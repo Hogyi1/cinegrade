@@ -1,0 +1,149 @@
+/* ==========================================================================
+   Reusable components (SearchBar, FilmstripCell)
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   SearchBar
+   -------------------------------------------------------------------------- */
+.search-bar {
+    -fx-background-color: -clr-surface-input;
+    -fx-background-radius: 8px;
+    -fx-border-radius: 8px;
+    -fx-border-color: -clr-border-subtle;
+    -fx-border-width: 1px;
+    -fx-padding: 2px 10px;
+    -fx-min-height: 30px;
+    -fx-cursor: text;
+}
+.search-bar:hover, .search-bar:focused-field {
+    -fx-border-color: -clr-blue;
+}
+
+.search-bar-field {
+    -fx-background-color: transparent;
+    -fx-text-fill: -clr-text-primary;
+    -fx-prompt-text-fill: -clr-text-muted;
+    -fx-font-size: 13px;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+    -fx-padding: 2px 0;
+}
+
+.search-bar-icon {
+    -fx-opacity: 0.65;
+}
+
+.search-bar-clear {
+    -fx-background-color: transparent;
+    -fx-background-radius: 9px;
+    -fx-padding: 4px;
+    -fx-cursor: hand;
+}
+.search-bar-clear:hover {
+    -fx-background-color: -clr-border;
+}
+
+.search-bar-clear-mark {
+    -fx-shape: "M2 0 L5 3 L8 0 L10 2 L7 5 L10 8 L8 10 L5 7 L2 10 L0 8 L3 5 L0 2 Z";
+    -fx-background-color: -clr-text-muted;
+    -fx-min-width: 9px;
+    -fx-min-height: 9px;
+    -fx-max-width: 9px;
+    -fx-max-height: 9px;
+}
+.search-bar-clear:hover .search-bar-clear-mark {
+    -fx-background-color: -clr-text-primary;
+}
+
+/* --------------------------------------------------------------------------
+   FilmstripCell
+   -------------------------------------------------------------------------- */
+.filmstrip-cell,
+.filmstrip-cell:filled,
+.filmstrip-cell:selected,
+.filmstrip-cell:focused {
+    -fx-background-color: transparent;
+    -fx-padding: 0 3px 0 0;
+    -fx-text-fill: transparent;
+}
+
+/* The frame is the color label; grey when the photo has none */
+.filmstrip-cell-frame {
+    -fx-background-color: #55585F;
+    -fx-border-color: transparent;
+    -fx-border-width: 2px;
+    -fx-cursor: hand;
+}
+.filmstrip-cell-frame:hover {
+    -fx-background-color: #66696F;
+}
+.filmstrip-cell-frame.label-red { -fx-background-color: #E02424; }
+.filmstrip-cell-frame.label-yellow { -fx-background-color: #F59E0B; }
+.filmstrip-cell-frame.label-green { -fx-background-color: #10B981; }
+.filmstrip-cell-frame.label-blue { -fx-background-color: #1C7DF0; }
+
+.filmstrip-cell:selected .filmstrip-cell-frame {
+    -fx-border-color: rgba(255, 255, 255, 0.55);
+}
+.filmstrip-cell-frame:active,
+.filmstrip-cell:selected .filmstrip-cell-frame:active {
+    -fx-border-color: -clr-text-primary;
+    -fx-effect: dropshadow(gaussian, rgba(20, 107, 209, 0.75), 8, 0.3, 0, 0);
+}
+
+.filmstrip-cell-thumb-box {
+    -fx-background-color: #1E1F23;
+}
+
+/* Stars: filled up to the rating, the empty ones only show on hover */
+.filmstrip-cell-stars {
+    -fx-padding: 2px 4px;
+    -fx-background-radius: 6px 6px 0 0;
+    -fx-background-color: transparent;
+}
+.filmstrip-cell-frame:rated .filmstrip-cell-stars,
+.filmstrip-cell-frame:hover .filmstrip-cell-stars {
+    -fx-background-color: rgba(0, 0, 0, 0.55);
+}
+.filmstrip-cell-star {
+    -fx-opacity: 0;
+    -fx-cursor: hand;
+}
+.filmstrip-cell-frame:hover .filmstrip-cell-star {
+    -fx-opacity: 0.35;
+}
+.filmstrip-cell-star.filled,
+.filmstrip-cell-frame:hover .filmstrip-cell-star.filled {
+    -fx-opacity: 1;
+}
+.filmstrip-cell-star:hover {
+    -fx-opacity: 0.8;
+}
+
+/* Badges: the heart is clickable, it shows when liked or on hover */
+.filmstrip-cell-badges {
+    -fx-padding: 3px;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.8), 3, 0.4, 0, 0);
+}
+.filmstrip-cell-like {
+    -fx-opacity: 0;
+    -fx-cursor: hand;
+}
+.filmstrip-cell-frame:hover .filmstrip-cell-like {
+    -fx-opacity: 0.4;
+}
+.filmstrip-cell-like.liked,
+.filmstrip-cell-frame:hover .filmstrip-cell-like.liked {
+    -fx-opacity: 1;
+}
+
+.filmstrip-cell-missing {
+    -fx-background-color: -clr-danger;
+    -fx-background-radius: 8px;
+    -fx-text-fill: -clr-text-primary;
+    -fx-font-weight: bold;
+    -fx-font-size: 10px;
+    -fx-padding: 0 5px;
+    -fx-translate-x: 3px;
+    -fx-translate-y: 3px;
+}

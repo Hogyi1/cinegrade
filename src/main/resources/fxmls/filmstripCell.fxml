@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.StackPane?>
+
+<!-- Frame = color label, inner box = thumbnail with the badges on top -->
+<StackPane fx:id="cellRoot" styleClass="filmstrip-cell-frame"
+           xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1">
+    <children>
+        <StackPane fx:id="thumbBox" styleClass="filmstrip-cell-thumb-box">
+            <children>
+                <ImageView fx:id="thumbnailView" pickOnBounds="true" preserveRatio="true" smooth="true"/>
+
+                <Label fx:id="missingBadge" styleClass="filmstrip-cell-missing" text="!" StackPane.alignment="TOP_LEFT"/>
+
+                <HBox fx:id="badgeBox" maxHeight="-Infinity" maxWidth="-Infinity" spacing="3.0"
+                      styleClass="filmstrip-cell-badges" StackPane.alignment="TOP_RIGHT">
+                    <children>
+                        <ImageView fx:id="editedIcon" fitHeight="12.0" fitWidth="12.0" preserveRatio="true"/>
+                        <ImageView fx:id="commentIcon" fitHeight="12.0" fitWidth="12.0" preserveRatio="true"/>
+                        <ImageView fx:id="likedIcon" fitHeight="12.0" fitWidth="12.0" preserveRatio="true"
+                                   pickOnBounds="true" styleClass="filmstrip-cell-like"/>
+                    </children>
+                </HBox>
+
+                <!-- Five clickable stars, filled up to the rating; the rest only show on hover -->
+                <HBox fx:id="starBox" maxHeight="-Infinity" maxWidth="-Infinity" spacing="1.0"
+                      styleClass="filmstrip-cell-stars" StackPane.alignment="BOTTOM_CENTER"/>
+            </children>
+        </StackPane>
+    </children>
+</StackPane>
