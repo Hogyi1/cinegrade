@@ -333,115 +333,171 @@
    -------------------------------------------------------------------------- */
 .filmstrip-root {
     -fx-background-color: -clr-dark;
-    -fx-border-color: -clr-border-subtle;
-    -fx-border-width: 1px 0 0 0;
-    -fx-pref-height: 140px;
-    -fx-min-height: 130px;
-    -fx-max-height: 160px;
+    -fx-spacing: 4px;
+    -fx-padding: 6px 0 0 0;
 }
 
 .filmstrip-filter-bar {
-    -fx-background-color: -clr-almostdarkgrey;
-    -fx-border-color: -clr-border-subtle;
-    -fx-border-width: 0 0 1px 0;
-    -fx-padding: 6px 14px;
-    -fx-spacing: 12px;
-    -fx-alignment: center-left;
+    -fx-background-color: -clr-surface-card;
+    -fx-background-radius: 10px;
+    -fx-padding: 5px 10px;
+    -fx-spacing: 8px;
+    -fx-min-height: 42px;
+    -fx-pref-height: 42px;
 }
 
-.filter-search-field {
-    -fx-background-color: -clr-surface-input;
-    -fx-border-color: -clr-border;
-    -fx-border-radius: 6px;
-    -fx-background-radius: 6px;
+.filmstrip-count {
     -fx-text-fill: -clr-text-primary;
-    -fx-font-size: 11.5px;
-    -fx-pref-width: 160px;
-    -fx-padding: 4px 10px;
+    -fx-font-size: 12.5px;
 }
-.filter-search-field:focused {
+
+.filmstrip-filter-title {
+    -fx-text-fill: -clr-text-primary;
+    -fx-font-size: 15px;
+}
+
+.filmstrip-separator {
+    -fx-background-color: #6A6B70;
+    -fx-min-width: 1px;
+    -fx-max-width: 1px;
+    -fx-pref-height: 26px;
+    -fx-max-height: 26px;
+}
+
+/* Last import pill */
+.filmstrip-pill {
+    -fx-background-color: transparent;
+    -fx-border-color: #6A6B70;
+    -fx-border-radius: 10px;
+    -fx-background-radius: 10px;
+    -fx-text-fill: -clr-text-secondary;
+    -fx-font-size: 11px;
+    -fx-padding: 2px 10px;
+    -fx-cursor: hand;
+}
+.filmstrip-pill:hover {
+    -fx-text-fill: -clr-text-primary;
+}
+.filmstrip-pill:selected {
+    -fx-background-color: -clr-blue;
+    -fx-border-color: -clr-blue;
+    -fx-text-fill: -clr-text-primary;
+}
+
+/* Icon toggles (edited, not edited, liked, commented): dim until switched on */
+.filmstrip-icon-toggle {
+    -fx-background-color: transparent;
+    -fx-background-radius: 6px;
+    -fx-padding: 3px 4px;
+    -fx-opacity: 0.45;
+    -fx-cursor: hand;
+}
+.filmstrip-icon-toggle:hover {
+    -fx-opacity: 0.8;
+}
+.filmstrip-icon-toggle:selected {
+    -fx-opacity: 1;
+    -fx-background-color: rgba(20, 107, 209, 0.35);
+}
+
+/* Rating filter */
+.filmstrip-operation-btn {
+    -fx-background-color: transparent;
+    -fx-text-fill: -clr-text-primary;
+    -fx-font-size: 16px;
+    -fx-padding: 0 4px;
+    -fx-min-width: 22px;
+    -fx-cursor: hand;
+}
+.filmstrip-operation-btn:hover {
+    -fx-text-fill: -clr-blue-hover;
+}
+
+.filmstrip-star-btn {
+    -fx-background-color: transparent;
+    -fx-padding: 1px;
+    -fx-opacity: 0.3;
+    -fx-cursor: hand;
+}
+.filmstrip-star-btn:hover {
+    -fx-opacity: 0.65;
+}
+.filmstrip-star-btn.filled {
+    -fx-opacity: 1;
+}
+
+/* Color label squares: grey frame, colored core */
+.filmstrip-color-btn {
+    -fx-min-width: 14px;
+    -fx-min-height: 14px;
+    -fx-max-width: 14px;
+    -fx-max-height: 14px;
+    -fx-background-color: #6A6B70, -clr-text-primary;
+    -fx-background-insets: 0, 2px;
+    -fx-background-radius: 2px, 1px;
+    -fx-padding: 0;
+    -fx-cursor: hand;
+}
+.filmstrip-color-btn:hover {
+    -fx-background-color: -clr-text-primary, -clr-text-primary;
+}
+.filmstrip-color-btn.color-red { -fx-background-color: #6A6B70, #E02424; }
+.filmstrip-color-btn.color-yellow { -fx-background-color: #6A6B70, #F59E0B; }
+.filmstrip-color-btn.color-green { -fx-background-color: #6A6B70, #10B981; }
+.filmstrip-color-btn.color-blue { -fx-background-color: #6A6B70, #1C7DF0; }
+.filmstrip-color-btn.color-red:hover { -fx-background-color: -clr-text-primary, #E02424; }
+.filmstrip-color-btn.color-yellow:hover { -fx-background-color: -clr-text-primary, #F59E0B; }
+.filmstrip-color-btn.color-green:hover { -fx-background-color: -clr-text-primary, #10B981; }
+.filmstrip-color-btn.color-blue:hover { -fx-background-color: -clr-text-primary, #1C7DF0; }
+
+.filmstrip-filter-bar .search-bar {
+    -fx-background-color: #6A6B70;
+    -fx-border-color: transparent;
+    -fx-background-radius: 10px;
+    -fx-border-radius: 10px;
+}
+.filmstrip-filter-bar .search-bar:hover,
+.filmstrip-filter-bar .search-bar:focused-field {
     -fx-border-color: -clr-blue;
 }
+.filmstrip-filter-bar .search-bar-field {
+    -fx-prompt-text-fill: #D0D1D4;
+}
 
-.filter-icon-btn {
-    -fx-background-color: transparent;
+/* Strip */
+.filmstrip-list {
+    -fx-background-color: -clr-surface-card;
+    -fx-background-insets: 0;
+    -fx-padding: 0;
+    -fx-border-color: -clr-dark;
+    -fx-border-width: 2px;
+    -fx-pref-height: 133px;
+    -fx-min-height: 133px;
+    -fx-max-height: 133px;
+}
+.filmstrip-list:focused {
+    -fx-background-color: -clr-surface-card;
+}
+.filmstrip-list .placeholder .label {
     -fx-text-fill: -clr-text-muted;
-    -fx-font-size: 12px;
-    -fx-cursor: hand;
-    -fx-padding: 3px 6px;
 }
-.filter-icon-btn:hover {
-    -fx-text-fill: -clr-text-primary;
-}
-.filter-icon-btn:selected {
-    -fx-text-fill: -clr-warning;
-}
-
-.filter-color-pill {
-    -fx-min-width: 12px;
-    -fx-min-height: 12px;
-    -fx-max-width: 12px;
-    -fx-max-height: 12px;
-    -fx-background-radius: 6px;
-    -fx-cursor: hand;
-}
-
-.filmstrip-scroll {
-    -fx-background-color: transparent;
-    -fx-background: transparent;
-    -fx-padding: 8px 12px;
-}
-.filmstrip-scroll > .viewport {
-    -fx-background-color: transparent;
-}
-.filmstrip-scroll .scroll-bar:horizontal {
+.filmstrip-list .scroll-bar:horizontal {
     -fx-background-color: transparent;
     -fx-pref-height: 6px;
+    -fx-padding: 0;
 }
-.filmstrip-scroll .scroll-bar:horizontal .thumb {
+.filmstrip-list .scroll-bar:horizontal .thumb {
     -fx-background-color: -clr-border;
     -fx-background-radius: 3px;
 }
-
-.filmstrip-cards-box {
-    -fx-spacing: 10px;
-    -fx-alignment: center-left;
+.filmstrip-list .scroll-bar .increment-button,
+.filmstrip-list .scroll-bar .decrement-button {
+    -fx-pref-width: 0;
+    -fx-padding: 0;
 }
-
-/* Filmstrip Card Item */
-.filmstrip-card {
-    -fx-background-color: -clr-darkgrey;
-    -fx-border-color: -clr-border-subtle;
-    -fx-border-radius: 6px;
-    -fx-background-radius: 6px;
-    -fx-border-width: 1px;
-    -fx-padding: 4px;
-    -fx-alignment: center;
-    -fx-cursor: hand;
-    -fx-min-width: 100px;
-    -fx-pref-width: 100px;
-}
-.filmstrip-card:hover {
-    -fx-border-color: -clr-border;
-    -fx-background-color: -clr-surface;
-}
-.filmstrip-card-selected {
-    -fx-border-color: -clr-blue;
-    -fx-border-width: 2px;
-    -fx-background-color: -clr-surface;
-    -fx-effect: dropshadow(gaussian, rgba(20, 107, 209, 0.45), 8, 0, 0, 2);
-}
-
-.filmstrip-card-thumb {
-    -fx-background-radius: 4px;
-    -fx-fit-width: 92px;
-    -fx-fit-height: 62px;
-}
-
-.filmstrip-card-filename {
-    -fx-text-fill: -clr-text-secondary;
-    -fx-font-size: 10px;
-    -fx-padding: 3px 0 0 0;
+.filmstrip-list .scroll-bar .increment-arrow,
+.filmstrip-list .scroll-bar .decrement-arrow {
+    -fx-padding: 0;
 }
 
 /* --------------------------------------------------------------------------

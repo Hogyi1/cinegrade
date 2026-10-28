@@ -14,7 +14,7 @@
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 
-<VBox fx:id="editPanelRoot" prefWidth="350.0" minWidth="330.0" maxWidth="380.0"
+<VBox fx:id="editPanelRoot" fx:controller="hu.elte.ik.thesis.cinegrade.javafx.ui.editing.DevelopEditPanelController" prefWidth="350.0" minWidth="330.0" maxWidth="380.0"
       styleClass="sidebar-panel-right"
       xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1">
     <children>

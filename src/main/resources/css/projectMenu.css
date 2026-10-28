@@ -151,6 +151,21 @@
     -fx-font-style: normal;
 }
 
+.project-search-bar {
+    -fx-background-color: -clr-surface-card;
+    -fx-background-radius: 10px;
+    -fx-border-radius: 10px;
+    -fx-border-color: transparent;
+    -fx-padding: 4px 14px;
+}
+.project-search-bar:hover, .project-search-bar:focused-field {
+    -fx-border-color: -clr-border-subtle;
+}
+.project-search-bar .search-bar-field {
+    -fx-font-size: 16px;
+    -fx-font-weight: 300;
+}
+
 .search-icon {
     -fx-opacity: 0.75;
     -fx-cursor: default;

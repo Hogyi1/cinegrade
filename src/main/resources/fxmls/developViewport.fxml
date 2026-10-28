@@ -11,7 +11,7 @@
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.StackPane?>
 
-<StackPane fx:id="viewportRoot" prefHeight="650.0" prefWidth="750.0"
+<StackPane fx:id="viewportRoot" fx:controller="hu.elte.ik.thesis.cinegrade.javafx.ui.editing.DevelopViewportController" prefHeight="650.0" prefWidth="750.0"
            styleClass="viewport-root"
            xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1">
     <children>
@@ -34,6 +34,8 @@
 
                 <Region HBox.hgrow="ALWAYS"/>
 
+                <!-- TODO remove: engine test, alternates between a test RAW and JPEG -->
+                <Button fx:id="testLoadBtn" mnemonicParsing="false" styleClass="hud-btn" text="Test: load RAW"/>
                 <ToggleButton fx:id="splitViewToggle" mnemonicParsing="false" styleClass="hud-btn" text="Before / After"/>
                 <Button fx:id="zoomFitBtn" mnemonicParsing="false" styleClass="hud-btn" text="Fit"/>
                 <Button fx:id="zoom100Btn" mnemonicParsing="false" styleClass="hud-btn" text="100%"/>

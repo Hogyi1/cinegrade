@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- [AI-GENERATED] -->
 
+<?import hu.elte.ik.thesis.cinegrade.javafx.ui.components.SearchBar?>
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
@@ -13,7 +14,7 @@
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 
-<VBox fx:id="leftPanelRoot" prefWidth="260.0" minWidth="240.0" maxWidth="300.0"
+<VBox fx:id="leftPanelRoot" fx:controller="hu.elte.ik.thesis.cinegrade.javafx.ui.editing.DevelopLeftPanelController" prefWidth="260.0" minWidth="240.0" maxWidth="300.0"
       styleClass="sidebar-panel"
       xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1">
     <children>
@@ -42,7 +43,7 @@
                         <!-- Search & Create Button -->
                         <HBox alignment="CENTER" spacing="6.0">
                             <children>
-                                <TextField fx:id="presetSearchField" promptText="Search presets..." styleClass="filter-search-field" HBox.hgrow="ALWAYS"/>
+                                <SearchBar fx:id="presetSearchField" promptText="Search presets..." HBox.hgrow="ALWAYS"/>
                                 <Button fx:id="createPresetBtn" mnemonicParsing="false" styleClass="hud-btn" text="+ New"/>
                             </children>
                         </HBox>

@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- [AI-GENERATED] -->
 
+<?import hu.elte.ik.thesis.cinegrade.javafx.ui.components.SearchBar?>
 <?import java.net.URL?>
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
@@ -114,19 +115,8 @@
                                 <!-- Search Bar Row (Right-Aligned) -->
                                 <HBox alignment="CENTER_RIGHT">
                                     <children>
-                                        <HBox alignment="CENTER_LEFT" maxWidth="500.0" minWidth="260.0" prefHeight="38.0"
-                                              prefWidth="450.0" spacing="10.0" styleClass="search-container">
-                                            <children>
-                                                <TextField fx:id="searchField" promptText="Search" styleClass="search-field"
-                                                           HBox.hgrow="ALWAYS"/>
-                                                <ImageView fitHeight="18.0" fitWidth="18.0" mouseTransparent="true" pickOnBounds="true" preserveRatio="true"
-                                                           styleClass="search-icon">
-                                                    <image>
-                                                        <Image url="@../images/icons/Search.png"/>
-                                                    </image>
-                                                </ImageView>
-                                            </children>
-                                        </HBox>
+                                        <SearchBar fx:id="searchField" maxWidth="500.0" minWidth="260.0" prefHeight="38.0" prefWidth="450.0"
+                                                   promptText="Search" styleClass="project-search-bar"/>
                                     </children>
                                 </HBox>
 
