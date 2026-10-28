@@ -40,7 +40,10 @@ public class CatalogSchemaInitializer {
                 rotation INTEGER NOT NULL DEFAULT 0,
                 rating INTEGER DEFAULT 0,
                 color_label TEXT,
-                date_imported DATETIME DEFAULT CURRENT_TIMESTAMP
+                date_imported DATETIME DEFAULT CURRENT_TIMESTAMP,
+                is_liked INTEGER NOT NULL DEFAULT 0,
+                is_edited INTEGER NOT NULL DEFAULT 0,
+                comment TEXT
             );
             """;
 
