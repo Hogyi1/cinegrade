@@ -82,11 +82,12 @@ public enum ErrorCode {
     // 5000–5099: Rendering & OpenGL Engine
     // ==========================================
     OPENGL_INIT_FAILED(5001, "Failed to initialize OpenGL engine or context.", Severity.FATAL),
-    SHADER_COMPILATION_FAILED(5002, "GLSL shader compilation failed: %s", Severity.FATAL),
-    SHADER_LINK_FAILED(5003, "GLSL shader program linking failed: %s", Severity.FATAL),
-    FBO_CREATION_FAILED(5004, "Failed to create or resize OpenGL FrameBuffer Object (status %d).", Severity.ERROR),
-    TEXTURE_UPLOAD_FAILED(5005, "Failed to upload image pixel data to OpenGL texture.", Severity.ERROR),
-    RENDER_TARGET_READBACK_FAILED(5006, "Failed to read back rendered pixels from FBO to CPU buffer.", Severity.ERROR),
+    OPENGL_WINDOW_CREATE_FAILED(5002, "Failed to create OpenGL window.", Severity.FATAL),
+    SHADER_COMPILATION_FAILED(5003, "GLSL shader compilation failed: %s", Severity.FATAL),
+    SHADER_LINK_FAILED(5004, "GLSL shader program linking failed: %s", Severity.FATAL),
+    FBO_CREATION_FAILED(5005, "Failed to create or resize OpenGL FrameBuffer Object (status %d).", Severity.ERROR),
+    TEXTURE_UPLOAD_FAILED(5006, "Failed to upload image pixel data to OpenGL texture.", Severity.ERROR),
+    RENDER_TARGET_READBACK_FAILED(5007, "Failed to read back rendered pixels from FBO to CPU buffer.", Severity.ERROR),
 
     // ==========================================
     // 8000–8099: SQL Errors
@@ -109,7 +110,8 @@ public enum ErrorCode {
     OPERATION_CANCELLED(9001, "Operation was cancelled.", Severity.WARNING),
     TASK_EXECUTION_FAILED(9002, "Background task execution failed: %s", Severity.ERROR),
     JSON_SERIALIZATION_FAILED(9003, "Failed to serialize object to JSON: %s", Severity.ERROR),
-    JSON_DESERIALIZATION_FAILED(9004, "Failed to deserialize JSON content: %s", Severity.ERROR);
+    JSON_DESERIALIZATION_FAILED(9004, "Failed to deserialize JSON content: %s", Severity.ERROR),
+    STARTUP_ERROR(9004, "App startup failed", Severity.FATAL);
 
     private final int code;
     private final String message;
