@@ -3,6 +3,7 @@ package hu.elte.ik.thesis.cinegrade.domain.tasks.appinit;
 import hu.elte.ik.thesis.cinegrade.domain.enums.ErrorCode;
 import hu.elte.ik.thesis.cinegrade.domain.exceptions.CineGradeException;
 import hu.elte.ik.thesis.cinegrade.domain.theme.ThemeManager;
+import hu.elte.ik.thesis.cinegrade.engine.RenderEngine;
 import hu.elte.ik.thesis.cinegrade.infra.config.AppConfig;
 import hu.elte.ik.thesis.cinegrade.infra.database.AppDatabase;
 import hu.elte.ik.thesis.cinegrade.infra.services.RequirementChecker;
@@ -22,9 +23,11 @@ public class AppInitService extends Service<AppInitResult> {
     private final StorageService storageService;
     private final AtomicInteger stepCounter = new AtomicInteger(0);
     private final ThemeManager themeManager;
+    private final RenderEngine renderEngine;
 
-    public AppInitService(RequirementChecker requirementChecker, ThemeManager themeManager, StorageService storageService) {
+    public AppInitService(RequirementChecker requirementChecker, RenderEngine renderEngine, ThemeManager themeManager, StorageService storageService) {
         this.requirementChecker = requirementChecker;
+        this.renderEngine = renderEngine;
         this.themeManager = themeManager;
         this.storageService = storageService;
     }
@@ -81,7 +84,8 @@ public class AppInitService extends Service<AppInitResult> {
                 updateProgress(stepCounter.getAndIncrement(), totalSteps);
 
                 updateMessage("Engine warmup...");
-                // TODO add engine warmup method
+                // Start the GPU thread first, then wait for its GL init (safe: this is not the FX thread)
+                renderEngine.start().join();
                 updateProgress(stepCounter.getAndIncrement(), totalSteps);
 
                 updateMessage("Ready!");

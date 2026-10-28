@@ -12,7 +12,10 @@ import hu.elte.ik.thesis.cinegrade.domain.exceptions.CineGradeException;
 import hu.elte.ik.thesis.cinegrade.domain.navigation.ControllerFactory;
 import hu.elte.ik.thesis.cinegrade.domain.navigation.SceneManager;
 import hu.elte.ik.thesis.cinegrade.domain.theme.ThemeManager;
+import hu.elte.ik.thesis.cinegrade.engine.RenderEngine;
+import hu.elte.ik.thesis.cinegrade.engine.renderer.ViewportRenderer;
 import hu.elte.ik.thesis.cinegrade.infra.config.AppConfig;
+import hu.elte.ik.thesis.cinegrade.infra.config.SystemInfo;
 import hu.elte.ik.thesis.cinegrade.infra.utils.thumbnail.ThumbnailFactory;
 import hu.elte.ik.thesis.cinegrade.infra.services.storage.StorageService;
 import hu.elte.ik.thesis.cinegrade.infra.utils.logger.LoggerUtils;
@@ -35,6 +38,9 @@ import org.apache.logging.log4j.Logger;
 
 import java.nio.file.Path;
 
+import static com.sun.jna.platform.win32.GL.GL_VERSION;
+import static org.lwjgl.opengl.GL11.glGetString;
+
 public class App extends Application {
 
     private ThreadPoolManager threadPoolManager;
@@ -49,6 +55,8 @@ public class App extends Application {
     private ResourceStack resources;
     private StorageService storageService;
     private ThumbnailFactory thumbnailFactory;
+    private RenderEngine renderEngine;
+    private ViewportRenderer viewportRenderer;
 
     private TaskToastPresenter taskToastPresenter;
     private ErrorPresenter errorToastPresenter;
@@ -78,7 +86,7 @@ public class App extends Application {
 
             logger.debug("Task setup finished, starting AppInitService");
         } catch (Exception ex) {
-            ErrorHandler.getInstance().handle(new CineGradeException(ErrorCode.UNKNOWN_ERROR, ex, "FATAL error inside application startup method"));
+            ErrorHandler.getInstance().handle(new CineGradeException(ErrorCode.STARTUP_ERROR, ex, "FATAL error inside application startup method"));
         }
     }
 
@@ -88,7 +96,7 @@ public class App extends Application {
      * @return the initialized AppInitService
      */
     private AppInitService createAppInitService() {
-        AppInitService appInitService = new AppInitService(requirementChecker, themeManager, storageService);
+        AppInitService appInitService = new AppInitService(requirementChecker, renderEngine, themeManager, storageService);
         taskManager.configure(appInitService);
 
         appInitService.setOnSucceeded(e -> {
@@ -96,13 +104,19 @@ public class App extends Application {
 
             createDatabaseManagers();
             PauseTransition pause = new PauseTransition(Duration.millis(1000));
-            pause.setOnFinished(ev -> sceneManager.switchView(ViewType.PROJECT_MENU));
+            pause.setOnFinished(ev -> {
+                renderEngine.getInteractive().submit(() -> {
+                    SystemInfo.INSTANCE.setGlVersion(glGetString(GL_VERSION));
+                    return null;
+                });
+                sceneManager.switchView(ViewType.PROJECT_MENU);
+            });
             pause.play();
         });
 
         appInitService.setOnFailed(e -> {
             Throwable ex = appInitService.getException();
-            ErrorHandler.getInstance().handle(ex);
+            ErrorHandler.getInstance().handle(new CineGradeException(ErrorCode.STARTUP_ERROR, ex));
         });
 
         return appInitService;
@@ -125,6 +139,19 @@ public class App extends Application {
                 catalogManager.getCurrentScope().stagingArea()));
         controllerFactory.register(DevelopmentPanelController.class, () -> new DevelopmentPanelController(catalogManager.getCurrentScope()));
         controllerFactory.register(ExportPanelController.class, () -> new ExportPanelController(catalogManager.getCurrentScope()));
+        controllerFactory.register(DevelopLeftPanelController.class, () -> new DevelopLeftPanelController(
+                catalogManager.getCurrentScope().editingManager(),
+                catalogManager.getCurrentScope().photoManager()));
+        controllerFactory.register(DevelopViewportController.class, () -> new DevelopViewportController(
+                catalogManager.getCurrentScope().editingManager(),
+                viewportRenderer));
+        controllerFactory.register(DevelopEditPanelController.class, () -> new DevelopEditPanelController(
+                catalogManager.getCurrentScope().editingManager()));
+        controllerFactory.register(DevelopFilmstripController.class, () -> new DevelopFilmstripController(
+                catalogManager.getCurrentScope().photoLibrary(),
+                catalogManager.getCurrentScope().photoManager(),
+                catalogManager.getCurrentScope().thumbnailService(),
+                threadPoolManager.getCpuPool()));
     }
 
     /**
@@ -133,6 +160,7 @@ public class App extends Application {
     private void createBootstrapManagers(Stage primaryStage) {
         logger.info("Creating bootstrap managers");
 
+        renderEngine = resources.push(new RenderEngine());
         thumbnailFactory = new ThumbnailFactory();
         storageService = new StorageService(Path.of(AppConfig.INSTANCE.getRootDirectory()));
         requirementChecker = new RequirementChecker();
@@ -149,7 +177,8 @@ public class App extends Application {
      */
     private void createDatabaseManagers() {
         logger.info("Creating database-dependent managers");
-        catalogManager = new CatalogManager(new CatalogScopeFactory(taskManager, thumbnailFactory, threadPoolManager), storageService);
+        viewportRenderer = resources.push(new ViewportRenderer(renderEngine.getInteractive()));
+        catalogManager = new CatalogManager(new CatalogScopeFactory(taskManager, thumbnailFactory, threadPoolManager, viewportRenderer), storageService);
         resources.push(catalogManager);
         userManager = new UserManager();
     }
