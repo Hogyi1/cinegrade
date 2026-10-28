@@ -66,16 +66,16 @@ public class EditStateDao {
      */
     private static void bind(PreparedStatement pstmt, EditState e, String updatedAt) throws SQLException {
         pstmt.setString(1, e.getPhotoId());
-        pstmt.setDouble(2, e.getExposure());
-        pstmt.setDouble(3, e.getContrast());
-        pstmt.setDouble(4, e.getHighlights());
-        pstmt.setDouble(5, e.getShadows());
-        pstmt.setDouble(6, e.getWhites());
-        pstmt.setDouble(7, e.getBlacks());
-        pstmt.setDouble(8, e.getTemperature());
-        pstmt.setDouble(9, e.getTint());
-        pstmt.setDouble(10, e.getSaturation());
-        pstmt.setDouble(11, e.getVibrance());
+        pstmt.setFloat(2, e.getExposure());
+        pstmt.setFloat(3, e.getContrast());
+        pstmt.setFloat(4, e.getHighlights());
+        pstmt.setFloat(5, e.getShadows());
+        pstmt.setFloat(6, e.getWhites());
+        pstmt.setFloat(7, e.getBlacks());
+        pstmt.setFloat(8, e.getTemperature());
+        pstmt.setFloat(9, e.getTint());
+        pstmt.setFloat(10, e.getSaturation());
+        pstmt.setFloat(11, e.getVibrance());
         pstmt.setString(12, e.getLutPath());
         pstmt.setString(13, e.getCurvesJson());
         pstmt.setString(14, updatedAt);
@@ -189,16 +189,16 @@ public class EditStateDao {
     private EditState mapRowToEditState(ResultSet rs) throws SQLException {
         return new EditState(
                 rs.getString("photo_id"),
-                rs.getDouble("exposure"),
-                rs.getDouble("contrast"),
-                rs.getDouble("highlights"),
-                rs.getDouble("shadows"),
-                rs.getDouble("whites"),
-                rs.getDouble("blacks"),
-                rs.getDouble("temperature"),
-                rs.getDouble("tint"),
-                rs.getDouble("saturation"),
-                rs.getDouble("vibrance"),
+                rs.getFloat("exposure"),
+                rs.getFloat("contrast"),
+                rs.getFloat("highlights"),
+                rs.getFloat("shadows"),
+                rs.getFloat("whites"),
+                rs.getFloat("blacks"),
+                rs.getFloat("temperature"),
+                rs.getFloat("tint"),
+                rs.getFloat("saturation"),
+                rs.getFloat("vibrance"),
                 rs.getString("lut_path"),
                 rs.getString("curves_json"),
                 parseInstant(rs.getString("updated_at"))

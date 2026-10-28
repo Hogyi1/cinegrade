@@ -98,7 +98,7 @@ public class StagingArea {
         if (entries == null || entries.isEmpty()) {
             return;
         }
-        masterEntries.addAll(entries);
+        fx(() -> masterEntries.addAll(entries));
     }
 
     /**
@@ -106,7 +106,7 @@ public class StagingArea {
      */
     public void clear() {
         logger.info("Clearing {} staged entries", masterEntries.size());
-        masterEntries.clear();
+        fx(masterEntries::clear);
     }
 
     /**
@@ -162,9 +162,9 @@ public class StagingArea {
             return;
         }
         countersUpdateScheduled = true;
-        Platform.runLater(() -> {
-            countersUpdateScheduled = false;
+        fx(() -> {
             updateCounters();
+            countersUpdateScheduled = false;
         });
     }
 
@@ -183,5 +183,13 @@ public class StagingArea {
         selectedFilesProperty.set(selected);
         stageSizeInBytes.set(byteSize);
         logger.debug("Counters updated: {} selected, {} bytes across {} staged entries", selected, byteSize, masterEntries.size());
+    }
+
+    private static void fx(Runnable task) {
+        if (Platform.isFxApplicationThread()) {
+            task.run();
+        } else {
+            Platform.runLater(task);
+        }
     }
 }

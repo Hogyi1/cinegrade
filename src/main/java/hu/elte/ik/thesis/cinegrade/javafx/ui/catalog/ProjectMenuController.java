@@ -12,6 +12,7 @@ import hu.elte.ik.thesis.cinegrade.domain.theme.ThemeManager;
 import hu.elte.ik.thesis.cinegrade.javafx.ui.components.CatalogViewItem;
 import hu.elte.ik.thesis.cinegrade.javafx.ui.dialog.NewProjectDialogController;
 import hu.elte.ik.thesis.cinegrade.javafx.ui.editing.NavigationController;
+import hu.elte.ik.thesis.cinegrade.javafx.ui.components.SearchBar;
 import javafx.application.Platform;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
@@ -61,7 +62,7 @@ public class ProjectMenuController {
     @FXML
     private Label welcomeLabel;
     @FXML
-    private TextField searchField;
+    private SearchBar searchField;
     @FXML
     private ListView<Catalog> catalogListView;
     @FXML

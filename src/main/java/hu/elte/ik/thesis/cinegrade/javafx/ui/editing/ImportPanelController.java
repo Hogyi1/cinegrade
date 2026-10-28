@@ -9,6 +9,7 @@ import hu.elte.ik.thesis.cinegrade.domain.enums.WorkspacePanel;
 import hu.elte.ik.thesis.cinegrade.domain.error.ErrorHandler;
 import hu.elte.ik.thesis.cinegrade.infra.utils.format.FormatUtils;
 import hu.elte.ik.thesis.cinegrade.javafx.ui.components.ImportPhotoCard;
+import hu.elte.ik.thesis.cinegrade.javafx.ui.components.SearchBar;
 import javafx.beans.binding.Bindings;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
@@ -74,7 +75,7 @@ public class ImportPanelController implements PanelController {
     @FXML
     private Button removeSelectedButton;
     @FXML
-    private TextField searchField;
+    private SearchBar searchField;
     @FXML
     private CheckBox autoPairCheckBox;
     @FXML
@@ -127,7 +128,6 @@ public class ImportPanelController implements PanelController {
         setupOthers();
     }
 
-    // [AI-GENERATED METHOD]
     private void setupGridView() {
         logger.debug("Configuring cardsGridView");
 

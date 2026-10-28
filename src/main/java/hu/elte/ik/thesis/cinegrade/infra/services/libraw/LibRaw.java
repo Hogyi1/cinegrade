@@ -5,6 +5,7 @@ import com.sun.jna.Native;
 import com.sun.jna.Pointer;
 import com.sun.jna.Structure;
 import hu.elte.ik.thesis.cinegrade.infra.utils.process.NativeBinaryLocator;
+import org.lwjgl.system.MemoryUtil;
 
 import java.nio.ByteBuffer;
 
@@ -25,32 +26,34 @@ public interface LibRaw extends Library {
         public short  colors;
         public short  bits;
         public int    data_size;
-        private ByteBuffer data;
         // data[1] is NOT mapped — we read it manually via pointer arithmetic
+
+        // enum(4) + ushort*4(8) + unsigned int(4) = 16 bytes: data[] starts right after the fields
+        private static final int DATA_OFFSET = 16;
 
         public static class ByReference
                 extends ProcessedImage implements Structure.ByReference {}
 
         /**
-         * Reads pixel bytes starting immediately after the struct fields.
-         * data[1] in C means the array lives contiguously after data_size in memory.
+         * Copies the pixel data onto the Java heap. For small images (thumbnails).
+         * Must be called before {@code libraw_dcraw_clear_mem}.
          */
-        public void setPixelBytes() {
-            if (data_size <= 0) return;
-
-            // Calculate offset: sum of all field sizes
-            // enum(4) + ushort*4(8) + unsigned int(4) = 16 bytes
-            int dataOffset = 16;
-
-
-            if (data == null){
-                data = ByteBuffer.allocateDirect(data_size);
-                data.put(getPointer().getByteArray(dataOffset, data_size));
-                data.flip();
-            }
+        public byte[] copyPixelBytes() {
+            if (data_size <= 0) return new byte[0];
+            return getPointer().getByteArray(DATA_OFFSET, data_size);
         }
 
-        public ByteBuffer getByteBuffer(){return data;}
+        /**
+         * Copies the pixel data into a new native buffer with one memcpy, no heap copy. For full-size images.
+         * Must be called before {@code libraw_dcraw_clear_mem}.
+         * <p>
+         * The caller owns the buffer and must free it with {@link MemoryUtil#memFree}; the GC does not.
+         */
+        public ByteBuffer copyPixelsNative() {
+            ByteBuffer pixels = MemoryUtil.memAlloc(data_size);
+            MemoryUtil.memCopy(Pointer.nativeValue(getPointer()) + DATA_OFFSET, MemoryUtil.memAddress(pixels), data_size);
+            return pixels;
+        }
     }
 
     // ── Lifecycle ─────────────────────────────────────────────────────────
@@ -77,6 +80,8 @@ public interface LibRaw extends Library {
     void libraw_set_output_color(Pointer lr, int value);
     void libraw_set_no_auto_bright(Pointer lr, int value);
     void libraw_set_use_camera_wb(Pointer lr, int value);
+    void libraw_set_user_flip(Pointer lr, int value);
+    int libraw_get_flip(Pointer lr);
     //void libraw_set_output_rotate(Pointer lr, int value);
 
     void libraw_set_user_mul(Pointer lr, int value, float value2);

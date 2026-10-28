@@ -2,8 +2,7 @@
 package hu.elte.ik.thesis.cinegrade.domain.editing;
 
 import hu.elte.ik.thesis.cinegrade.domain.enums.ImportMethod;
-import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.*;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -13,32 +12,28 @@ import java.nio.file.Path;
 import java.time.Instant;
 import java.util.UUID;
 
+@Getter @Setter
 public class PhotoEntry extends Entry {
 
     private final BooleanProperty missingPhoto = new SimpleBooleanProperty(false);
     private final BooleanProperty missingThumbnail = new SimpleBooleanProperty(false);
-    @Getter @Setter
+    private final BooleanProperty isEdited = new SimpleBooleanProperty(false);
+    private final BooleanProperty isLiked = new SimpleBooleanProperty(false);
+    private final IntegerProperty thumbnailVersion = new SimpleIntegerProperty(0);
+    private final IntegerProperty ratingProperty = new SimpleIntegerProperty(0);
+    // Visual only, not part of the filter
+    private final StringProperty colorLabelProperty = new SimpleStringProperty();
+    private final StringProperty commentProperty = new SimpleStringProperty();
+
     private String id;
     // Setters below are overloaded with Path variants, so only the getter is generated
-    @Getter
     private String originalPath;
-    @Getter @Setter
     private ImportMethod importMethod;
-    @Getter @Setter
     private long fileSize;
-    @Getter @Setter
-    private int rating = 0;
-    @Getter @Setter
-    private String colorLabel;
-    @Getter @Setter
     private Instant dateImported;
-    @Getter @Setter
     private String importId;
-    @Getter @Setter
     private String mimeType;
-    @Getter @Setter
     private boolean isRaw;
-    @Getter @Setter
     private int rotation;
 
     // On import
@@ -53,13 +48,17 @@ public class PhotoEntry extends Entry {
     public PhotoEntry(String id, String importId, File resolvedFile,
                       long fileSize, int rating, String colorLabel,
                       Instant dateImported, ImportMethod importMethod, String originalPath,
-                      String mimeType, boolean isRaw, int rotation) {
+                      String mimeType, boolean isRaw, int rotation,
+                      boolean liked, boolean edited, String comment) {
         super(resolvedFile);
         this.id = id != null ? id : UUID.randomUUID().toString();
         this.importId = importId;
         this.fileSize = fileSize;
-        this.rating = rating;
-        this.colorLabel = colorLabel;
+        this.ratingProperty.set(rating);
+        this.colorLabelProperty.set(colorLabel);
+        this.isLiked.set(liked);
+        this.isEdited.set(edited);
+        this.commentProperty.set(comment);
         this.dateImported = dateImported != null ? dateImported : Instant.now();
         this.importMethod = importMethod != null ? importMethod : ImportMethod.ADD;
         this.originalPath = originalPath;
@@ -126,6 +125,42 @@ public class PhotoEntry extends Entry {
 
     public void setMissingThumbnail(boolean missing) {
         this.missingThumbnail.set(missing);
+    }
+
+    // [AI-GENERATED METHOD]
+    public int getRating() {
+        return ratingProperty.get();
+    }
+
+    // [AI-GENERATED METHOD]
+    public void setRating(int rating) {
+        ratingProperty.set(rating);
+    }
+
+    // [AI-GENERATED METHOD]
+    public String getColorLabel() {
+        return colorLabelProperty.get();
+    }
+
+    // [AI-GENERATED METHOD]
+    public void setColorLabel(String colorLabel) {
+        colorLabelProperty.set(colorLabel);
+    }
+
+    // [AI-GENERATED METHOD]
+    public String getComment() {
+        return commentProperty.get();
+    }
+
+    // [AI-GENERATED METHOD]
+    public void setComment(String comment) {
+        commentProperty.set(comment);
+    }
+
+    // [AI-GENERATED METHOD]
+    public boolean hasComment() {
+        String comment = commentProperty.get();
+        return comment != null && !comment.isBlank();
     }
 
     public String getFilePath() {

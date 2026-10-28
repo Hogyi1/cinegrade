@@ -1,19 +1,11 @@
 package hu.elte.ik.thesis.cinegrade.app.managers.imports;
 
 import hu.elte.ik.thesis.cinegrade.app.managers.concurrency.tasks.TaskManager;
-import hu.elte.ik.thesis.cinegrade.app.managers.editing.PhotoManager;
+import hu.elte.ik.thesis.cinegrade.app.managers.photos.PhotoManager;
 import hu.elte.ik.thesis.cinegrade.domain.catalog.Catalog;
-import hu.elte.ik.thesis.cinegrade.domain.editing.PhotoEntry;
-import hu.elte.ik.thesis.cinegrade.domain.editing.imports.FileProbeResult;
 import hu.elte.ik.thesis.cinegrade.domain.editing.imports.ImportRequest;
-import hu.elte.ik.thesis.cinegrade.domain.editing.imports.StageEntry;
-import hu.elte.ik.thesis.cinegrade.domain.editing.imports.StageResult;
-import hu.elte.ik.thesis.cinegrade.domain.enums.ErrorCode;
 import hu.elte.ik.thesis.cinegrade.domain.enums.ImportMethod;
-import hu.elte.ik.thesis.cinegrade.domain.exceptions.CineGradeException;
 import hu.elte.ik.thesis.cinegrade.domain.tasks.ImportService;
-import hu.elte.ik.thesis.cinegrade.domain.tasks.ImportProbeService;
-import hu.elte.ik.thesis.cinegrade.domain.tasks.ImportStageService;
 import hu.elte.ik.thesis.cinegrade.infra.database.TransactionRunner;
 import hu.elte.ik.thesis.cinegrade.infra.database.dao.catalog.EditStateDao;
 import hu.elte.ik.thesis.cinegrade.infra.database.dao.catalog.MetadataDao;
@@ -21,25 +13,11 @@ import hu.elte.ik.thesis.cinegrade.infra.database.dao.catalog.PhotoDao;
 import hu.elte.ik.thesis.cinegrade.infra.services.exiftool.ExifToolService;
 import hu.elte.ik.thesis.cinegrade.infra.services.storage.StorageService;
 import hu.elte.ik.thesis.cinegrade.infra.services.storage.ThumbnailService;
-import javafx.application.Platform;
-import javafx.beans.Observable;
-import javafx.beans.binding.Bindings;
-import javafx.beans.property.*;
-import javafx.collections.FXCollections;
-import javafx.collections.ListChangeListener;
-import javafx.collections.ObservableList;
-import javafx.collections.transformation.FilteredList;
-import javafx.collections.transformation.SortedList;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.File;
-import java.nio.file.Path;
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.time.Instant;
 import java.util.*;
-import java.util.function.Predicate;
 
 /**
  * Manages the staged import workflow for photos before they are persisted to the catalog.

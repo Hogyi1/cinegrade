@@ -50,17 +50,8 @@ public class LibrawService implements AutoCloseable {
 
             if (thumbnail != null) {
                 thumbnail.read();
-                thumbnail.setPixelBytes();
-
-                ByteBuffer byteBuffer = thumbnail.getByteBuffer();
-                if (byteBuffer == null) {
-                    logger.error("Failed to get byte buffer for thumbnail");
-                    return Optional.empty();
-                }
-
-                byteBuffer.rewind();
-                byte[] jpegBytes = new byte[byteBuffer.remaining()];
-                byteBuffer.get(jpegBytes);
+                // Thumbnails are small: one heap copy, nothing to free
+                byte[] jpegBytes = thumbnail.copyPixelBytes();
 
                 if (thumbnail.type == 2) {
                     logger.debug("Embedded JPEG thumbnail extracted: {} bytes ({} KB)",
@@ -81,6 +72,68 @@ public class LibrawService implements AutoCloseable {
          return Optional.empty();
     }
 
+    /**
+     * Decodes a RAW file into 16-bit sRGB pixels.
+     * <p>
+     * The returned {@link DecodedRaw#data()} is native memory owned by the caller: free it with
+     * {@code MemoryUtil.memFree} once it was uploaded (the GC never frees it).
+     * <p>
+     * Not thread-safe: one LibrawService (one native handle) per thread, like {@code ThumbnailFactory} does.
+     *
+     * @param rawFile the RAW file
+     * @return the decoded image, or empty if LibRaw could not open or process the file
+     */
+    public Optional<DecodedRaw> decodeRaw(File rawFile) {
+        if (closed) return Optional.empty();
+
+        try {
+            libRaw.libraw_set_output_bps(handler, LibRawOptions.OutputBits.BITS_16.value);
+            libRaw.libraw_set_demosaic(handler, LibRawOptions.Demosaic.PPG.value);
+            libRaw.libraw_set_output_color(handler, LibRawOptions.OutputColor.SRGB.value);
+            libRaw.libraw_set_no_auto_bright(handler, LibRawOptions.Toggle.ON.value);
+            libRaw.libraw_set_use_camera_wb(handler, LibRawOptions.Toggle.OFF.value);
+
+            libRaw.libraw_set_user_flip(handler, LibRawOptions.Flip.FROM_FILE.value);
+
+            int err = libRaw.libraw_open_file(handler, rawFile.getAbsolutePath());
+            if (err != 0) {
+                logger.error("Failed to open raw file (code {}): {}", err, rawFile.getAbsolutePath());
+                return Optional.empty();
+            }
+
+            err = libRaw.libraw_unpack(handler);
+            if (err != 0) {
+                logger.error("Failed to unpack raw file (code {}): {}", err, rawFile.getAbsolutePath());
+                return Optional.empty();
+            }
+
+            err = libRaw.libraw_dcraw_process(handler);
+            if (err != 0) {
+                logger.error("Failed to process raw file (code {}): {}", err, rawFile.getAbsolutePath());
+                return Optional.empty();
+            }
+
+            int[] errc = {0};
+            LibRaw.ProcessedImage.ByReference image = libRaw.libraw_dcraw_make_mem_image(handler, errc);
+            if (image == null) {
+                logger.error("Failed to create the memory image (code {}): {}", errc[0], rawFile.getAbsolutePath());
+                return Optional.empty();
+            }
+
+            try {
+                image.read();
+                ByteBuffer pixels = image.copyPixelsNative();
+                logger.debug("{}x{} decoded, {} bits, {} bytes", (int) image.width, (int) image.height,
+                        (int) image.bits, image.data_size);
+                return Optional.of(new DecodedRaw(pixels, image.width, image.height, image.bits));
+            } finally {
+                libRaw.libraw_dcraw_clear_mem(image.getPointer());
+            }
+        } finally {
+            libRaw.libraw_recycle(handler);
+        }
+    }
+
     @Override
     public void close() throws Exception {
         if (!closed) {
@@ -91,4 +144,10 @@ public class LibrawService implements AutoCloseable {
     }
 
     public record RawThumbnail(byte[] data, int type, int width, int height, int colors, int bits) { }
+    /**
+     * A decoded image ready for upload: 16 bits = RGB16 (RAW), 8 bits = RGBA8 (JPEG/PNG).
+     *
+     * @param data native pixel memory, owned by whoever holds the record; free it with {@code MemoryUtil.memFree}
+     */
+    public record DecodedRaw(ByteBuffer data, int width, int height, int bits) { }
 }

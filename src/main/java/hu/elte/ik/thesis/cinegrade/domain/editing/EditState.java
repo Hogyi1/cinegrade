@@ -10,16 +10,16 @@ import java.time.Instant;
 @Setter
 public class EditState {
     private String photoId;
-    private double exposure = 0.0;
-    private double contrast = 0.0;
-    private double highlights = 0.0;
-    private double shadows = 0.0;
-    private double whites = 0.0;
-    private double blacks = 0.0;
-    private double temperature = 5500.0;
-    private double tint = 0.0;
-    private double saturation = 0.0;
-    private double vibrance = 0.0;
+    private float exposure = 0.0f;
+    private float contrast = 0.0f;
+    private float highlights = 0.0f;
+    private float shadows = 0.0f;
+    private float whites = 0.0f;
+    private float blacks = 0.0f;
+    private float temperature = 5500.0f;
+    private float tint = 0.0f;
+    private float saturation = 0.0f;
+    private float vibrance = 0.0f;
     private String lutPath;
     private String curvesJson;
     private Instant updatedAt = Instant.now();
@@ -34,7 +34,7 @@ public class EditState {
     }
 
     // [AI-GENERATED METHOD]
-    public EditState(String photoId, double exposure, double contrast, double highlights, double shadows, double whites, double blacks, double temperature, double tint, double saturation, double vibrance, String lutPath, String curvesJson, Instant updatedAt) {
+    public EditState(String photoId, float exposure, float contrast, float highlights, float shadows, float whites, float blacks, float temperature, float tint, float saturation, float vibrance, String lutPath, String curvesJson, Instant updatedAt) {
         this.photoId = photoId;
         this.exposure = exposure;
         this.contrast = contrast;

@@ -21,6 +21,8 @@ public class ThemeManager {
     private static final Logger logger = LogManager.getLogger(ThemeManager.class);
     private static final String SETTING_KEY = "app.theme";
     private static final String THEME_CSS = "/css/theme.css";
+    // Reusable components (SearchBar, FilmstripCell); scene level so panel stylesheets can still override them
+    private static final String COMPONENTS_CSS = "/css/components.css";
 
     private final Theme fallBackTheme = AppConfig.INSTANCE.getFallBackTheme();
     private final ObjectProperty<Theme> activeTheme = new SimpleObjectProperty<>(fallBackTheme);
@@ -82,6 +84,7 @@ public class ThemeManager {
 
     public static Scene setupStylesheet(Scene scene) {
         scene.getStylesheets().add(ThemeManager.class.getResource(THEME_CSS).toExternalForm());
+        scene.getStylesheets().add(ThemeManager.class.getResource(COMPONENTS_CSS).toExternalForm());
         return scene;
     }
 }

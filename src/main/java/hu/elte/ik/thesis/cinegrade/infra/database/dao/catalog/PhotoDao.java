@@ -35,7 +35,7 @@ public class PhotoDao {
      * Column list shared by the SELECT and INSERT statements.
      */
     private static final String COLUMNS =
-            "id, original_path, import_method, import_id, file_path, file_name, file_size, mime_type, is_raw, rotation, rating, color_label, date_imported";
+            "id, original_path, import_method, import_id, file_path, file_name, file_size, mime_type, is_raw, rotation, rating, color_label, date_imported, is_liked, is_edited, comment";
 
     /**
      * Creates a DAO operating on the given connection.
@@ -75,7 +75,7 @@ public class PhotoDao {
             return;
         }
 
-        String sql = "INSERT INTO photos (" + COLUMNS + ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO photos (" + COLUMNS + ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
@@ -100,6 +100,9 @@ public class PhotoDao {
                 pstmt.setString(12, photo.getColorLabel());
                 Instant imported = photo.getDateImported() != null ? photo.getDateImported() : Instant.now();
                 pstmt.setString(13, imported.toString());
+                pstmt.setInt(14, photo.getIsLiked().get() ? 1 : 0);
+                pstmt.setInt(15, photo.getIsEdited().get() ? 1 : 0);
+                pstmt.setString(16, photo.getComment());
                 pstmt.addBatch();
             }
             pstmt.executeBatch();
@@ -183,6 +186,103 @@ public class PhotoDao {
     }
 
     /**
+     * Sets the rating of many photos as one JDBC batch. Run it inside a {@code TransactionRunner} transaction.
+     *
+     * @param ids    ids of the photos; {@code null} or empty is a no-op
+     * @param rating the new rating
+     * @throws SQLException if the update fails
+     */
+    public void updateRatings(List<String> ids, int rating) throws SQLException {
+        batchUpdate("UPDATE photos SET rating = ? WHERE id = ?", ids, pstmt -> pstmt.setInt(1, rating));
+    }
+
+    /**
+     * Sets the color label of many photos as one JDBC batch. Run it inside a {@code TransactionRunner} transaction.
+     *
+     * @param ids        ids of the photos; {@code null} or empty is a no-op
+     * @param colorLabel the new color label, may be {@code null}
+     * @throws SQLException if the update fails
+     */
+    public void updateColorLabels(List<String> ids, String colorLabel) throws SQLException {
+        batchUpdate("UPDATE photos SET color_label = ? WHERE id = ?", ids, pstmt -> pstmt.setString(1, colorLabel));
+    }
+
+    /**
+     * Likes or unlikes many photos as one JDBC batch. Run it inside a {@code TransactionRunner} transaction.
+     *
+     * @param ids   ids of the photos; {@code null} or empty is a no-op
+     * @param liked the new liked state
+     * @throws SQLException if the update fails
+     */
+    public void updateLiked(List<String> ids, boolean liked) throws SQLException {
+        batchUpdate("UPDATE photos SET is_liked = ? WHERE id = ?", ids, pstmt -> pstmt.setInt(1, liked ? 1 : 0));
+    }
+
+    /**
+     * Sets whether the photo's edit state differs from the defaults. Written together with the edit state.
+     *
+     * @param id     id of the photo
+     * @param edited {@code true} if the photo has edits
+     * @return {@code true} if a row was updated
+     * @throws SQLException if the update fails
+     */
+    public boolean updateEdited(String id, boolean edited) throws SQLException {
+        String sql = "UPDATE photos SET is_edited = ? WHERE id = ?";
+
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            pstmt.setInt(1, edited ? 1 : 0);
+            pstmt.setString(2, id);
+            return pstmt.executeUpdate() > 0;
+        }
+    }
+
+    /**
+     * Sets the comment of a photo.
+     *
+     * @param id      id of the photo
+     * @param comment the new comment, {@code null} or blank clears it
+     * @return {@code true} if a row was updated
+     * @throws SQLException if the update fails
+     */
+    public boolean updateComment(String id, String comment) throws SQLException {
+        String sql = "UPDATE photos SET comment = ? WHERE id = ?";
+
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            if (comment != null && !comment.isBlank()) {
+                pstmt.setString(1, comment);
+            } else {
+                pstmt.setNull(1, Types.VARCHAR);
+            }
+            pstmt.setString(2, id);
+            return pstmt.executeUpdate() > 0;
+        }
+    }
+
+    /**
+     * Sets the first parameter of {@code sql} once with {@code firstParam}, binds each id to the second one
+     * and runs everything as one batch.
+     */
+    private void batchUpdate(String sql, List<String> ids, StatementSetter firstParam) throws SQLException {
+        if (ids == null || ids.isEmpty()) {
+            return;
+        }
+
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            firstParam.set(pstmt);
+            for (String id : ids) {
+                pstmt.setString(2, id);
+                pstmt.addBatch();
+            }
+            pstmt.executeBatch();
+        }
+    }
+
+    @FunctionalInterface
+    private interface StatementSetter {
+        void set(PreparedStatement pstmt) throws SQLException;
+    }
+
+    /**
      * Sets the import the photo belongs to.
      *
      * @param id       id of the photo
@@ -243,6 +343,9 @@ public class PhotoDao {
         int rating = rs.getInt("rating");
         String colorLabel = rs.getString("color_label");
         Instant dateImported = parseInstant(rs.getString("date_imported"));
+        boolean liked = rs.getInt("is_liked") != 0;
+        boolean edited = rs.getInt("is_edited") != 0;
+        String comment = rs.getString("comment");
 
         File resolvedFile;
         Path rawPath = Path.of(rawFilePath);
@@ -256,7 +359,8 @@ public class PhotoDao {
                 id, importId, resolvedFile,
                 fileSize, rating, colorLabel, dateImported,
                 importMethod, originalPath,
-                mimeType, isRaw, rotation
+                mimeType, isRaw, rotation,
+                liked, edited, comment
         );
 
         // Thumbnails live in the preview database now; a missing one is regenerated by the ThumbnailService
