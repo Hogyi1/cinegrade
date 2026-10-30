@@ -3,7 +3,10 @@
 
 <?import java.net.URL?>
 <?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
 
+<!-- Every panel floats on its own rounded plate, 10px from the window and from each other (Figma "Development") -->
 <BorderPane fx:id="developmentRoot" prefHeight="850.0" prefWidth="1380.0"
             styleClass="development-panel-root"
             xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
@@ -13,23 +16,23 @@
         <URL value="@../css/developmentPanel.css"/>
     </stylesheets>
 
-    <!-- Left: Presets, History & Tags Sidebar -->
-    <left>
-        <fx:include source="developLeftPanel.fxml" fx:id="developLeftPanel"/>
-    </left>
-
-    <!-- Center: Interactive OpenGL/WritableImage Viewport -->
+    <!-- Presets | viewport | edit controls -->
     <center>
-        <fx:include source="developViewport.fxml" fx:id="developViewport"/>
+        <HBox spacing="10.0">
+            <children>
+                <fx:include source="developLeftPanel.fxml" fx:id="developLeftPanel"/>
+                <fx:include source="developViewport.fxml" fx:id="developViewport" HBox.hgrow="ALWAYS"/>
+                <fx:include source="developEditPanel.fxml" fx:id="developEditPanel"/>
+            </children>
+        </HBox>
     </center>
 
-    <!-- Right: Histogram, Basics, Curves, Color Wheels & Spatial Controls -->
-    <right>
-        <fx:include source="developEditPanel.fxml" fx:id="developEditPanel"/>
-    </right>
-
-    <!-- Bottom: Filmstrip Carousel & Filter Bar -->
+    <!-- Filmstrip with its filter bar -->
     <bottom>
-        <fx:include source="developFilmstrip.fxml" fx:id="developFilmstrip"/>
+        <VBox styleClass="development-bottom">
+            <children>
+                <fx:include source="developFilmstrip.fxml" fx:id="developFilmstrip"/>
+            </children>
+        </VBox>
     </bottom>
 </BorderPane>

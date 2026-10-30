@@ -153,13 +153,17 @@
 
 .project-search-bar {
     -fx-background-color: -clr-surface-card;
-    -fx-background-radius: 10px;
-    -fx-border-radius: 10px;
+    -fx-background-radius: 22px;
+    -fx-border-radius: 22px;
     -fx-border-color: transparent;
-    -fx-padding: 4px 14px;
+    -fx-padding: 4px 10px 4px 18px;
 }
-.project-search-bar:hover, .project-search-bar:focused-field {
-    -fx-border-color: -clr-border-subtle;
+.project-search-bar:hover {
+    -fx-border-color: -clr-border;
+}
+.project-search-bar:focused-field {
+    -fx-border-color: -clr-blue;
+    -fx-effect: dropshadow(gaussian, rgba(20, 107, 209, 0.35), 10, 0, 0, 0);
 }
 .project-search-bar .search-bar-field {
     -fx-font-size: 16px;
@@ -285,36 +289,6 @@
 .catalog-options-button:hover SVGPath,
 .catalog-options-button:hover .svg-path {
     -fx-fill: white;
-}
-
-/* Context Menu / Popup Menu */
-.context-menu {
-    -fx-background-color: -clr-almostdarkgrey;
-    -fx-background-radius: 8px;
-    -fx-border-color: -clr-border;
-    -fx-border-radius: 8px;
-    -fx-border-width: 1px;
-    -fx-padding: 5px;
-    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.55), 14, 0, 0, 4);
-}
-.menu-item {
-    -fx-background-color: transparent;
-    -fx-padding: 8px 14px;
-    -fx-background-radius: 6px;
-    -fx-cursor: hand;
-}
-.menu-item:hover, .menu-item:focused {
-    -fx-background-color: -clr-surface-card;
-}
-.menu-item .label {
-    -fx-text-fill: -clr-text-primary;
-    -fx-font-size: 13px;
-}
-.menu-item-danger:hover, .menu-item-danger:focused {
-    -fx-background-color: -clr-danger-glow;
-}
-.menu-item-danger .label {
-    -fx-text-fill: -clr-danger-hover;
 }
 
 /* Clean Custom ScrollBar */

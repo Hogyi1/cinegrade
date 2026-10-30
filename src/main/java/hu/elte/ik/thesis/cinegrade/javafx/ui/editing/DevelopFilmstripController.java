@@ -6,32 +6,35 @@ import hu.elte.ik.thesis.cinegrade.domain.editing.PhotoEntry;
 import hu.elte.ik.thesis.cinegrade.domain.enums.ColorLabel;
 import hu.elte.ik.thesis.cinegrade.domain.enums.Operation;
 import hu.elte.ik.thesis.cinegrade.infra.services.storage.ThumbnailService;
+import hu.elte.ik.thesis.cinegrade.javafx.ui.components.CommentEditor;
+import hu.elte.ik.thesis.cinegrade.javafx.ui.components.ConfirmDialog;
 import hu.elte.ik.thesis.cinegrade.javafx.ui.components.FilmstripCell;
 import hu.elte.ik.thesis.cinegrade.javafx.ui.components.SearchBar;
-import hu.elte.ik.thesis.cinegrade.javafx.ui.components.ThumbnailImageCache;
 import javafx.beans.binding.Bindings;
+import javafx.beans.binding.DoubleBinding;
 import javafx.collections.ListChangeListener;
 import javafx.fxml.FXML;
-import javafx.scene.control.Alert;
+import javafx.scene.Node;
 import javafx.scene.control.Button;
-import javafx.scene.control.ButtonType;
 import javafx.scene.control.Label;
+import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.MultipleSelectionModel;
 import javafx.scene.control.SelectionMode;
-import javafx.scene.control.TextInputDialog;
+import javafx.scene.control.Slider;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToggleGroup;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
+import javafx.scene.control.skin.VirtualFlow;
+import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
+import javafx.scene.input.ScrollEvent;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.Executor;
 
 /**
  * Filmstrip of the development page: filter bar and the photo strip.
@@ -44,14 +47,14 @@ public class DevelopFilmstripController {
 
     private static final Logger logger = LogManager.getLogger(DevelopFilmstripController.class);
 
-    // Cell plus the dark gap between two cells
-    private static final double CELL_STEP = FilmstripCell.CELL_SIZE + 3;
-    private static final int THUMBNAIL_DECODE_HEIGHT = 200;
-    private static final int MAX_DECODED_THUMBNAILS = 300;
+    // Horizontal padding of a cell (see .filmstrip-cell), the gap between two cards
+    private static final double CELL_GAP = 8;
+    // Height of the horizontal scroll bar plus a little air, so the cards never need vertical scrolling
+    private static final double SCROLLBAR_ROOM = 14;
 
     private final PhotoLibrary library;
     private final PhotoManager photoManager;
-    private final ThumbnailImageCache thumbnails;
+    private final ThumbnailService thumbnailService;
 
     // Set while the library's selection is copied into the ListView, so that copy is not sent back
     private boolean syncingSelection;
@@ -59,9 +62,15 @@ public class DevelopFilmstripController {
     @FXML
     private VBox filmstripRoot;
     @FXML
+    private ToggleButton allPhotosBtn;
+    @FXML
+    private ToggleButton lastImportBtn;
+    @FXML
     private Label filmstripCountLabel;
     @FXML
-    private ToggleButton lastImportToggle;
+    private Label selectedBadge;
+    @FXML
+    private Slider filmstripZoomSlider;
     @FXML
     private ToggleButton editedFilterBtn;
     @FXML
@@ -99,18 +108,18 @@ public class DevelopFilmstripController {
     @FXML
     private ListView<PhotoEntry> filmstripList;
 
-    public DevelopFilmstripController(PhotoLibrary library, PhotoManager photoManager,
-                                      ThumbnailService thumbnailService, Executor decodePool) {
+    public DevelopFilmstripController(PhotoLibrary library, PhotoManager photoManager, ThumbnailService thumbnailService) {
         this.library = library;
         this.photoManager = photoManager;
-        this.thumbnails = new ThumbnailImageCache(thumbnailService, decodePool, THUMBNAIL_DECODE_HEIGHT, MAX_DECODED_THUMBNAILS);
+        this.thumbnailService = thumbnailService;
     }
 
     @FXML
     private void initialize() {
         setupList();
         setupSelectionSync();
-        setupCountLabel();
+        setupCountLabels();
+        setupScopeSwitch();
         setupFilters();
         setupRatingFilter();
         setupColorLabels();
@@ -118,16 +127,38 @@ public class DevelopFilmstripController {
 
     private void setupList() {
         FilmstripCell.Actions actions = new FilmstripCell.Actions(
-                photoManager::updateRating,
-                photo -> photoManager.updateLiked(List.of(photo), !photo.getIsLiked().get()),
+                (photo, rating) -> photoManager.updateRating(targetsOf(photo), rating),
+                photo -> toggleLike(targetsOf(photo)),
                 this::editComment,
-                this::confirmRemove);
+                photo -> confirmRemove(targetsOf(photo)),
+                photo -> confirmDelete(targetsOf(photo)));
+
+        // The zoom slider scales the cards; the list is exactly one card high, so it only scrolls sideways
+        DoubleBinding cardSize = filmstripZoomSlider.valueProperty().multiply(FilmstripCell.BASE_SIZE);
+        DoubleBinding listHeight = cardSize.add(SCROLLBAR_ROOM);
+        filmstripList.fixedCellSizeProperty().bind(cardSize.add(CELL_GAP));
+        filmstripList.minHeightProperty().bind(listHeight);
+        filmstripList.prefHeightProperty().bind(listHeight);
+        filmstripList.maxHeightProperty().bind(listHeight);
 
         filmstripList.setItems(library.getSortedEntries());
-        filmstripList.setFixedCellSize(CELL_STEP);
-        filmstripList.setCellFactory(list -> new FilmstripCell(thumbnails, library.getSelectedPhotoProperty(), actions));
+        filmstripList.setCellFactory(list -> new FilmstripCell(thumbnailService, library.getSelectedPhotoProperty(), cardSize, actions));
         filmstripList.setPlaceholder(new Label("No photos match the filters"));
-        filmstripList.addEventHandler(KeyEvent.KEY_PRESSED, this::onListKey);
+        filmstripList.addEventFilter(ScrollEvent.SCROLL, this::scrollSideways);
+        filmstripList.addEventFilter(KeyEvent.KEY_PRESSED, this::onListKey);
+    }
+
+    /**
+     * A mouse wheel only scrolls vertically; turn that into horizontal scrolling of the strip.
+     */
+    private void scrollSideways(ScrollEvent event) {
+        if (event.getDeltaY() == 0 || Math.abs(event.getDeltaX()) > Math.abs(event.getDeltaY())) {
+            return;
+        }
+        if (filmstripList.lookup(".virtual-flow") instanceof VirtualFlow<?> flow) {
+            flow.scrollPixels(-event.getDeltaY());
+        }
+        event.consume();
     }
 
     private void setupSelectionSync() {
@@ -168,18 +199,39 @@ public class DevelopFilmstripController {
         library.select(selection.getSelectedItem(), selected);
     }
 
-    private void setupCountLabel() {
+    private void setupCountLabels() {
         filmstripCountLabel.textProperty().bind(Bindings.createStringBinding(() -> {
             int listed = library.getListedPhotosProperty().get();
-            int selected = library.getSelectedFilesProperty().get();
-            PhotoEntry active = library.getSelectedPhotoProperty().get();
-            String text = "%d photo%s / %d selected".formatted(listed, listed == 1 ? "" : "s", selected);
-            return active != null ? text + " / " + active.getFileName() : text;
-        }, library.getListedPhotosProperty(), library.getSelectedFilesProperty(), library.getSelectedPhotoProperty()));
+            return "%d photo%s".formatted(listed, listed == 1 ? "" : "s");
+        }, library.getListedPhotosProperty()));
+
+        selectedBadge.textProperty().bind(library.getSelectedFilesProperty().asString("%d selected"));
+        selectedBadge.visibleProperty().bind(library.getSelectedFilesProperty().greaterThan(0));
+        selectedBadge.managedProperty().bind(selectedBadge.visibleProperty());
+    }
+
+    /**
+     * "All photos | Last import": always exactly one of the two is on, whatever the user clicks.
+     */
+    private void setupScopeSwitch() {
+        Runnable sync = () -> {
+            boolean lastImported = library.getLastImportedProperty().get();
+            allPhotosBtn.setSelected(!lastImported);
+            lastImportBtn.setSelected(lastImported);
+        };
+        allPhotosBtn.setOnAction(e -> {
+            library.getLastImportedProperty().set(false);
+            sync.run();
+        });
+        lastImportBtn.setOnAction(e -> {
+            library.getLastImportedProperty().set(true);
+            sync.run();
+        });
+        library.getLastImportedProperty().addListener((obs, oldValue, newValue) -> sync.run());
+        sync.run();
     }
 
     private void setupFilters() {
-        lastImportToggle.selectedProperty().bindBidirectional(library.getLastImportedProperty());
         // The toggle group keeps edited / not edited exclusive, both off shows every photo
         editedFilterBtn.selectedProperty().bindBidirectional(library.getEditedProperty());
         notEditedFilterBtn.selectedProperty().bindBidirectional(library.getNotEditedProperty());
@@ -197,14 +249,11 @@ public class DevelopFilmstripController {
         });
 
         Button[] stars = {star1Btn, star2Btn, star3Btn, star4Btn, star5Btn};
-        Image starImage = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/images/icons/Star.png")));
         for (int i = 0; i < stars.length; i++) {
             int rating = i + 1;
-            ImageView icon = new ImageView(starImage);
-            icon.setFitWidth(15);
-            icon.setFitHeight(15);
-            icon.setPreserveRatio(true);
-            stars[i].setGraphic(icon);
+            Region shape = new Region();
+            shape.getStyleClass().add("filmstrip-star-shape");
+            stars[i].setGraphic(shape);
             stars[i].setOnAction(e -> {
                 // Clicking the active star again clears the rating filter
                 int current = library.getRatingProperty().get();
@@ -238,36 +287,98 @@ public class DevelopFilmstripController {
     }
 
     /**
-     * 0-5 rate the selected photos while the strip has the focus.
+     * Shortcuts while the strip has the focus: 0-5 rate, C comments, Space likes, Delete removes from the catalog,
+     * Shift+Delete deletes from the disk. To be moved to the app-wide input listener.
      */
     private void onListKey(KeyEvent event) {
+        List<PhotoEntry> selection = library.getSelection();
         String key = event.getText();
-        if (key.length() == 1 && key.charAt(0) >= '0' && key.charAt(0) <= '5') {
-            photoManager.updateRating(library.getSelection(), key.charAt(0) - '0');
-            event.consume();
+        boolean plain = !event.isShortcutDown() && !event.isAltDown();
+
+        if (plain && key.length() == 1 && key.charAt(0) >= '0' && key.charAt(0) <= '5') {
+            photoManager.updateRating(selection, key.charAt(0) - '0');
+        } else if (plain && !event.isShiftDown() && event.getCode() == KeyCode.C) {
+            PhotoEntry active = library.getSelectedPhotoProperty().get();
+            if (active != null) {
+                editComment(active);
+            }
+        } else if (plain && !event.isShiftDown() && event.getCode() == KeyCode.SPACE) {
+            toggleLike(selection);
+        } else if (plain && event.getCode() == KeyCode.DELETE) {
+            if (event.isShiftDown()) {
+                confirmDelete(selection);
+            } else {
+                confirmRemove(selection);
+            }
+        } else {
+            return;
         }
+        event.consume();
+    }
+
+    /**
+     * A right-clicked photo that is part of the selection acts for the whole selection, otherwise only for itself.
+     */
+    private List<PhotoEntry> targetsOf(PhotoEntry photo) {
+        List<PhotoEntry> selection = library.getSelection();
+        return selection.contains(photo) ? selection : List.of(photo);
+    }
+
+    private void toggleLike(List<PhotoEntry> photos) {
+        if (photos.isEmpty()) {
+            return;
+        }
+        // Mixed selection: like all of them first, like Lightroom's flags
+        boolean like = !photos.stream().allMatch(photo -> photo.getIsLiked().get());
+        photoManager.updateLiked(photos, like);
     }
 
     private void editComment(PhotoEntry photo) {
-        TextInputDialog dialog = new TextInputDialog(photo.getComment() != null ? photo.getComment() : "");
-        dialog.initOwner(filmstripRoot.getScene().getWindow());
-        dialog.setTitle("Comment");
-        dialog.setHeaderText(photo.getFileName());
-        dialog.setContentText("Comment:");
-        dialog.showAndWait().ifPresent(text -> photoManager.updateComment(photo, text));
+        CommentEditor.show(cellOf(photo), photo.getFileName(), photo.getComment(),
+                text -> photoManager.updateComment(photo, text));
     }
 
-    private void confirmRemove(PhotoEntry photo) {
-        Alert alert = new Alert(Alert.AlertType.CONFIRMATION,
-                "Remove " + photo.getFileName() + " from the catalog? The file on disk is kept.",
-                ButtonType.OK, ButtonType.CANCEL);
-        alert.initOwner(filmstripRoot.getScene().getWindow());
-        alert.setHeaderText(null);
-        alert.showAndWait()
-                .filter(ButtonType.OK::equals)
-                .ifPresent(ok -> {
-                    logger.info("Removing photo {} from the catalog", photo.getId());
-                    photoManager.removePhoto(photo);
-                });
+    /**
+     * The visible cell showing the photo, or the whole strip if it is scrolled out of view.
+     */
+    private Node cellOf(PhotoEntry photo) {
+        for (Node node : filmstripList.lookupAll(".filmstrip-cell")) {
+            if (node instanceof ListCell<?> cell && cell.getItem() == photo && cell.isVisible()) {
+                return cell;
+            }
+        }
+        return filmstripList;
+    }
+
+    private void confirmRemove(List<PhotoEntry> photos) {
+        if (photos.isEmpty()) {
+            return;
+        }
+        boolean confirmed = ConfirmDialog.show(filmstripRoot.getScene().getWindow(),
+                "Remove " + describe(photos) + " from the catalog?",
+                "Edits and ratings are removed. The files stay on the disk and can be imported again.",
+                "Remove", true);
+        if (confirmed) {
+            logger.info("Removing {} photo(s) from the catalog", photos.size());
+            photos.forEach(photoManager::removePhoto);
+        }
+    }
+
+    private void confirmDelete(List<PhotoEntry> photos) {
+        if (photos.isEmpty()) {
+            return;
+        }
+        boolean confirmed = ConfirmDialog.show(filmstripRoot.getScene().getWindow(),
+                "Delete " + describe(photos) + " from the disk?",
+                "The original files are deleted permanently, together with their edits. This can't be undone.",
+                "Delete", true);
+        if (confirmed) {
+            logger.info("Deleting {} photo(s) from the disk", photos.size());
+            photos.forEach(photoManager::deletePhoto);
+        }
+    }
+
+    private static String describe(List<PhotoEntry> photos) {
+        return photos.size() == 1 ? "“" + photos.getFirst().getFileName() + "”" : photos.size() + " photos";
     }
 }

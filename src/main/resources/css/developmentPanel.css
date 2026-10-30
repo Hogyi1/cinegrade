@@ -8,7 +8,13 @@
    Root Development Layout
    -------------------------------------------------------------------------- */
 .development-panel-root {
-    -fx-background-color: -clr-dark;
+    -fx-background-color: -clr-almostdarkgrey;
+    -fx-padding: 10px;
+}
+
+/* Gap between the panels above and the filmstrip */
+.development-bottom {
+    -fx-padding: 10px 0 0 0;
 }
 
 /* --------------------------------------------------------------------------
@@ -16,12 +22,15 @@
    -------------------------------------------------------------------------- */
 .viewport-root {
     -fx-background-color: -clr-dark;
+    -fx-background-radius: 12px;
     -fx-border-color: -clr-border-subtle;
-    -fx-border-width: 0 1px 1px 1px;
+    -fx-border-width: 1px;
+    -fx-border-radius: 12px;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.25), 20, 0, 0, 4);
 }
 
 .viewport-stack {
-    -fx-background-color: -clr-dark;
+    -fx-background-color: transparent;
     -fx-alignment: center;
 }
 
@@ -79,16 +88,15 @@
 /* --------------------------------------------------------------------------
    Left & Right Sidebars Common Styles
    -------------------------------------------------------------------------- */
-.sidebar-panel {
-    -fx-background-color: -clr-almostdarkgrey;
-    -fx-border-color: -clr-border-subtle;
-    -fx-border-width: 0 1px 0 0;
-}
-
+/* Floating plates, like the import panel's */
+.sidebar-panel,
 .sidebar-panel-right {
-    -fx-background-color: -clr-almostdarkgrey;
+    -fx-background-color: -clr-surface-card;
+    -fx-background-radius: 12px;
     -fx-border-color: -clr-border-subtle;
-    -fx-border-width: 0 0 0 1px;
+    -fx-border-width: 1px;
+    -fx-border-radius: 12px;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.25), 20, 0, 0, 4);
 }
 
 .sidebar-scroll {
@@ -116,6 +124,7 @@
    -------------------------------------------------------------------------- */
 .histogram-container {
     -fx-background-color: -clr-dark;
+    -fx-background-radius: 11px 11px 0 0;
     -fx-border-color: -clr-border-subtle;
     -fx-border-width: 0 0 1px 0;
     -fx-padding: 10px 14px;
@@ -183,7 +192,7 @@
 }
 
 .collapsible-group > .content {
-    -fx-background-color: -clr-almostdarkgrey;
+    -fx-background-color: transparent;
     -fx-border-color: transparent;
     -fx-padding: 12px 14px;
 }
@@ -331,83 +340,118 @@
 /* --------------------------------------------------------------------------
    Bottom Filmstrip & Filter Bar
    -------------------------------------------------------------------------- */
+/* Outer plate (like .import-plate) */
 .filmstrip-root {
-    -fx-background-color: -clr-dark;
-    -fx-spacing: 4px;
-    -fx-padding: 6px 0 0 0;
+    -fx-background-color: -clr-surface-card;
+    -fx-background-radius: 12px;
+    -fx-border-color: -clr-border-subtle;
+    -fx-border-width: 1px;
+    -fx-border-radius: 12px;
+    -fx-padding: 8px 10px 10px 10px;
+    -fx-spacing: 8px;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.25), 20, 0, 0, 4);
 }
 
 .filmstrip-filter-bar {
-    -fx-background-color: -clr-surface-card;
+    -fx-spacing: 10px;
+    -fx-min-height: 36px;
+    -fx-pref-height: 36px;
+}
+
+/* All photos | Last import */
+.filmstrip-segmented {
+    -fx-background-color: -clr-surface-input;
     -fx-background-radius: 10px;
-    -fx-padding: 5px 10px;
-    -fx-spacing: 8px;
-    -fx-min-height: 42px;
-    -fx-pref-height: 42px;
+    -fx-border-color: -clr-border-subtle;
+    -fx-border-width: 1px;
+    -fx-border-radius: 10px;
+    -fx-padding: 3px;
+    -fx-spacing: 2px;
+}
+.filmstrip-segment {
+    -fx-background-color: transparent;
+    -fx-background-radius: 7px;
+    -fx-text-fill: -clr-text-muted;
+    -fx-font-size: 12px;
+    -fx-font-weight: 600;
+    -fx-padding: 4px 12px;
+    -fx-cursor: hand;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+}
+.filmstrip-segment:hover {
+    -fx-text-fill: -clr-text-primary;
+}
+.filmstrip-segment:selected {
+    -fx-background-color: -clr-blue;
+    -fx-text-fill: #FFFFFF;
+    -fx-effect: dropshadow(gaussian, rgba(20, 107, 209, 0.4), 6, 0, 0, 1);
 }
 
 .filmstrip-count {
     -fx-text-fill: -clr-text-primary;
-    -fx-font-size: 12.5px;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+}
+
+.filmstrip-selected-badge {
+    -fx-background-color: rgba(20, 107, 209, 0.18);
+    -fx-background-radius: 12px;
+    -fx-border-color: -clr-blue;
+    -fx-border-radius: 12px;
+    -fx-text-fill: -clr-blue-hover;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-padding: 2px 10px;
 }
 
 .filmstrip-filter-title {
-    -fx-text-fill: -clr-text-primary;
-    -fx-font-size: 15px;
+    -fx-text-fill: -clr-text-secondary;
+    -fx-font-size: 12.5px;
 }
 
 .filmstrip-separator {
-    -fx-background-color: #6A6B70;
+    -fx-background-color: -clr-border;
     -fx-min-width: 1px;
     -fx-max-width: 1px;
-    -fx-pref-height: 26px;
-    -fx-max-height: 26px;
-}
-
-/* Last import pill */
-.filmstrip-pill {
-    -fx-background-color: transparent;
-    -fx-border-color: #6A6B70;
-    -fx-border-radius: 10px;
-    -fx-background-radius: 10px;
-    -fx-text-fill: -clr-text-secondary;
-    -fx-font-size: 11px;
-    -fx-padding: 2px 10px;
-    -fx-cursor: hand;
-}
-.filmstrip-pill:hover {
-    -fx-text-fill: -clr-text-primary;
-}
-.filmstrip-pill:selected {
-    -fx-background-color: -clr-blue;
-    -fx-border-color: -clr-blue;
-    -fx-text-fill: -clr-text-primary;
+    -fx-pref-height: 22px;
+    -fx-max-height: 22px;
 }
 
 /* Icon toggles (edited, not edited, liked, commented): dim until switched on */
 .filmstrip-icon-toggle {
     -fx-background-color: transparent;
-    -fx-background-radius: 6px;
-    -fx-padding: 3px 4px;
-    -fx-opacity: 0.45;
+    -fx-background-radius: 8px;
+    -fx-border-color: transparent;
+    -fx-border-radius: 8px;
+    -fx-padding: 5px;
+    -fx-opacity: 0.5;
     -fx-cursor: hand;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
 }
 .filmstrip-icon-toggle:hover {
-    -fx-opacity: 0.8;
+    -fx-background-color: -clr-surface;
+    -fx-opacity: 0.85;
 }
 .filmstrip-icon-toggle:selected {
+    -fx-background-color: rgba(20, 107, 209, 0.22);
+    -fx-border-color: -clr-blue;
     -fx-opacity: 1;
-    -fx-background-color: rgba(20, 107, 209, 0.35);
 }
 
 /* Rating filter */
 .filmstrip-operation-btn {
-    -fx-background-color: transparent;
-    -fx-text-fill: -clr-text-primary;
-    -fx-font-size: 16px;
-    -fx-padding: 0 4px;
-    -fx-min-width: 22px;
+    -fx-background-color: -clr-surface-input;
+    -fx-background-radius: 7px;
+    -fx-text-fill: -clr-text-secondary;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-padding: 1px 6px;
+    -fx-min-width: 26px;
     -fx-cursor: hand;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
 }
 .filmstrip-operation-btn:hover {
     -fx-text-fill: -clr-blue-hover;
@@ -415,80 +459,109 @@
 
 .filmstrip-star-btn {
     -fx-background-color: transparent;
-    -fx-padding: 1px;
-    -fx-opacity: 0.3;
+    -fx-padding: 2px;
     -fx-cursor: hand;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
 }
-.filmstrip-star-btn:hover {
-    -fx-opacity: 0.65;
-}
-.filmstrip-star-btn.filled {
-    -fx-opacity: 1;
-}
-
-/* Color label squares: grey frame, colored core */
-.filmstrip-color-btn {
+.filmstrip-star-shape {
+    -fx-shape: "M12 2 L14.9 8.6 L22 9.3 L16.6 14 L18.2 21 L12 17.3 L5.8 21 L7.4 14 L2 9.3 L9.1 8.6 Z";
+    -fx-background-color: -clr-text-dim;
     -fx-min-width: 14px;
     -fx-min-height: 14px;
     -fx-max-width: 14px;
     -fx-max-height: 14px;
-    -fx-background-color: #6A6B70, -clr-text-primary;
-    -fx-background-insets: 0, 2px;
-    -fx-background-radius: 2px, 1px;
+}
+.filmstrip-star-btn:hover .filmstrip-star-shape {
+    -fx-background-color: -clr-text-muted;
+}
+.filmstrip-star-btn.filled .filmstrip-star-shape {
+    -fx-background-color: -clr-warning;
+}
+
+/* Color label of the selection: rounded swatches, a white rim on hover */
+.filmstrip-color-btn {
+    -fx-min-width: 16px;
+    -fx-min-height: 16px;
+    -fx-max-width: 16px;
+    -fx-max-height: 16px;
     -fx-padding: 0;
+    -fx-background-radius: 5px;
+    -fx-background-insets: 2px;
+    -fx-border-color: transparent;
+    -fx-border-width: 1.5px;
+    -fx-border-radius: 6px;
     -fx-cursor: hand;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
 }
 .filmstrip-color-btn:hover {
-    -fx-background-color: -clr-text-primary, -clr-text-primary;
+    -fx-border-color: -clr-text-primary;
 }
-.filmstrip-color-btn.color-red { -fx-background-color: #6A6B70, #E02424; }
-.filmstrip-color-btn.color-yellow { -fx-background-color: #6A6B70, #F59E0B; }
-.filmstrip-color-btn.color-green { -fx-background-color: #6A6B70, #10B981; }
-.filmstrip-color-btn.color-blue { -fx-background-color: #6A6B70, #1C7DF0; }
-.filmstrip-color-btn.color-red:hover { -fx-background-color: -clr-text-primary, #E02424; }
-.filmstrip-color-btn.color-yellow:hover { -fx-background-color: -clr-text-primary, #F59E0B; }
-.filmstrip-color-btn.color-green:hover { -fx-background-color: -clr-text-primary, #10B981; }
-.filmstrip-color-btn.color-blue:hover { -fx-background-color: -clr-text-primary, #1C7DF0; }
+.filmstrip-color-btn.color-none {
+    -fx-background-color: -clr-surface-input;
+    -fx-border-color: -clr-text-dim;
+}
+.filmstrip-color-btn.color-none:hover {
+    -fx-border-color: -clr-text-primary;
+}
+.filmstrip-color-btn.color-red { -fx-background-color: -clr-danger; }
+.filmstrip-color-btn.color-yellow { -fx-background-color: -clr-warning; }
+.filmstrip-color-btn.color-green { -fx-background-color: -clr-success; }
+.filmstrip-color-btn.color-blue { -fx-background-color: -clr-blue; }
 
-.filmstrip-filter-bar .search-bar {
-    -fx-background-color: #6A6B70;
-    -fx-border-color: transparent;
+/* Inner plate of the strip (like .inner-plate, without the blue rim) */
+.filmstrip-strip {
+    -fx-background-color: -clr-dark;
     -fx-background-radius: 10px;
+    -fx-border-color: -clr-border-subtle;
+    -fx-border-width: 1px;
     -fx-border-radius: 10px;
-}
-.filmstrip-filter-bar .search-bar:hover,
-.filmstrip-filter-bar .search-bar:focused-field {
-    -fx-border-color: -clr-blue;
-}
-.filmstrip-filter-bar .search-bar-field {
-    -fx-prompt-text-fill: #D0D1D4;
+    -fx-padding: 8px 6px 2px 6px;
 }
 
-/* Strip */
-.filmstrip-list {
-    -fx-background-color: -clr-surface-card;
+.filmstrip-list,
+.filmstrip-list:focused {
+    -fx-background-color: transparent;
     -fx-background-insets: 0;
     -fx-padding: 0;
-    -fx-border-color: -clr-dark;
-    -fx-border-width: 2px;
-    -fx-pref-height: 133px;
-    -fx-min-height: 133px;
-    -fx-max-height: 133px;
-}
-.filmstrip-list:focused {
-    -fx-background-color: -clr-surface-card;
+    -fx-border-color: transparent;
 }
 .filmstrip-list .placeholder .label {
     -fx-text-fill: -clr-text-muted;
+    -fx-font-size: 12.5px;
 }
+.filmstrip-list .corner {
+    -fx-background-color: transparent;
+}
+
+/* Only sideways: the list is one card high, the vertical bar never shows */
+.filmstrip-list .scroll-bar:vertical {
+    -fx-pref-width: 0;
+    -fx-max-width: 0;
+    -fx-opacity: 0;
+}
+
+/* Horizontal bar, same look as the import grid's */
 .filmstrip-list .scroll-bar:horizontal {
     -fx-background-color: transparent;
-    -fx-pref-height: 6px;
+    -fx-pref-height: 8px;
     -fx-padding: 0;
+}
+.filmstrip-list .scroll-bar:horizontal .track {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
 }
 .filmstrip-list .scroll-bar:horizontal .thumb {
     -fx-background-color: -clr-border;
-    -fx-background-radius: 3px;
+    -fx-background-radius: 4px;
+    -fx-background-insets: 1px;
+}
+.filmstrip-list .scroll-bar:horizontal .thumb:hover {
+    -fx-background-color: -clr-blue-hover;
+}
+.filmstrip-list .scroll-bar:horizontal .thumb:pressed {
+    -fx-background-color: -clr-blue-active;
 }
 .filmstrip-list .scroll-bar .increment-button,
 .filmstrip-list .scroll-bar .decrement-button {
@@ -497,6 +570,7 @@
 }
 .filmstrip-list .scroll-bar .increment-arrow,
 .filmstrip-list .scroll-bar .decrement-arrow {
+    -fx-shape: " ";
     -fx-padding: 0;
 }
 
@@ -504,7 +578,7 @@
    Left Panel (Presets & History)
    -------------------------------------------------------------------------- */
 .left-tab-bar {
-    -fx-background-color: -clr-almostdarkgrey;
+    -fx-background-color: transparent;
     -fx-border-color: -clr-border-subtle;
     -fx-border-width: 0 0 1px 0;
     -fx-padding: 8px 12px;
