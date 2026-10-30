@@ -61,13 +61,7 @@ public class ThumbnailFactory {
             LibrawService.RawThumbnail thumbnail = librawService.extractThumbnail(rawFile)
                     .orElseThrow(() -> new CineGradeException(ErrorCode.IMPORT_THUMBNAIL_FAILED, rawFile));
 
-            BufferedImage source = thumbnail.type() == 2
-                    ? toImage(thumbnail)
-                    : ImageIO.read(new ByteArrayInputStream(thumbnail.data()));
-            if (source == null) {
-                throw new CineGradeException(ErrorCode.IMPORT_THUMBNAIL_FAILED, rawFile);
-            }
-
+            BufferedImage source = toImage(thumbnail);
             return encode(Thumbnails.of(source).rotate(rotation));
         } catch (Exception ex) {
             throw new CineGradeException(ErrorCode.IMPORT_THUMBNAIL_FAILED, ex, rawFile);
@@ -88,6 +82,42 @@ public class ThumbnailFactory {
             return encode(Thumbnails.of(imageFile).rotate(rotation));
         } catch (IOException ex) {
             throw new CineGradeException(ErrorCode.IMPORT_THUMBNAIL_FAILED, ex, imageFile);
+        }
+    }
+
+    /**
+     * Encodes pixels read back from the GPU (BGRA, four bytes per pixel) as a JPEG thumbnail.
+     * The array is wrapped, not copied; alpha is dropped.
+     *
+     * @param bgra   {@code width * height * 4} bytes
+     * @param width  width in pixels
+     * @param height height in pixels
+     * @return the thumbnail encoded as JPEG
+     * @throws CineGradeException with {@link ErrorCode#IMPORT_THUMBNAIL_FAILED} if encoding fails
+     */
+    public byte[] fromPixels(byte[] bgra, int width, int height) {
+        WritableRaster raster = Raster.createInterleavedRaster(
+                new DataBufferByte(bgra, bgra.length),
+                width,
+                height,
+                width * 4, // Jump a row
+                4, // Per pixel B, G, R, A
+                new int[]{2, 1, 0}, // R, G, B band offsets, alpha skipped
+                null
+        );
+
+        ColorModel cm = new ComponentColorModel(
+                ColorSpace.getInstance(ColorSpace.CS_sRGB),
+                false,
+                false,
+                Transparency.OPAQUE,
+                DataBuffer.TYPE_BYTE
+        );
+
+        try {
+            return encode(Thumbnails.of(new BufferedImage(cm, raster, false, null)));
+        } catch (IOException ex) {
+            throw new CineGradeException(ErrorCode.IMPORT_THUMBNAIL_FAILED, ex, "rendered thumbnail");
         }
     }
 

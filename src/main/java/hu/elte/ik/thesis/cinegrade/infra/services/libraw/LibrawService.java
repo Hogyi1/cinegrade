@@ -75,7 +75,7 @@ public class LibrawService implements AutoCloseable {
     /**
      * Decodes a RAW file into 16-bit sRGB pixels.
      * <p>
-     * The returned {@link DecodedRaw#data()} is native memory owned by the caller: free it with
+     * The returned {@link DecodedImage#data()} is native memory owned by the caller: free it with
      * {@code MemoryUtil.memFree} once it was uploaded (the GC never frees it).
      * <p>
      * Not thread-safe: one LibrawService (one native handle) per thread, like {@code ThumbnailFactory} does.
@@ -83,7 +83,7 @@ public class LibrawService implements AutoCloseable {
      * @param rawFile the RAW file
      * @return the decoded image, or empty if LibRaw could not open or process the file
      */
-    public Optional<DecodedRaw> decodeRaw(File rawFile) {
+    public Optional<DecodedImage> decodeRaw(File rawFile) {
         if (closed) return Optional.empty();
 
         try {
@@ -125,7 +125,7 @@ public class LibrawService implements AutoCloseable {
                 ByteBuffer pixels = image.copyPixelsNative();
                 logger.debug("{}x{} decoded, {} bits, {} bytes", (int) image.width, (int) image.height,
                         (int) image.bits, image.data_size);
-                return Optional.of(new DecodedRaw(pixels, image.width, image.height, image.bits));
+                return Optional.of(new DecodedImage(pixels, image.width, image.height, image.bits));
             } finally {
                 libRaw.libraw_dcraw_clear_mem(image.getPointer());
             }
@@ -149,5 +149,5 @@ public class LibrawService implements AutoCloseable {
      *
      * @param data native pixel memory, owned by whoever holds the record; free it with {@code MemoryUtil.memFree}
      */
-    public record DecodedRaw(ByteBuffer data, int width, int height, int bits) { }
+    public record DecodedImage(ByteBuffer data, int width, int height, int bits) { }
 }

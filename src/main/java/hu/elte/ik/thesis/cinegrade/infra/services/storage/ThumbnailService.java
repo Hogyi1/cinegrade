@@ -7,9 +7,11 @@ import hu.elte.ik.thesis.cinegrade.domain.enums.ErrorCode;
 import hu.elte.ik.thesis.cinegrade.domain.exceptions.CineGradeException;
 import hu.elte.ik.thesis.cinegrade.infra.database.dao.preview.PhotoBlobDao;
 import hu.elte.ik.thesis.cinegrade.infra.utils.thumbnail.ThumbnailFactory;
+import javafx.scene.image.Image;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.io.ByteArrayInputStream;
 import java.sql.SQLException;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -18,6 +20,9 @@ import java.util.concurrent.ExecutorService;
 /**
  * Thumbnails of one catalog: memory cache → preview database → ThumbnailFactory (read-through).
  * <p>
+ * Keeps the JPEG bytes and, for the UI, the decoded images ({@link #IMAGE_HEIGHT} px high). Storing a new
+ * thumbnail drops the old decoded image, so the next {@link #loadImage} decodes the new one.
+ * <p>
  * It is the only user of the preview database, so its lock is also the preview DB's write lock.
  * The lock is only held for the quick parts (cache and DB access); generating a thumbnail
  * (~40 ms in LibRaw/Thumbnailator) always runs outside it.
@@ -25,7 +30,11 @@ import java.util.concurrent.ExecutorService;
 public class ThumbnailService implements AutoCloseable {
 
     private static final Logger logger = LogManager.getLogger(ThumbnailService.class);
-    private static final long MAX_CACHED = 1500;
+    private static final long MAX_CACHED = 1500; // 50kb per photo
+    private static final int MAX_CACHED_IMAGES = 300; // 250kb per photo
+
+    // filmstrip cell height
+    public static final int IMAGE_HEIGHT = 250;
 
     private final PhotoBlobDao dao;
     private final ThumbnailFactory thumbnailFactory;
@@ -35,6 +44,12 @@ public class ThumbnailService implements AutoCloseable {
         @Override
         protected boolean removeEldestEntry(Map.Entry<String, byte[]> eldest) {
             return size() > MAX_CACHED;
+        }
+    };
+    private final LinkedHashMap<String, Image> images = new LinkedHashMap<>(256, 0.75f, true) {
+        @Override
+        protected boolean removeEldestEntry(Map.Entry<String, Image> eldest) {
+            return size() > MAX_CACHED_IMAGES;
         }
     };
 
@@ -50,6 +65,31 @@ public class ThumbnailService implements AutoCloseable {
      */
     public CompletableFuture<Optional<byte[]>> load(PhotoEntry photo) {
         return CompletableFuture.supplyAsync(() -> getOrCreate(photo), cpuPool);
+    }
+
+    /**
+     * Async decoded thumbnail for the UI: loads the JPEG like {@link #load} and decodes it on the CPU pool.
+     * Use the result with {@code thenAcceptAsync(image -> ..., Platform::runLater)}.
+     *
+     * @return the image, or empty if the photo has no thumbnail or it can't be decoded
+     */
+    public CompletableFuture<Optional<Image>> loadImage(PhotoEntry photo) {
+        String id = photo.getId();
+        synchronized (lock) {
+            Image cached = images.get(id);
+            if (cached != null) {
+                return CompletableFuture.completedFuture(Optional.of(cached));
+            }
+        }
+        return CompletableFuture.supplyAsync(() -> getOrCreate(photo)
+                .map(jpeg -> new Image(new ByteArrayInputStream(jpeg), 0, IMAGE_HEIGHT, true, true))
+                .filter(image -> !image.isError())
+                .map(image -> {
+                    synchronized (lock) {
+                        images.put(id, image);
+                    }
+                    return image;
+                }), cpuPool);
     }
 
     /**
@@ -139,6 +179,7 @@ public class ThumbnailService implements AutoCloseable {
                 throw new CineGradeException(ErrorCode.DB_EXECUTION_FAILED, ex, "thumbnail batch upsert");
             }
             cache.putAll(thumbnailsByPhotoId);
+            thumbnailsByPhotoId.keySet().forEach(images::remove);
         }
     }
 
@@ -150,10 +191,20 @@ public class ThumbnailService implements AutoCloseable {
             try {
                 dao.upsert(toBlob(photoId, jpeg));
                 cache.put(photoId, jpeg);
+                images.remove(photoId);
             } catch (SQLException ex) {
                 throw new CineGradeException(ErrorCode.DB_EXECUTION_FAILED, ex, "thumbnail upsert " + photoId);
             }
         }
+    }
+
+    // [AI-GENERATED METHOD]
+
+    /**
+     * Encodes rendered BGRA pixels to JPEG on the CPU pool, then stores them like {@link #put}.
+     */
+    public CompletableFuture<Void> putPixels(String photoId, byte[] bgra, int width, int height) {
+        return CompletableFuture.runAsync(() -> put(photoId, thumbnailFactory.fromPixels(bgra, width, height)), cpuPool);
     }
 
     /**
@@ -162,7 +213,8 @@ public class ThumbnailService implements AutoCloseable {
      */
     public void delete(String photoId) {
         synchronized (lock) {
-           cache.remove(photoId);
+            cache.remove(photoId);
+            images.remove(photoId);
             try {
                 dao.deleteAll(photoId);
             } catch (SQLException ex) {
@@ -195,6 +247,7 @@ public class ThumbnailService implements AutoCloseable {
     public void close() {
         synchronized (lock) {
             cache.clear();
+            images.clear();
         }
     }
 
