@@ -4,6 +4,7 @@ import hu.elte.ik.thesis.cinegrade.app.scope.ResourceStack;
 import hu.elte.ik.thesis.cinegrade.domain.editing.EditState;
 import hu.elte.ik.thesis.cinegrade.engine.GpuWorker;
 import hu.elte.ik.thesis.cinegrade.engine.gl.*;
+import hu.elte.ik.thesis.cinegrade.engine.grade.BaseBlockUniform;
 import hu.elte.ik.thesis.cinegrade.infra.services.libraw.LibrawService;
 import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyObjectProperty;
@@ -19,8 +20,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
-
-import static org.lwjgl.opengl.GL20.glUniform3f;
 
 /**
  * Renders the open photo for the development viewport on the interactive GPU worker.
@@ -40,7 +39,9 @@ public class ViewportRenderer implements AutoCloseable {
     private final GpuWorker worker;
     private final ResourceStack resources = new ResourceStack();
     private final ReadOnlyObjectWrapper<Image> frame = new ReadOnlyObjectWrapper<>();
-
+    private final AtomicReference<EditState> latestEdit = new AtomicReference<>(new EditState());
+    private final AtomicReference<ViewTransform> latestView = new AtomicReference<>(ViewTransform.FIT);
+    private final AtomicBoolean renderQueued = new AtomicBoolean();
     // GPU thread only
     private ImageTexture imageTexture;
     private FrameBuffer fbo;
@@ -51,26 +52,9 @@ public class ViewportRenderer implements AutoCloseable {
     private int areaWidth, areaHeight;
     private boolean hasImage;
 
-    // Written by the FX thread, read by the render job
-    private final AtomicReference<EditState> latestEdit = new AtomicReference<>(new EditState());
-    private final AtomicReference<ViewTransform> latestView = new AtomicReference<>(ViewTransform.FIT);
-    private final AtomicBoolean renderQueued = new AtomicBoolean();
-
-    /**
-     * Zoom and pan of the viewport. Not part of the edit (never saved, not in the grade UBO).
-     *
-     * @param scale   uv scale, 1 = whole image, 0.5 = 2x zoom
-     * @param offsetX left edge of the visible region in [0,1] uv space
-     * @param offsetY bottom edge of the visible region in [0,1] uv space
-     */
-    public record ViewTransform(float scale, float offsetX, float offsetY) {
-        public static final ViewTransform FIT = new ViewTransform(1f, 0f, 0f);
-    }
-
     public ViewportRenderer(GpuWorker gpuWorker) {
         this.worker = gpuWorker;
 
-        // Runs before any other job of this renderer (the queue is FIFO)
         worker.submit(() -> {
             imageTexture = resources.push(new ImageTexture());
             fbo = resources.push(new FrameBuffer(1, 1));
@@ -82,6 +66,15 @@ public class ViewportRenderer implements AutoCloseable {
 
     public ReadOnlyObjectProperty<Image> frameProperty() {
         return frame.getReadOnlyProperty();
+    }
+
+    // [AI-GENERATED METHOD]
+
+    /**
+     * The uploaded photo, shared with {@link ThumbnailRenderer}. GPU thread only; null until the setup job ran.
+     */
+    public ImageTexture getImageTexture() {
+        return imageTexture;
     }
 
     /**
@@ -101,7 +94,7 @@ public class ViewportRenderer implements AutoCloseable {
      * Uploads a decoded photo and renders it. Takes ownership of {@code decodedRaw.data()}: it is freed after the
      * upload, the caller must not touch it afterwards.
      */
-    public CompletableFuture<Void> show(LibrawService.DecodedRaw decodedRaw) {
+    public CompletableFuture<Void> show(LibrawService.DecodedImage decodedRaw) {
         return worker.submit(() -> {
             try {
                 imageTexture.uploadTexture(decodedRaw);
@@ -162,7 +155,6 @@ public class ViewportRenderer implements AutoCloseable {
     }
 
     private void renderLatest() {
-        // Cleared before reading, so a request arriving during this render queues the next one
         renderQueued.set(false);
         if (!hasImage || width == 0) {
             return;
@@ -176,15 +168,11 @@ public class ViewportRenderer implements AutoCloseable {
 
         fbo.bind();
         shader.use();
-        // 48 bytes, so uploading every render costs nothing. Skipping it when "unchanged" would need EditState to be
-        // immutable: a mutated-in-place EditState is the same object with new values
         gradeBlock.upload(edit);
-        gradeBlock.bindBase();
-        glUniform3f(shader.uniform("uvZoom_OffsetX_OffsetY"), view.scale(), view.offsetX(), view.offsetY());
+        shader.bindVec3Uniform("uvZoom_OffsetX_OffsetY", view.vec3);
         imageTexture.bind();
         quad.draw();
 
-        // Nothing newer waiting: this is the last frame for now, read it synchronously so it shows
         boolean last = !renderQueued.get();
         int w = width;
         int h = height;
@@ -207,5 +195,18 @@ public class ViewportRenderer implements AutoCloseable {
         } catch (Exception ex) {
             logger.warn("Viewport renderer GL resources were not released cleanly", ex);
         }
+    }
+
+    /**
+     * Zoom and pan of the viewport. Not part of the edit (never saved, not in the grade UBO).
+     *
+     * @param vec3 x = uv scale, 1 = whole image, 0.5 = 2x zoom,
+     *             y = left edge of the visible region in [0,1] uv space,
+     *             z = bottom edge of the visible region in [0,1] uv space
+     */
+    public record ViewTransform(ShaderProgram.Vector3 vec3) {
+        public static final ViewTransform FIT = new ViewTransform(new ShaderProgram.Vector3(1f, 0f, 0f));
+        public static final ViewTransform _150 = new ViewTransform(new ShaderProgram.Vector3(1.5f, 0f, 0f));
+        public static final ViewTransform _200 = new ViewTransform(new ShaderProgram.Vector3(2f, 0f, 0f));
     }
 }

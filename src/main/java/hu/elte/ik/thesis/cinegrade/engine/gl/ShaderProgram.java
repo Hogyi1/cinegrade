@@ -66,7 +66,6 @@ public class ShaderProgram implements AutoCloseable {
         glAttachShader(programID, fragmentID);
         glLinkProgram(programID);
 
-        // The linked program keeps the compiled code; the shader objects are not needed anymore
         glDetachShader(programID, vertexID);
         glDetachShader(programID, fragmentID);
         glDeleteShader(vertexID);
@@ -84,17 +83,51 @@ public class ShaderProgram implements AutoCloseable {
     public void bindUniformBlock(String blockName, int binding) {
         int index = glGetUniformBlockIndex(programID, blockName);
         if (index == GL_INVALID_INDEX) {
-            // The compiler removes blocks the shader never reads
             logger.warn("Uniform block '{}' not found (unused in the shader?)", blockName);
             return;
         }
         glUniformBlockBinding(programID, index, binding);
     }
 
+    public void bindIntUniform(String name, int value) {
+        int location = uniform(name);
+        if (location != -1) {
+            glUniform1i(location, value);
+        }
+    }
+
+    public void bindFloatUniform(String name, float value) {
+        int location = uniform(name);
+        if (location != -1) {
+            glUniform1f(location, value);
+        }
+    }
+
+    public void bindVec2Uniform(String name, Vector2 value) {
+        int location = uniform(name);
+        if (location != -1) {
+            glUniform2f(location, value.x(), value.y());
+        }
+    }
+
+    public void bindVec3Uniform(String name, Vector3 value) {
+        int location = uniform(name);
+        if (location != -1) {
+            glUniform3f(location, value.x(), value.y(), value.z());
+        }
+    }
+
+    public void bindVec4Uniform(String name, Vector4 value) {
+        int location = uniform(name);
+        if (location != -1) {
+            glUniform4f(location, value.x(), value.y(), value.z(), value.w());
+        }
+    }
+
     /**
      * Location of a plain uniform, looked up once. -1 if the shader does not use it (setting -1 is a no-op).
      */
-    public int uniform(String name) {
+    private int uniform(String name) {
         return uniformLocations.computeIfAbsent(name, n -> glGetUniformLocation(programID, n));
     }
 
@@ -106,5 +139,17 @@ public class ShaderProgram implements AutoCloseable {
     public void close() {
         glUseProgram(0);
         glDeleteProgram(programID);
+    }
+
+    public record Vector2(float x, float y) {
+        public static Vector2 of(float v) { return new Vector2(v, v); }
+    }
+
+    public record Vector3(float x, float y, float z) {
+        public static Vector3 of(float v) { return new Vector3(v, v, v); }
+    }
+
+    public record Vector4(float x, float y, float z, float w) {
+        public static Vector4 of(float v) { return new Vector4(v, v, v, v); }
     }
 }

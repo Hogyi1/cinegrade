@@ -12,7 +12,8 @@ import static org.lwjgl.opengl.GL30.*;
 
 public class FrameBuffer implements AutoCloseable {
 
-    private static final Logger logger = LogManager.getLogger(FrameBuffer.class);
+    // FrameBufferObject, the render reads into this fbo instead of the screen as there is no screen
+    // We create its own texture it can read into
     private final int fboId, textureId;
     private int w, h;
 
@@ -33,12 +34,14 @@ public class FrameBuffer implements AutoCloseable {
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, (ByteBuffer) null);
         glBindTexture(GL_TEXTURE_2D, 0);
 
+        // Bind the texture to this framebuffer
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, textureId, 0);
 
         if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
             throw new CineGradeException(ErrorCode.FBO_CREATION_FAILED,"FrameBuffer incomplete after assigning new texture!");
         }
 
+        // Unbind from the global state
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
 

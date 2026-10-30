@@ -1,7 +1,7 @@
 package hu.elte.ik.thesis.cinegrade.engine;
 
 import hu.elte.ik.thesis.cinegrade.app.scope.ResourceStack;
-import hu.elte.ik.thesis.cinegrade.engine.gl.BaseBlockUniform;
+import hu.elte.ik.thesis.cinegrade.engine.grade.BaseBlockUniform;
 import hu.elte.ik.thesis.cinegrade.engine.gl.FullscreenQuad;
 import hu.elte.ik.thesis.cinegrade.engine.gl.ShaderProgram;
 import lombok.Getter;
@@ -13,7 +13,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import static org.lwjgl.glfw.GLFW.*;
-import static org.lwjgl.opengl.GL33.*;
 
 @Getter
 public class GpuWorker implements AutoCloseable {
@@ -67,7 +66,7 @@ public class GpuWorker implements AutoCloseable {
             shader.create();
             shader.bindUniformBlock(BaseBlockUniform.BLOCK_NAME, BaseBlockUniform.BINDING);
         } catch (Throwable t) {
-            // Without this a failed init leaves `ready` pending and the splash waits forever
+            // Without this a failed init leaves ready pending and the splash waits forever
             ready.completeExceptionally(t);
             return;
         }

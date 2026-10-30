@@ -32,7 +32,7 @@ public class ImageTexture implements AutoCloseable {
      * Uploads the pixels straight from the decoded native buffer (no extra copy).
      * The buffer is not freed here; the caller still owns it.
      */
-    public void uploadTexture(LibrawService.DecodedRaw decodedRaw) {
+    public void uploadTexture(LibrawService.DecodedImage decodedRaw) {
         bind();
         boolean is16Bit = decodedRaw.bits() == 16;
         int internalFormat = is16Bit ? GL_RGB16F : GL_RGBA8;

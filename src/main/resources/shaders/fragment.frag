@@ -1,7 +1,7 @@
 #version 330
 
 // multiple of 16
-layout(std140) uniform BasicBlock {
+layout(std140, binding = 0) uniform BasicBlock {
     float exposure; // offset 0 - 4 bytes
     float temp; // offset 4 - 4 bytes
     float tint; // offset 8 - 4 bytes
