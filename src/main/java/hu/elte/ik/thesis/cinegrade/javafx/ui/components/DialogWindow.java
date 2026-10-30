@@ -78,7 +78,7 @@ public final class DialogWindow {
         // The shadow room is transparent, so the visible box starts SHADOW_ROOM inside the stage
         double x = bounds.getMinX() + bounds.getWidth() / 2 - stage.getWidth() / 2;
         double y = bounds.getMinY() - stage.getHeight() + SHADOW_ROOM - 6;
-        stage.setX(Math.max(screen.getMinX(), Math.min(x, screen.getMaxX() - stage.getWidth())));
+        stage.setX(Math.clamp(x, screen.getMinX(), screen.getMaxX() - stage.getWidth()));
         stage.setY(Math.max(screen.getMinY(), y));
     }
 }
