@@ -6,18 +6,14 @@ import javafx.css.PseudoClass;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.TextField;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 
-import java.util.Objects;
-
 /**
- * Text field with a search icon on the right. The icon is swapped for a clear (X) button while there is text;
+ * Text field with a search icon on the right (a CSS shape, so it takes the theme colors). The icon is swapped for a clear (X) button while there is text;
  * clicking it or pressing Escape empties the field.
  * <p>
  * Usable straight from FXML: {@code <SearchBar fx:id="searchField" promptText="Search..."/>}. Styles come from
@@ -26,11 +22,10 @@ import java.util.Objects;
  */
 public class SearchBar extends HBox {
 
-    private static final String SEARCH_ICON = "/images/icons/Search.png";
     private static final PseudoClass FOCUSED_FIELD = PseudoClass.getPseudoClass("focused-field");
 
     private final TextField textField = new TextField();
-    private final ImageView searchIcon = new ImageView();
+    private final Region searchIcon = new Region();
     private final Button clearButton = new Button();
 
     public SearchBar() {
@@ -42,10 +37,6 @@ public class SearchBar extends HBox {
         HBox.setHgrow(textField, Priority.ALWAYS);
         textField.setMaxWidth(Double.MAX_VALUE);
 
-        searchIcon.setImage(new Image(Objects.requireNonNull(SearchBar.class.getResourceAsStream(SEARCH_ICON))));
-        searchIcon.setFitWidth(16);
-        searchIcon.setFitHeight(16);
-        searchIcon.setPreserveRatio(true);
         searchIcon.setMouseTransparent(true);
         searchIcon.getStyleClass().add("search-bar-icon");
 
@@ -64,8 +55,8 @@ public class SearchBar extends HBox {
         clearButton.visibleProperty().bind(empty.not());
 
         StackPane trailing = new StackPane(searchIcon, clearButton);
-        trailing.setMinWidth(18);
-        trailing.setPrefWidth(18);
+        trailing.setMinWidth(20);
+        trailing.setPrefWidth(20);
 
         textField.setOnKeyPressed(e -> {
             if (e.getCode() == KeyCode.ESCAPE && !textField.getText().isEmpty()) {

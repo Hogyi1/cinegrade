@@ -7,18 +7,12 @@ import hu.elte.ik.thesis.cinegrade.infra.utils.format.FormatUtils;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Side;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
-import javafx.scene.paint.Color;
-import javafx.stage.Modality;
-import javafx.stage.Stage;
-import javafx.stage.StageStyle;
 
 import java.io.IOException;
 import java.util.function.Consumer;
@@ -124,33 +118,17 @@ public class CatalogViewItem extends ListCell<Catalog> {
     }
 
     private void createConfirmationModal() {
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxmls/deleteConfirmationModal.fxml"));
-            Parent root = loader.load();
-
-            Button cancelButton = (Button) root.lookup("#cancelButton");
-            Button deleteButton = (Button) root.lookup("#deleteButton");
-
-            Stage confirmStage = new Stage(StageStyle.TRANSPARENT);
-            confirmStage.initModality(Modality.APPLICATION_MODAL);
-            confirmStage.setTitle("CineGrade — Confirm Deletion");
-            confirmStage.setResizable(false);
-            Scene scene = new Scene(root);
-            scene.setFill(Color.TRANSPARENT);
-            confirmStage.setScene(scene);
-
-            cancelButton.setOnAction(e -> confirmStage.close());
-            deleteButton.setOnAction(e -> {
-                confirmStage.close();
-                Catalog current = getItem();
-                if (current != null && onDelete != null) {
-                    onDelete.accept(current);
-                }
-            });
-
-            confirmStage.showAndWait();
-        } catch (IOException ex) {
-            throw new CineGradeException(ErrorCode.REQ_RESOURCE_MISSING, ex, "/fxmls/deleteConfirmationModal.fxml");
+        Catalog current = getItem();
+        if (current == null) {
+            return;
+        }
+        String name = current.getCatalogName() != null ? current.getCatalogName() : "this catalog";
+        boolean confirmed = ConfirmDialog.show(getScene().getWindow(),
+                "Delete “" + name + "”?",
+                "The catalog and its edits are deleted. This can't be undone.",
+                "Delete catalog", true);
+        if (confirmed && onDelete != null) {
+            onDelete.accept(current);
         }
     }
 }

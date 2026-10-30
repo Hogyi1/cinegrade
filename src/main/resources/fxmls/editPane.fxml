@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- [AI-GENERATED] -->
+
+<?import javafx.scene.control.ToggleButton?>
+<?import javafx.scene.control.TitledPane?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+
+<fx:root type="javafx.scene.control.TitledPane" animated="false" expanded="false" styleClass="edit-pane"
+         xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1">
+    <graphic>
+        <ToggleButton fx:id="eyeToggle" focusTraversable="false" mnemonicParsing="false" selected="true"
+                      styleClass="edit-pane-eye">
+            <graphic>
+                <Region styleClass="eye-icon"/>
+            </graphic>
+        </ToggleButton>
+    </graphic>
+    <content>
+        <VBox fx:id="body" styleClass="edit-pane-body"/>
+    </content>
+</fx:root>

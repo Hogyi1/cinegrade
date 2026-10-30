@@ -4,8 +4,11 @@ import hu.elte.ik.thesis.cinegrade.domain.editing.PhotoEntry;
 import hu.elte.ik.thesis.cinegrade.domain.enums.ColorLabel;
 import hu.elte.ik.thesis.cinegrade.domain.enums.ErrorCode;
 import hu.elte.ik.thesis.cinegrade.domain.exceptions.CineGradeException;
+import hu.elte.ik.thesis.cinegrade.infra.services.storage.ThumbnailService;
+import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
+import javafx.beans.binding.DoubleExpression;
 import javafx.beans.value.ObservableValue;
 import javafx.css.PseudoClass;
 import javafx.fxml.FXML;
@@ -21,7 +24,9 @@ import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
+import javafx.scene.shape.Rectangle;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -31,8 +36,8 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 /**
- * One photo of the filmstrip: the thumbnail inside a frame colored by the color label, with clickable rating
- * stars, a like heart and comment/edited badges.
+ * One photo of the filmstrip: a rounded card around the thumbnail, tinted by the color label, with clickable
+ * rating stars, a like heart and comment/edited badges.
  * <p>
  * The cell only shows the photo and reports clicks through {@link Actions}; it never writes to the photo or the
  * database itself. Listeners on the shown photo are moved along when the ListView reuses the cell.
@@ -42,14 +47,15 @@ public class FilmstripCell extends ListCell<PhotoEntry> {
     private static final Logger logger = LogManager.getLogger(FilmstripCell.class);
     private static final String FXML_PATH = "/fxmls/filmstripCell.fxml";
 
-    public static final double CELL_SIZE = 125.0;
-    private static final double THUMB_SIZE = 100.0;
-    private static final double STAR_SIZE = 11.0;
+    // Card size at zoom 1, the card is square
+    public static final double BASE_SIZE = 116.0;
+    // Border + padding of the card (see .filmstrip-cell-frame), the thumbnail fills the rest
+    private static final double FRAME_INSET = 2 * (2 + 4);
+    private static final double THUMB_CORNER = 12.0;
 
     private static final PseudoClass ACTIVE = PseudoClass.getPseudoClass("active");
     private static final PseudoClass RATED = PseudoClass.getPseudoClass("rated");
 
-    private static final Image STAR = icon("/images/icons/Star.png");
     private static final Image LOVE = icon("/images/icons/Love.png");
     private static final Image COMMENT = icon("/images/icons/Comments.png");
     private static final Image EDITED = icon("/images/icons/Edited.png");
@@ -59,13 +65,15 @@ public class FilmstripCell extends ListCell<PhotoEntry> {
      *
      * @param rate        set this rating on the photo (0 clears it)
      * @param toggleLike  flip the liked state of the photo
-     * @param editComment open the comment editor for the photo
+     * @param editComment open the comment editor for the photo, anchored to this cell
      * @param remove      remove the photo from the catalog
+     * @param delete      delete the photo from the disk
      */
     public record Actions(BiConsumer<PhotoEntry, Integer> rate,
                           Consumer<PhotoEntry> toggleLike,
                           Consumer<PhotoEntry> editComment,
-                          Consumer<PhotoEntry> remove) {
+                          Consumer<PhotoEntry> remove,
+                          Consumer<PhotoEntry> delete) {
     }
 
     @FXML
@@ -87,10 +95,10 @@ public class FilmstripCell extends ListCell<PhotoEntry> {
     @FXML
     private HBox starBox;
 
-    private final ThumbnailImageCache thumbnails;
+    private final ThumbnailService thumbnailService;
     private final ObservableValue<PhotoEntry> activePhoto;
     private final Actions actions;
-    private final ImageView[] stars = new ImageView[5];
+    private final Region[] stars = new Region[5];
     private final Tooltip commentTooltip = new Tooltip();
     private final MenuItem likeItem = new MenuItem();
     private final ContextMenu contextMenu = new ContextMenu();
@@ -103,12 +111,14 @@ public class FilmstripCell extends ListCell<PhotoEntry> {
     private PhotoEntry currentPhoto;
 
     /**
-     * @param thumbnails  decoded thumbnail cache shared by every cell
-     * @param activePhoto the photo open in the viewport, highlighted on its cell
-     * @param actions     click handlers
+     * @param thumbnailService source of the decoded thumbnails
+     * @param activePhoto      the photo open in the viewport, highlighted on its cell
+     * @param cardSize         size of the card in pixels (the filmstrip zoom)
+     * @param actions          click handlers
      */
-    public FilmstripCell(ThumbnailImageCache thumbnails, ObservableValue<PhotoEntry> activePhoto, Actions actions) {
-        this.thumbnails = thumbnails;
+    public FilmstripCell(ThumbnailService thumbnailService, ObservableValue<PhotoEntry> activePhoto,
+                         DoubleExpression cardSize, Actions actions) {
+        this.thumbnailService = thumbnailService;
         this.activePhoto = activePhoto;
         this.actions = actions;
 
@@ -123,7 +133,7 @@ public class FilmstripCell extends ListCell<PhotoEntry> {
 
         getStyleClass().add("filmstrip-cell");
         setText(null);
-        setupLayout();
+        setupLayout(cardSize);
         setupStars();
         setupBadges();
         setupContextMenu();
@@ -132,25 +142,31 @@ public class FilmstripCell extends ListCell<PhotoEntry> {
         activePhoto.addListener(activeListener);
     }
 
-    private void setupLayout() {
-        cellRoot.setMinSize(CELL_SIZE, CELL_SIZE);
-        cellRoot.setPrefSize(CELL_SIZE, CELL_SIZE);
-        cellRoot.setMaxSize(CELL_SIZE, CELL_SIZE);
-        thumbBox.setMinSize(THUMB_SIZE, THUMB_SIZE);
-        thumbBox.setPrefSize(THUMB_SIZE, THUMB_SIZE);
-        thumbBox.setMaxSize(THUMB_SIZE, THUMB_SIZE);
-        thumbnailView.setFitWidth(THUMB_SIZE);
-        thumbnailView.setFitHeight(THUMB_SIZE);
+    private void setupLayout(DoubleExpression cardSize) {
+        cellRoot.minWidthProperty().bind(cardSize);
+        cellRoot.prefWidthProperty().bind(cardSize);
+        cellRoot.maxWidthProperty().bind(cardSize);
+        cellRoot.minHeightProperty().bind(cardSize);
+        cellRoot.prefHeightProperty().bind(cardSize);
+        cellRoot.maxHeightProperty().bind(cardSize);
+
+        DoubleExpression thumbSize = cardSize.subtract(FRAME_INSET);
+        thumbnailView.fitWidthProperty().bind(thumbSize);
+        thumbnailView.fitHeightProperty().bind(thumbSize);
+
+        // Rounded corners on the thumbnail itself, the background box alone would not cut the image
+        Rectangle clip = new Rectangle();
+        clip.setArcWidth(THUMB_CORNER);
+        clip.setArcHeight(THUMB_CORNER);
+        clip.widthProperty().bind(thumbBox.widthProperty());
+        clip.heightProperty().bind(thumbBox.heightProperty());
+        thumbBox.setClip(clip);
     }
 
     private void setupStars() {
         for (int i = 0; i < stars.length; i++) {
             int rating = i + 1;
-            ImageView star = new ImageView(STAR);
-            star.setFitWidth(STAR_SIZE);
-            star.setFitHeight(STAR_SIZE);
-            star.setPreserveRatio(true);
-            star.setPickOnBounds(true);
+            Region star = new Region();
             star.getStyleClass().add("filmstrip-cell-star");
             // Pressed is what the ListView selects on: consume it so rating a photo does not select it
             star.addEventHandler(MouseEvent.MOUSE_PRESSED, MouseEvent::consume);
@@ -184,26 +200,24 @@ public class FilmstripCell extends ListCell<PhotoEntry> {
 
     private void setupContextMenu() {
         MenuItem commentItem = new MenuItem("Edit comment…");
-        commentItem.setOnAction(e -> {
-            if (currentPhoto != null) {
-                actions.editComment().accept(currentPhoto);
-            }
-        });
-        likeItem.setOnAction(e -> {
-            if (currentPhoto != null) {
-                actions.toggleLike().accept(currentPhoto);
-            }
-        });
+        commentItem.setOnAction(e -> run(actions.editComment()));
+        likeItem.setOnAction(e -> run(actions.toggleLike()));
+
         MenuItem removeItem = new MenuItem("Remove from catalog");
-        removeItem.getStyleClass().add("menu-item-danger");
-        removeItem.setOnAction(e -> {
-            if (currentPhoto != null) {
-                actions.remove().accept(currentPhoto);
-            }
-        });
-        contextMenu.getItems().setAll(likeItem, commentItem, new SeparatorMenuItem(), removeItem);
+        removeItem.setOnAction(e -> run(actions.remove()));
+        MenuItem deleteItem = new MenuItem("Delete from disk…");
+        deleteItem.getStyleClass().add("menu-item-danger");
+        deleteItem.setOnAction(e -> run(actions.delete()));
+
+        contextMenu.getItems().setAll(likeItem, commentItem, new SeparatorMenuItem(), removeItem, deleteItem);
         contextMenu.setOnShowing(e -> likeItem.setText(
                 currentPhoto != null && currentPhoto.getIsLiked().get() ? "Unlike" : "Like"));
+    }
+
+    private void run(Consumer<PhotoEntry> action) {
+        if (currentPhoto != null) {
+            action.accept(currentPhoto);
+        }
     }
 
     @Override
@@ -267,12 +281,17 @@ public class FilmstripCell extends ListCell<PhotoEntry> {
         if (requested == null) {
             return;
         }
-        thumbnails.load(requested, image -> {
-            // The cell may show another photo by the time the image arrives
-            if (requested == currentPhoto) {
-                thumbnailView.setImage(image);
-            }
-        });
+        thumbnailService.loadImage(requested)
+                .thenAcceptAsync(image -> {
+                    // The cell may show another photo by the time the image arrives
+                    if (requested == currentPhoto) {
+                        thumbnailView.setImage(image.orElse(null));
+                    }
+                }, Platform::runLater)
+                .exceptionally(ex -> {
+                    logger.warn("Failed to load thumbnail of photo {}", requested.getId(), ex);
+                    return null;
+                });
     }
 
     private void refreshBadges() {
