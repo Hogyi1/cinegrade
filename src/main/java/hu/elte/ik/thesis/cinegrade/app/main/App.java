@@ -13,6 +13,8 @@ import hu.elte.ik.thesis.cinegrade.domain.navigation.ControllerFactory;
 import hu.elte.ik.thesis.cinegrade.domain.navigation.SceneManager;
 import hu.elte.ik.thesis.cinegrade.domain.theme.ThemeManager;
 import hu.elte.ik.thesis.cinegrade.engine.RenderEngine;
+import hu.elte.ik.thesis.cinegrade.engine.renderer.ExportRenderer;
+import hu.elte.ik.thesis.cinegrade.engine.renderer.ThumbnailRenderer;
 import hu.elte.ik.thesis.cinegrade.engine.renderer.ViewportRenderer;
 import hu.elte.ik.thesis.cinegrade.infra.config.AppConfig;
 import hu.elte.ik.thesis.cinegrade.infra.config.SystemInfo;
@@ -57,6 +59,8 @@ public class App extends Application {
     private ThumbnailFactory thumbnailFactory;
     private RenderEngine renderEngine;
     private ViewportRenderer viewportRenderer;
+    private ThumbnailRenderer thumbnailRenderer;
+    private ExportRenderer exportRenderer;
 
     private TaskToastPresenter taskToastPresenter;
     private ErrorPresenter errorToastPresenter;
@@ -150,8 +154,7 @@ public class App extends Application {
         controllerFactory.register(DevelopFilmstripController.class, () -> new DevelopFilmstripController(
                 catalogManager.getCurrentScope().photoLibrary(),
                 catalogManager.getCurrentScope().photoManager(),
-                catalogManager.getCurrentScope().thumbnailService(),
-                threadPoolManager.getCpuPool()));
+                catalogManager.getCurrentScope().thumbnailService()));
     }
 
     /**
@@ -178,7 +181,16 @@ public class App extends Application {
     private void createDatabaseManagers() {
         logger.info("Creating database-dependent managers");
         viewportRenderer = resources.push(new ViewportRenderer(renderEngine.getInteractive()));
-        catalogManager = new CatalogManager(new CatalogScopeFactory(taskManager, thumbnailFactory, threadPoolManager, viewportRenderer), storageService);
+        thumbnailRenderer = resources.push(new ThumbnailRenderer(renderEngine.getInteractive(), viewportRenderer));
+        exportRenderer = resources.push(new ExportRenderer(renderEngine.getBackground()));
+
+        catalogManager = new CatalogManager(new CatalogScopeFactory(taskManager,
+                thumbnailFactory,
+                threadPoolManager,
+                viewportRenderer,
+                thumbnailRenderer,
+                exportRenderer), storageService);
+
         resources.push(catalogManager);
         userManager = new UserManager();
     }

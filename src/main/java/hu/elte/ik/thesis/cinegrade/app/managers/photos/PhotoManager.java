@@ -6,6 +6,7 @@ import hu.elte.ik.thesis.cinegrade.infra.database.TransactionRunner;
 import hu.elte.ik.thesis.cinegrade.infra.database.dao.catalog.PhotoDao;
 import hu.elte.ik.thesis.cinegrade.infra.services.storage.ThumbnailService;
 import javafx.application.Platform;
+import javafx.beans.property.ObjectProperty;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -20,19 +21,22 @@ public class PhotoManager implements AutoCloseable {
 
     private final PhotoDao photoDao;
     private final TransactionRunner catalogTx;
-    private final Catalog catalog;
     private final PhotoLibrary photoLibrary;
     private final ThumbnailService thumbnailService;
 
-    public PhotoManager(TransactionRunner catalogTx, PhotoDao photoDao, PhotoLibrary photoLibrary, ThumbnailService thumbnailService, Catalog catalog) {
+    public PhotoManager(TransactionRunner catalogTx, PhotoDao photoDao, PhotoLibrary photoLibrary, ThumbnailService thumbnailService) {
         this.catalogTx = catalogTx;
         this.photoDao = photoDao;
-        this.catalog = catalog;
         this.photoLibrary = photoLibrary;
         this.thumbnailService = thumbnailService;
 
         loadCatalogPhotos();
     }
+
+    public ObjectProperty<PhotoEntry> selectedPhoto() {
+        return photoLibrary.getSelectedPhotoProperty();
+    }
+
 
     /**
      * Starts a new import session by clearing the previous import list.
@@ -201,6 +205,16 @@ public class PhotoManager implements AutoCloseable {
                     logger.error("Failed to delete photo {} from database", photo.getId(), ex);
                     return null;
                 });
+    }
+
+    /**
+     * Deletes the photo's file from the disk and removes it from the catalog (Shift+Delete in the filmstrip).
+     *
+     * @param photo the photo entry to delete
+     */
+    public void deletePhoto(PhotoEntry photo) {
+        // TODO delete the file on the ioPool, then removePhoto(photo)
+        logger.warn("deletePhoto is not implemented yet, {} was not deleted", photo.getId());
     }
 
     @Override

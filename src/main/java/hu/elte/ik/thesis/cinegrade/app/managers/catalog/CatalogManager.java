@@ -199,6 +199,7 @@ public class CatalogManager implements AutoCloseable {
     private void closeCurrentScope() {
         try (CatalogScope scope = currentScope) {
             if (scope != null) {
+                scope.close();
                 logger.info("Closing catalog: {}", scope.catalog().getCatalogName());
             }
         } finally {

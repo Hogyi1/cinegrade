@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.time.Instant;
+import java.util.Objects;
 
 @Getter
 @Setter
@@ -49,5 +50,59 @@ public class EditState {
         this.lutPath = lutPath;
         this.curvesJson = curvesJson;
         this.updatedAt = updatedAt != null ? updatedAt : Instant.now();
+    }
+
+    public EditState(String photoId, EditState editState) {
+        this.photoId = photoId;
+        this.exposure = editState.getExposure();
+        this.contrast = editState.getContrast();
+        this.highlights = editState.getHighlights();
+        this.shadows = editState.getShadows();
+        this.whites = editState.getWhites();
+        this.blacks = editState.getBlacks();
+        this.temperature = editState.getTemperature();
+        this.tint = editState.getTint();
+        this.saturation = editState.getSaturation();
+        this.vibrance = editState.getVibrance();
+        this.lutPath = editState.getLutPath();
+        this.curvesJson = editState.getCurvesJson();
+        this.updatedAt = Instant.now();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        EditState that = (EditState) o;
+        return Float.compare(that.exposure, exposure) == 0
+                && Float.compare(that.contrast, contrast) == 0
+                && Float.compare(that.highlights, highlights) == 0
+                && Float.compare(that.shadows, shadows) == 0
+                && Float.compare(that.whites, whites) == 0
+                && Float.compare(that.blacks, blacks) == 0
+                && Float.compare(that.temperature, temperature) == 0
+                && Float.compare(that.tint, tint) == 0
+                && Float.compare(that.saturation, saturation) == 0
+                && Float.compare(that.vibrance, vibrance) == 0
+                && Objects.equals(lutPath, that.lutPath)
+                && Objects.equals(curvesJson, that.curvesJson);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(
+                exposure,
+                contrast,
+                highlights,
+                shadows,
+                whites,
+                blacks,
+                temperature,
+                tint,
+                saturation,
+                vibrance,
+                lutPath,
+                curvesJson
+        );
     }
 }
