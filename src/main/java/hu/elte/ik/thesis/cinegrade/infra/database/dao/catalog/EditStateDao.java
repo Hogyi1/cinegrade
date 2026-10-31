@@ -24,18 +24,18 @@ public class EditStateDao {
      */
     private static final String COLUMNS =
             "photo_id, exposure, contrast, highlights, shadows, whites, blacks, " +
-                    "temperature, tint, saturation, vibrance, lut_path, curves_json, updated_at";
+                    "temperature, tint, saturation, vibrance, hsl, lut_path, curves_json, updated_at";
     /**
      * Insert-or-update statement keyed on {@code photo_id}; its parameters are bound by {@link #bind}.
      */
     private static final String UPSERT_SQL =
-            "INSERT INTO edit_states (" + COLUMNS + ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) " +
+            "INSERT INTO edit_states (" + COLUMNS + ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) " +
                     "ON CONFLICT(photo_id) DO UPDATE SET " +
                     "exposure = excluded.exposure, contrast = excluded.contrast, " +
                     "highlights = excluded.highlights, shadows = excluded.shadows, " +
                     "whites = excluded.whites, blacks = excluded.blacks, " +
                     "temperature = excluded.temperature, tint = excluded.tint, " +
-                    "saturation = excluded.saturation, vibrance = excluded.vibrance, " +
+                    "saturation = excluded.saturation, vibrance = excluded.vibrance, hsl = excluded.hsl, " +
                     "lut_path = excluded.lut_path, curves_json = excluded.curves_json, " +
                     "updated_at = excluded.updated_at";
     /**
@@ -76,9 +76,52 @@ public class EditStateDao {
         pstmt.setFloat(9, e.getTint());
         pstmt.setFloat(10, e.getSaturation());
         pstmt.setFloat(11, e.getVibrance());
-        pstmt.setString(12, e.getLutPath());
-        pstmt.setString(13, e.getCurvesJson());
-        pstmt.setString(14, updatedAt);
+        pstmt.setString(12, formatHsl(e.getHsl()));
+        pstmt.setString(13, e.getLutPath());
+        pstmt.setString(14, e.getCurvesJson());
+        pstmt.setString(15, updatedAt);
+    }
+
+    /**
+     * Writes the color mixer values as one comma separated text, in the order of {@link EditState#getHsl()}.
+     *
+     * @param hsl the {@link EditState#HSL_SIZE} values
+     * @return the text stored in the {@code hsl} column
+     */
+    private static String formatHsl(float[] hsl) {
+        StringBuilder text = new StringBuilder();
+        for (int i = 0; i < hsl.length; i++) {
+            if (i > 0) {
+                text.append(',');
+            }
+            text.append(hsl[i]);
+        }
+        return text.toString();
+    }
+
+    /**
+     * Reads the {@code hsl} column back. A missing or malformed value gives all zeros (no color mixer change).
+     *
+     * @param value stored text, may be {@code null}
+     * @return {@link EditState#HSL_SIZE} values
+     */
+    private static float[] parseHsl(String value) {
+        float[] hsl = new float[EditState.HSL_SIZE];
+        if (value == null || value.isBlank()) {
+            return hsl;
+        }
+        String[] parts = value.split(",");
+        if (parts.length != EditState.HSL_SIZE) {
+            return hsl;
+        }
+        try {
+            for (int i = 0; i < parts.length; i++) {
+                hsl[i] = Float.parseFloat(parts[i].trim());
+            }
+        } catch (NumberFormatException e) {
+            return new float[EditState.HSL_SIZE];
+        }
+        return hsl;
     }
 
     /**
@@ -187,7 +230,7 @@ public class EditStateDao {
      * @throws SQLException if a column cannot be read
      */
     private EditState mapRowToEditState(ResultSet rs) throws SQLException {
-        return new EditState(
+        EditState editState = new EditState(
                 rs.getString("photo_id"),
                 rs.getFloat("exposure"),
                 rs.getFloat("contrast"),
@@ -203,5 +246,7 @@ public class EditStateDao {
                 rs.getString("curves_json"),
                 parseInstant(rs.getString("updated_at"))
         );
+        editState.setHsl(parseHsl(rs.getString("hsl")));
+        return editState;
     }
 }

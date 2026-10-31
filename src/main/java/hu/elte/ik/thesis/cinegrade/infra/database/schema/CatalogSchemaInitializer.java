@@ -77,6 +77,7 @@ public class CatalogSchemaInitializer {
                 tint REAL DEFAULT 0.0,
                 saturation REAL DEFAULT 0.0,
                 vibrance REAL DEFAULT 0.0,
+                hsl TEXT,
                 lut_path TEXT,
                 curves_json TEXT,
                 updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,

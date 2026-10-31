@@ -10,6 +10,10 @@ import java.util.Objects;
 @Getter
 @Setter
 public class EditState {
+    public transient static final int HSL_COLORS = 8;
+    // hue, sat, lum, padding: one std140 vec4 per color
+    public transient static final int HSL_STRIDE = 4;
+    public transient  static final int HSL_SIZE = HSL_STRIDE * HSL_COLORS;
     private String photoId;
     private float exposure = 0.0f;
     private float contrast = 0.0f;
@@ -21,6 +25,9 @@ public class EditState {
     private float tint = 0.0f;
     private float saturation = 0.0f;
     private float vibrance = 0.0f;
+    // Color mixer, per color: red_hue, red_sat, red_lum, pad, orange_hue, ... for
+    // red, orange, yellow, green, aqua, blue, purple, magenta (same layout as hsl_* in fragment.frag)
+    private float[] hsl = new float[HSL_SIZE];
     private String lutPath;
     private String curvesJson;
     private Instant updatedAt = Instant.now();
@@ -64,6 +71,8 @@ public class EditState {
         this.tint = editState.getTint();
         this.saturation = editState.getSaturation();
         this.vibrance = editState.getVibrance();
+        // a copy, the snapshot must not change with the live edit
+        this.hsl = editState.getHsl().clone();
         this.lutPath = editState.getLutPath();
         this.curvesJson = editState.getCurvesJson();
         this.updatedAt = Instant.now();
@@ -84,13 +93,14 @@ public class EditState {
                 && Float.compare(that.tint, tint) == 0
                 && Float.compare(that.saturation, saturation) == 0
                 && Float.compare(that.vibrance, vibrance) == 0
+                && java.util.Arrays.equals(hsl, that.hsl)
                 && Objects.equals(lutPath, that.lutPath)
                 && Objects.equals(curvesJson, that.curvesJson);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(
+        return 31 * java.util.Arrays.hashCode(hsl) + Objects.hash(
                 exposure,
                 contrast,
                 highlights,
