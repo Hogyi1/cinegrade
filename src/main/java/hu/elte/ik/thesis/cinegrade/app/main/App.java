@@ -147,8 +147,7 @@ public class App extends Application {
                 catalogManager.getCurrentScope().editingManager(),
                 catalogManager.getCurrentScope().photoManager()));
         controllerFactory.register(DevelopViewportController.class, () -> new DevelopViewportController(
-                catalogManager.getCurrentScope().editingManager(),
-                viewportRenderer));
+                catalogManager.getCurrentScope().editingManager()));
         controllerFactory.register(DevelopEditPanelController.class, () -> new DevelopEditPanelController(
                 catalogManager.getCurrentScope().editingManager()));
         controllerFactory.register(DevelopFilmstripController.class, () -> new DevelopFilmstripController(
@@ -181,7 +180,7 @@ public class App extends Application {
     private void createDatabaseManagers() {
         logger.info("Creating database-dependent managers");
         viewportRenderer = resources.push(new ViewportRenderer(renderEngine.getInteractive()));
-        thumbnailRenderer = resources.push(new ThumbnailRenderer(renderEngine.getInteractive(), viewportRenderer));
+        thumbnailRenderer = resources.push(new ThumbnailRenderer(renderEngine.getBackground()));
         exportRenderer = resources.push(new ExportRenderer(renderEngine.getBackground()));
 
         catalogManager = new CatalogManager(new CatalogScopeFactory(taskManager,

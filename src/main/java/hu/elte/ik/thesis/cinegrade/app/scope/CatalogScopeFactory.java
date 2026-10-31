@@ -69,7 +69,7 @@ public class CatalogScopeFactory {
             LibrawService librawService = resources.push(new LibrawService());
 
             PhotoLibrary photoLibrary = new PhotoLibrary();
-            PhotoManager photoManager = resources.push(new PhotoManager(transactionRunner, photoDao, photoLibrary, thumbnailService));
+            PhotoManager photoManager = resources.push(new PhotoManager(transactionRunner, photoDao, photoLibrary, thumbnailService, threadPoolManager.getIoPool()));
 
             StagingArea stagingArea = new StagingArea();
             StagingPipeline stagingPipeline = new StagingPipeline(stagingArea,
@@ -101,8 +101,8 @@ public class CatalogScopeFactory {
                     viewportRenderer,
                     thumbnailRenderer,
                     threadPoolManager.getCpuPool(),
-                    librawService,
-                    thumbnailService));
+                    thumbnailService,
+                    librawService));
 
             ExportManager exportManager = resources.push(new ExportManager(db.getConnection(), catalog));
 

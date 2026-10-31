@@ -195,7 +195,7 @@ public class PhotoLibrary {
         fx(() -> {
             selectedEntries.remove(entry);
             if (selectedPhotoProperty.get() == entry) {
-                selectedPhotoProperty.set(null);
+                selectNextOne(entry);
             }
             lastImportedPhotos.remove(entry);
             masterEntries.remove(entry);
@@ -211,8 +211,23 @@ public class PhotoLibrary {
     public void select(PhotoEntry active, List<PhotoEntry> selected) {
         fx(() -> {
             selectedEntries.setAll(selected);
+            if (active == null) {
+                return;
+            }
             selectedPhotoProperty.set(active);
         });
+    }
+
+    private void selectNextOne(PhotoEntry photoEntry) {
+        int index = filteredEntries.indexOf(photoEntry);
+        if (index >= 0 && index < filteredEntries.size() - 1) {
+            selectedPhotoProperty.set(filteredEntries.get(index + 1));
+        } else if (index > 0) {
+            // the last one: the one before it, not itself
+            selectedPhotoProperty.set(filteredEntries.get(index - 1));
+        } else {
+            selectedPhotoProperty.set(null);
+        }
     }
 
     /**
@@ -223,8 +238,9 @@ public class PhotoLibrary {
     public void showLastImportedPhotos(boolean show) {
         fx(() -> {
             lastImportedProperty.set(show);
-            if (!filteredEntries.contains(selectedPhotoProperty.get())) {
-                select(filteredEntries.getLast(), selectedEntries);
+            // empty at the start of every import; a copy, setAll with its own list would empty it
+            if (!filteredEntries.isEmpty() && !filteredEntries.contains(selectedPhotoProperty.get())) {
+                select(filteredEntries.getLast(), List.copyOf(selectedEntries));
             }
         });
     }

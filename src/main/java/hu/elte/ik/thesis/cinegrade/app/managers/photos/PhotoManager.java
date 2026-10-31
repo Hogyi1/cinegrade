@@ -1,19 +1,29 @@
 package hu.elte.ik.thesis.cinegrade.app.managers.photos;
 
-import hu.elte.ik.thesis.cinegrade.domain.catalog.Catalog;
 import hu.elte.ik.thesis.cinegrade.domain.editing.PhotoEntry;
+import hu.elte.ik.thesis.cinegrade.domain.enums.ErrorCode;
+import hu.elte.ik.thesis.cinegrade.domain.enums.ImportMethod;
+import hu.elte.ik.thesis.cinegrade.domain.error.ErrorHandler;
+import hu.elte.ik.thesis.cinegrade.domain.exceptions.CineGradeException;
 import hu.elte.ik.thesis.cinegrade.infra.database.TransactionRunner;
 import hu.elte.ik.thesis.cinegrade.infra.database.dao.catalog.PhotoDao;
+import hu.elte.ik.thesis.cinegrade.infra.services.storage.StorageService;
 import hu.elte.ik.thesis.cinegrade.infra.services.storage.ThumbnailService;
 import javafx.application.Platform;
 import javafx.beans.property.ObjectProperty;
+import javafx.collections.ObservableList;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
+import java.util.concurrent.ExecutorService;
 
 public class PhotoManager implements AutoCloseable {
 
@@ -23,20 +33,33 @@ public class PhotoManager implements AutoCloseable {
     private final TransactionRunner catalogTx;
     private final PhotoLibrary photoLibrary;
     private final ThumbnailService thumbnailService;
+    private final ExecutorService ioPool;
 
-    public PhotoManager(TransactionRunner catalogTx, PhotoDao photoDao, PhotoLibrary photoLibrary, ThumbnailService thumbnailService) {
+    public PhotoManager(TransactionRunner catalogTx, PhotoDao photoDao, PhotoLibrary photoLibrary, ThumbnailService thumbnailService, ExecutorService ioPool) {
         this.catalogTx = catalogTx;
         this.photoDao = photoDao;
         this.photoLibrary = photoLibrary;
         this.thumbnailService = thumbnailService;
+        this.ioPool = ioPool;
 
         loadCatalogPhotos();
+    }
+
+    private static void fx(Runnable action) {
+        if (Platform.isFxApplicationThread()) {
+            action.run();
+        } else {
+            Platform.runLater(action);
+        }
     }
 
     public ObjectProperty<PhotoEntry> selectedPhoto() {
         return photoLibrary.getSelectedPhotoProperty();
     }
 
+    public ObservableList<PhotoEntry> selectedPhotos() {
+        return photoLibrary.getSelectedEntries();
+    }
 
     /**
      * Starts a new import session by clearing the previous import list.
@@ -91,8 +114,8 @@ public class PhotoManager implements AutoCloseable {
      * @param rating the new rating
      */
     public void updateRating(PhotoEntry photo, int rating) {
-        photo.setRating(rating);
         catalogTx.execute(c -> photoDao.updateRating(photo.getId(), rating))
+                .thenRun(() -> fx(() -> photo.setRating(rating)))
                 .exceptionally(ex -> {
                     logger.error("Failed to update rating in database for photo {}", photo.getId(), ex);
                     return null;
@@ -106,8 +129,8 @@ public class PhotoManager implements AutoCloseable {
      * @param colorLabel the new color label
      */
     public void updateColorLabel(PhotoEntry photo, String colorLabel) {
-        photo.setColorLabel(colorLabel);
         catalogTx.execute(c -> photoDao.updateColorLabel(photo.getId(), colorLabel))
+                .thenRun(() -> fx(() -> photo.setColorLabel(colorLabel)))
                 .exceptionally(ex -> {
                     logger.error("Failed to update color label in database for photo {}", photo.getId(), ex);
                     return null;
@@ -124,9 +147,9 @@ public class PhotoManager implements AutoCloseable {
         if (photos == null || photos.isEmpty()) {
             return;
         }
-        photos.forEach(photo -> photo.setRating(rating));
         List<String> ids = photos.stream().map(PhotoEntry::getId).toList();
         catalogTx.execute(c -> photoDao.updateRatings(ids, rating))
+                .thenRun(() -> fx(() -> photos.forEach(photo -> photo.setRating(rating))))
                 .exceptionally(ex -> {
                     logger.error("Failed to update rating in database for {} photo(s)", ids.size(), ex);
                     return null;
@@ -143,9 +166,9 @@ public class PhotoManager implements AutoCloseable {
         if (photos == null || photos.isEmpty()) {
             return;
         }
-        photos.forEach(photo -> photo.setColorLabel(colorLabel));
         List<String> ids = photos.stream().map(PhotoEntry::getId).toList();
         catalogTx.execute(c -> photoDao.updateColorLabels(ids, colorLabel))
+                .thenRun(() -> fx(() -> photos.forEach(photo -> photo.setColorLabel(colorLabel))))
                 .exceptionally(ex -> {
                     logger.error("Failed to update color label in database for {} photo(s)", ids.size(), ex);
                     return null;
@@ -162,9 +185,9 @@ public class PhotoManager implements AutoCloseable {
         if (photos == null || photos.isEmpty()) {
             return;
         }
-        photos.forEach(photo -> photo.getIsLiked().set(liked));
         List<String> ids = photos.stream().map(PhotoEntry::getId).toList();
         catalogTx.execute(c -> photoDao.updateLiked(ids, liked))
+                .thenRun(() -> fx(() -> photos.forEach(photo -> photo.getIsLiked().set(liked))))
                 .exceptionally(ex -> {
                     logger.error("Failed to update liked state in database for {} photo(s)", ids.size(), ex);
                     return null;
@@ -179,8 +202,8 @@ public class PhotoManager implements AutoCloseable {
      */
     public void updateComment(PhotoEntry photo, String comment) {
         String value = comment != null && !comment.isBlank() ? comment.strip() : null;
-        photo.setComment(value);
         catalogTx.execute(c -> photoDao.updateComment(photo.getId(), value))
+                .thenRun(() -> fx(() -> photo.setComment(value)))
                 .exceptionally(ex -> {
                     logger.error("Failed to update comment in database for photo {}", photo.getId(), ex);
                     return null;
@@ -197,12 +220,20 @@ public class PhotoManager implements AutoCloseable {
             return;
         }
 
-        photoLibrary.removeAll(photo);
-
         catalogTx.execute(c -> photoDao.delete(photo.getId()))
+                .thenRun(() -> fx(() -> photoLibrary.removeAll(photo)))
                 .thenRun(() -> thumbnailService.delete(photo.getId()))
                 .exceptionally(ex -> {
                     logger.error("Failed to delete photo {} from database", photo.getId(), ex);
+                    return null;
+                });
+    }
+
+    public void updateIsEdited(PhotoEntry photo, boolean edited) {
+        catalogTx.execute(c -> photoDao.updateEdited(photo.getId(), edited))
+                .thenRun(() -> fx(() -> photo.getIsEdited().set(edited)))
+                .exceptionally(ex -> {
+                    logger.error("Failed to update edited state for photo {}", photo.getId(), ex);
                     return null;
                 });
     }
@@ -213,8 +244,21 @@ public class PhotoManager implements AutoCloseable {
      * @param photo the photo entry to delete
      */
     public void deletePhoto(PhotoEntry photo) {
-        // TODO delete the file on the ioPool, then removePhoto(photo)
-        logger.warn("deletePhoto is not implemented yet, {} was not deleted", photo.getId());
+        if (photo == null) {
+            return;
+        }
+        CompletableFuture.supplyAsync(() -> {
+                    try {
+                        Files.deleteIfExists(photo.getFile().toPath());
+                    } catch (IOException e) {
+                        throw new CineGradeException(ErrorCode.FILE_DELETE_FAILED, e, "Failed to delete photo file");
+                    }
+                    return null;
+                }, ioPool).thenRun(() -> removePhoto(photo))
+                .exceptionally(ex -> {
+                    ErrorHandler.getInstance().handle(ex.getCause());
+                    return null;
+                });
     }
 
     @Override

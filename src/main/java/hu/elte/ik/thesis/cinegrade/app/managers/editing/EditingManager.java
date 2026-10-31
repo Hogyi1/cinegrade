@@ -1,7 +1,6 @@
 package hu.elte.ik.thesis.cinegrade.app.managers.editing;
 
 import hu.elte.ik.thesis.cinegrade.app.managers.photos.PhotoManager;
-import hu.elte.ik.thesis.cinegrade.domain.catalog.Catalog;
 import hu.elte.ik.thesis.cinegrade.domain.editing.EditState;
 import hu.elte.ik.thesis.cinegrade.domain.editing.PhotoEntry;
 import hu.elte.ik.thesis.cinegrade.domain.enums.ErrorCode;
@@ -14,28 +13,23 @@ import hu.elte.ik.thesis.cinegrade.infra.database.dao.catalog.EditStateDao;
 import hu.elte.ik.thesis.cinegrade.infra.database.dao.catalog.MetadataDao;
 import hu.elte.ik.thesis.cinegrade.infra.services.libraw.LibrawService;
 import hu.elte.ik.thesis.cinegrade.infra.services.storage.ThumbnailService;
+import hu.elte.ik.thesis.cinegrade.javafx.ui.input.ViewportNavigator;
 import javafx.application.Platform;
-import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.ReadOnlyObjectProperty;
-import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.property.*;
+import javafx.scene.image.Image;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.lwjgl.system.MemoryUtil;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
-import java.awt.image.ColorModel;
-import java.awt.image.DataBufferByte;
-import java.awt.image.WritableRaster;
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.ByteBuffer;
-import java.util.EnumSet;
-import java.util.Optional;
-import java.util.Set;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
+import java.nio.ByteOrder;
+import java.util.*;
+import java.util.concurrent.*;
+import java.util.function.BooleanSupplier;
 
 public class EditingManager implements AutoCloseable {
 
@@ -47,22 +41,30 @@ public class EditingManager implements AutoCloseable {
     private final ViewportRenderer viewportRenderer;
     private final ThumbnailRenderer thumbnailRenderer;
     private final ExecutorService cpuPool;
-    private final LibrawService librawService;
     private final ThumbnailService thumbnailService;
+    private final LibrawService librawService;
     private final ObjectProperty<EditState> currentEditState = new SimpleObjectProperty<>();
     private final ObjectProperty<EditState> copiedEditState = new SimpleObjectProperty<>();
     private final ObjectProperty<PhotoEntry> currentPhotoEntry = new SimpleObjectProperty<>();
+    private final ObjectProperty<Image> placeholder = new SimpleObjectProperty<>(null);
     // Sections whose eye toggle is off: rendered with defaults, still saved with their values. FX thread only
     private final Set<GradeParam.Section> bypassed = EnumSet.noneOf(GradeParam.Section.class);
+    private final BooleanProperty loading = new SimpleBooleanProperty(false), showOriginal = new SimpleBooleanProperty(false);
+    private final ExecutorService decoderThread = Executors.newSingleThreadExecutor();
+    private final Map<String, EditState> thumbnailEdits = new HashMap<>();
+    private final Map<String, PhotoEntry> thumbnailPhotos = new HashMap<>();
+    private final Deque<String> thumbnailQueue = new ArrayDeque<>();
+    private boolean thumbnailRunning = false;
 
-    public EditingManager(TransactionRunner catalogTx,
-                          EditStateDao editStateDao,
-                          MetadataDao metadataDao,
-                          PhotoManager photoManager,
-                          ViewportRenderer viewportRenderer,
-                          ThumbnailRenderer thumbnailRenderer,
-                          ExecutorService cpuPool,
-                          LibrawService librawService, ThumbnailService thumbnailService) {
+    // The photo the user wants now; a decode for any other photo is stale and gets skipped / cancelled
+    private volatile String requestedPhotoId;
+    // Thumbnail jobs run one after another (decode → upload → render → store), each chained on the previous one.
+
+    // The photo in the thumbnail renderer's texture; only read and written inside the chain, so no re-decode
+    // while the same photo is edited again and again
+    private volatile String thumbnailPhotoId;
+
+    public EditingManager(TransactionRunner catalogTx, EditStateDao editStateDao, MetadataDao metadataDao, PhotoManager photoManager, ViewportRenderer viewportRenderer, ThumbnailRenderer thumbnailRenderer, ExecutorService cpuPool, ThumbnailService thumbnailService, LibrawService librawService) throws ExecutionException, InterruptedException {
         this.catalogTx = catalogTx;
         this.editStateDao = editStateDao;
         this.metadataDao = metadataDao;
@@ -70,22 +72,72 @@ public class EditingManager implements AutoCloseable {
         this.viewportRenderer = viewportRenderer;
         this.thumbnailRenderer = thumbnailRenderer;
         this.cpuPool = cpuPool;
-        this.librawService = librawService;
         this.thumbnailService = thumbnailService;
+        this.librawService = decoderThread.submit(LibrawService::new).get();
+        photoManager.selectedPhoto().addListener((obs, oldVal, newVal) -> changeEditState(newVal));
+        currentPhotoEntry.bind(photoManager.selectedPhoto());
+        showOriginal.addListener((obs, was, on) -> {
+            if (currentEditState.get() != null) {
+                viewportRenderer.requestRender(effective(currentEditState.get()));
+            }
+        });
+    }
 
-        photoManager.selectedPhoto().addListener((obs, oldVal, newVal) -> onPhotoChanged(oldVal, newVal));
+    /**
+     * JPEG/PNG/TIFF → RGBA8 in native memory (the caller frees it), shared by the viewport and the thumbnail chain.
+     */
+    private LibrawService.DecodedImage readImage(File imgPath) throws IOException {
+        BufferedImage bufferedImage = ImageIO.read(imgPath);
+        if (bufferedImage == null) {
+            throw new CineGradeException(ErrorCode.FILE_READ_FAILED, "Failed to read image file");
+        }
+        int w = bufferedImage.getWidth();
+        int h = bufferedImage.getHeight();
+
+        int[] pixels = bufferedImage.getRGB(0, 0, bufferedImage.getWidth(), bufferedImage.getHeight(), null, 0, bufferedImage.getWidth());
+        ByteBuffer buffer = MemoryUtil.memAlloc(w * h * 4).order(ByteOrder.nativeOrder());
+
+        for (int argb : pixels) {
+            buffer.put((byte) ((argb >> 16) & 0xFF)); // R
+            buffer.put((byte) ((argb >> 8) & 0xFF)); // G
+            buffer.put((byte) (argb & 0xFF)); // B
+            buffer.put((byte) ((argb >> 24) & 0xFF)); // A
+        }
+        buffer.flip();
+
+        return new LibrawService.DecodedImage(buffer, w, h, 8);
+    }
+
+    /**
+     * Before: renders the photo with every setting at its default; the edit itself is untouched.
+     */
+    public void showBefore(boolean before) {
+        showOriginal.set(before);
+    }
+
+    public BooleanProperty showOriginalProperty() {
+        return showOriginal;
+    }
+
+    public ReadOnlyObjectProperty<PhotoEntry> currentPhotoProperty() {
+        return currentPhotoEntry;
+    }
+
+    public ReadOnlyBooleanProperty loadingProperty() {
+        return loading;
+    }
+
+    public ReadOnlyObjectProperty<Image> viewportImageProperty() {
+        return viewportRenderer.frameProperty();
+    }
+
+    public ReadOnlyObjectProperty<Image> placeholderImageProperty() {
+        return placeholder;
     }
 
     public ReadOnlyObjectProperty<EditState> currentEditStateProperty() {
         return currentEditState;
     }
-
-    public void onPhotoChanged(PhotoEntry oldVal, PhotoEntry newVal) {
-        // every commit is already saved and thumbnailed, nothing to flush for oldVal
-        changeEditState(newVal);
-    }
-
-    // [AI-GENERATED METHOD]
 
     /**
      * Slider is moving: change the edit in memory and redraw the viewport. Nothing is saved.
@@ -99,8 +151,6 @@ public class EditingManager implements AutoCloseable {
         viewportRenderer.requestRender(effective(editState));
     }
 
-    // [AI-GENERATED METHOD]
-
     /**
      * Slider released / value typed: change the edit, save it and refresh the thumbnail.
      */
@@ -112,8 +162,6 @@ public class EditingManager implements AutoCloseable {
         param.write(editState, value);
         applySettings(photoManager.selectedPhoto().get());
     }
-
-    // [AI-GENERATED METHOD]
 
     /**
      * Eye toggle of a section: bypassed sections render with their defaults but keep their saved values.
@@ -129,30 +177,101 @@ public class EditingManager implements AutoCloseable {
         }
     }
 
-    public void changeEditState(PhotoEntry photoEntry) {
-        if (photoEntry == null) {
+    public void changeEditState(PhotoEntry photo) {
+        // queued decodes of the previous photos are skipped, a running one is cancelled through LibRaw's callback
+        requestedPhotoId = photo == null ? null : photo.getId();
+        showOriginal.set(false);
+        if (photo == null) {
+            loading.set(false);
             currentEditState.set(null);
+            viewportRenderer.clear();
             return;
         }
-
-        CompletableFuture<Optional<EditState>> editState = catalogTx.read(c -> editStateDao.findByPhotoId(photoEntry.getId()))
+        loading.set(true);
+        placeholder.set(null);
+        thumbnailService.loadImage(photo)
+                .thenAcceptAsync(imageOpt -> {
+                    if (photo != currentPhotoEntry.get()) return;
+                    placeholder.set(imageOpt.orElse(null));
+                }, Platform::runLater)
+                .thenCompose(v -> catalogTx.read(c -> editStateDao.findByPhotoId(photo.getId())))
                 .exceptionally(ex -> {
-                    logger.error("Failed to apply edit state to database", ex);
+                    logger.error("Failed to find edit state for photo: {}", photo.getFile(), ex);
                     return Optional.empty();
-                });
+                })
+                .thenAcceptAsync(found -> {
+                    if (photo != currentPhotoEntry.get()) return;
+                    currentEditState.set(found.orElseGet(() -> new EditState(photo.getId())));
+                    viewportRenderer.requestRender(effective(currentEditState.get()));
+                    showOnGpu(photo);
+                }, Platform::runLater);
+    }
 
-        currentEditState.set(editState.join().orElseGet(() -> new EditState(photoEntry.getId())));
+    private void showOnGpu(PhotoEntry photo) {
+        extractBytes(photo).thenCompose(decoded -> {
+            if (!photo.getId().equals(requestedPhotoId)) {
+                MemoryUtil.memFree(decoded.data());
+                return CompletableFuture.completedFuture(null);
+            }
+            return viewportRenderer.show(decoded)
+                    .whenComplete((v, ex) -> MemoryUtil.memFree(decoded.data()))
+                    .thenRun(() -> Platform.runLater(() -> {
+                        if (photo == currentPhotoEntry.get()) {
+                            loading.set(false);
+                        }
+                    }));
+        }).exceptionally(ex -> {
+            //cancelled
+            if (ex instanceof CancellationException || ex.getCause() instanceof CancellationException) {
+                return null;
+            }
+            logger.error("Failed to show photo on GPU: {}", photo.getFile(), ex);
+            Platform.runLater(() -> {
+                if (photo == currentPhotoEntry.get()) {
+                    loading.set(false);
+                }
+            });
+            return null;
+        });
     }
 
     public void pasteSettings() {
-        if (copiedEditState.get() == null || copiedEditState.get().equals(currentEditState.get()) || currentEditState.get() == null) {
+        if (copiedEditState.get() == null) {
             return;
         }
 
-        String photoId = currentEditState.get().getPhotoId();
-        EditState pastedEditState = new EditState(photoId, copiedEditState.get());
-        currentEditState.set(pastedEditState);
-        applySettings(photoManager.selectedPhoto().get());
+        EditState copied = new EditState(null, copiedEditState.get());
+        List<PhotoEntry> copyWithoutSelected = new ArrayList<>(photoManager.selectedPhotos());
+        copyWithoutSelected.remove(currentPhotoEntry.get());
+
+        if (currentEditState.get() != null) {
+            String photoId = currentEditState.get().getPhotoId();
+            EditState pastedEditState = new EditState(photoId, copiedEditState.get());
+            currentEditState.set(pastedEditState);
+            applySettings(currentPhotoEntry.get());
+        }
+
+        for (PhotoEntry entry : copyWithoutSelected) {
+            EditState snapshot = new EditState(entry.getId(), copied);
+
+            saveEditState(snapshot);
+            boolean edited = !snapshot.equals(new EditState(entry.getId()));
+            photoManager.updateIsEdited(entry, edited);
+            updateThumbnail(entry, snapshot, false);
+        }
+    }
+
+    /**
+     * Ctrl+Shift+R: every setting of the photo back to its default, saved like a paste.
+     */
+    public void resetSettings() {
+        if (currentEditState.get() == null) {
+            return;
+        }
+        currentEditState.set(new EditState(currentEditState.get().getPhotoId()));
+        if (photoManager.selectedPhoto().get() != null) {
+            applySettings(photoManager.selectedPhoto().get());
+        }
     }
 
     public void applySettings(PhotoEntry photoEntry) {
@@ -162,48 +281,114 @@ public class EditingManager implements AutoCloseable {
         // the DB and GPU threads read it later while the sliders keep changing the live one
         EditState snapshot = new EditState(currentEditState.get().getPhotoId(), currentEditState.get());
 
-        catalogTx.execute(c -> editStateDao.upsert(snapshot))
-                .exceptionally(ex -> {
-                    logger.error("Failed to apply edit state to database", ex);
-                    return null;
-                });
-
+        saveEditState(snapshot);
+        boolean edited = !snapshot.equals(new EditState(photoEntry.getId()));
+        photoManager.updateIsEdited(photoEntry, edited);
         viewportRenderer.requestRender(effective(snapshot));
-        updateThumbnail(photoEntry, snapshot);
+        updateThumbnail(photoEntry, snapshot, true);
     }
 
-    // [AI-GENERATED METHOD]
-
     /**
-     * GPU render → JPEG on the CPU pool → preview DB, then bumps the version so the filmstrip reloads it.
-     * Submitted before the next photo's {@code show}, so it still renders this photo.
+     * Queues a thumbnail job behind the previous ones, for any photo (open or not), so a paste to 20 photos decodes
+     * and renders them one by one instead of 20 decodes at once. Pass a snapshot: it is read later on other threads.
      */
-    private void updateThumbnail(PhotoEntry photoEntry, EditState editState) {
+    private void updateThumbnail(PhotoEntry photoEntry, EditState editState, boolean urgent) {
         if (photoEntry == null) {
             return;
         }
-        thumbnailRenderer.render(editState)
+
+        String id = photoEntry.getId();
+        boolean waiting = thumbnailEdits.put(id, editState) != null;
+        thumbnailPhotos.put(id, photoEntry);
+        if (waiting) {
+            if (urgent) {
+                thumbnailQueue.remove(id);
+                thumbnailQueue.addFirst(id);
+            }
+        } else if (urgent) {
+            thumbnailQueue.addFirst(id);
+        } else {
+            thumbnailQueue.addLast(id);
+        }
+
+        pumpThumbnails();
+    }
+
+    private void pumpThumbnails() {
+        if (thumbnailRunning || thumbnailQueue.isEmpty()) {
+            return;
+        }
+        thumbnailRunning = true;
+        String id = thumbnailQueue.poll();
+        EditState editState = thumbnailEdits.remove(id);
+        PhotoEntry photoEntry = thumbnailPhotos.remove(id);
+
+        renderThumbnail(photoEntry, editState).whenCompleteAsync((v, ex) -> {
+            if (ex != null) {
+                thumbnailPhotoId = null;
+                logger.warn("Failed to update thumbnail of {}", photoEntry.getFile(), ex);
+            }
+            thumbnailRunning = false;
+            pumpThumbnails();
+        }, Platform::runLater);
+    }
+
+    /**
+     * One thumbnail job: decode + upload (skipped if the photo is already in the texture) → GPU render →
+     * JPEG on the CPU pool → preview DB, then bumps the version so the filmstrip reloads it.
+     */
+    private CompletableFuture<Void> renderThumbnail(PhotoEntry photoEntry, EditState editState) {
+        CompletableFuture<Void> loaded = photoEntry.getId().equals(thumbnailPhotoId)
+                ? CompletableFuture.completedFuture(null)
+                : CompletableFuture.supplyAsync(() -> decodeForThumbnail(photoEntry), cpuPool)
+                .thenCompose(decoded -> thumbnailRenderer.load(decoded)
+                        .whenComplete((v, ex) -> MemoryUtil.memFree(decoded.data())))
+                .thenRun(() -> thumbnailPhotoId = photoEntry.getId());
+
+        return loaded
+                .thenCompose(v -> thumbnailRenderer.render(editState))
                 .thenCompose(pixels -> pixels
-                        .map(p -> thumbnailService.putPixels(photoEntry.getId(), p.bgra(), p.width(), p.height())
-                                .thenApply(v -> true))
+                        .map(p -> thumbnailService.putPixels(photoEntry.getId(), p.bgra(), p.width(), p.height()).thenApply(v -> true))
                         .orElseGet(() -> CompletableFuture.completedFuture(false)))
                 .thenAccept(stored -> {
                     if (stored) {
                         Platform.runLater(() -> photoEntry.getThumbnailVersion().set(photoEntry.getThumbnailVersion().get() + 1));
                     }
-                })
-                .exceptionally(ex -> {
-                    logger.warn("Failed to update thumbnail of {}", photoEntry.getFile(), ex);
-                    return null;
                 });
     }
 
-    // [AI-GENERATED METHOD]
+    /**
+     * Decode for the thumbnail chain, on the CPU pool. RAWs get their own short-lived LibRaw handle: the viewport's
+     * one belongs to the decoder thread. The chain runs one job at a time, so only one of these exists at once.
+     */
+    private LibrawService.DecodedImage decodeForThumbnail(PhotoEntry photoEntry) {
+        File file = photoEntry.getFile();
+        if (!photoEntry.isRaw()) {
+            try {
+                return readImage(file);
+            } catch (IOException exception) {
+                throw new CineGradeException(ErrorCode.FILE_READ_FAILED, exception, "Failed to read image file");
+            }
+        }
+        try (LibrawService service = new LibrawService()) {
+            // never canceled: a queued thumbnail is still wanted after the user moved on
+            return service.decodeRaw(file, () -> false)
+                    .orElseThrow(() -> new CineGradeException(ErrorCode.FILE_READ_FAILED, "Failed to decode raw image"));
+        } catch (CineGradeException exception) {
+            throw exception;
+        } catch (Exception exception) {
+            // close() of the LibRaw handle
+            throw new CineGradeException(ErrorCode.FILE_READ_FAILED, exception, "Failed to decode raw image");
+        }
+    }
 
     /**
      * Copy of the edit with the bypassed sections set back to their defaults; this is what gets rendered.
      */
     private EditState effective(EditState editState) {
+        if (showOriginal.get()) {
+            return new EditState(editState.getPhotoId());
+        }
         EditState copy = new EditState(editState.getPhotoId(), editState);
         for (GradeParam param : GradeParam.values()) {
             if (bypassed.contains(param.getGroup().getSection())) {
@@ -222,43 +407,75 @@ public class EditingManager implements AutoCloseable {
     }
 
     public void saveEditState(EditState editState) {
-        catalogTx.execute(c -> editStateDao.upsert(editState))
-                .exceptionally(ex -> {
-                    logger.error("Failed to save edit state to database", ex);
-                    return null;
-                });
+        catalogTx.execute(c -> editStateDao.upsert(editState)).exceptionally(ex -> {
+            logger.error("Failed to save edit state to database", ex);
+            return null;
+        });
     }
 
     private CompletableFuture<LibrawService.DecodedImage> extractBytes(PhotoEntry photoEntry) {
-        try {
-            File imgPath = photoEntry.getFile();
 
-            if (photoEntry.isRaw()) {
-                return CompletableFuture.supplyAsync(() -> {
-                    try {
-                        Optional<LibrawService.DecodedImage> decodedImage = librawService.decodeRaw(imgPath);
-                        return decodedImage.orElse((LibrawService.DecodedImage) null);
-                    } catch (Exception exception) {
-                        logger.error("Failed to decode raw image", exception);
-                        return (LibrawService.DecodedImage) null;
-                    }
-                }, cpuPool);
-            } else {
-                BufferedImage bufferedImage = ImageIO.read(imgPath);
+        File imgPath = photoEntry.getFile();
 
-                // get DataBufferBytes from Raster
-                WritableRaster raster = bufferedImage.getRaster();
-                DataBufferByte data = (DataBufferByte) raster.getDataBuffer();
-                return CompletableFuture.completedFuture(new LibrawService.DecodedImage(ByteBuffer.wrap(data.getData()), bufferedImage.getWidth(), bufferedImage.getHeight(), bufferedImage.getColorModel().getPixelSize()));
-            }
-        } catch (IOException exception) {
-            photoEntry.missingPhotoProperty().set(true);
-            return CompletableFuture.failedFuture(new CineGradeException(ErrorCode.FILE_READ_FAILED, exception, "Failed to read image file"));
+        // asked before the decode starts (queued behind another one) and by LibRaw while it runs
+        BooleanSupplier stale = () -> !photoEntry.getId().equals(requestedPhotoId);
+
+        if (photoEntry.isRaw()) {
+            // the decoder thread owns the one LibRaw handle: decodes run one by one, the stale ones are skipped
+            return CompletableFuture.supplyAsync(() -> {
+                if (stale.getAsBoolean()) {
+                    throw new CancellationException("Photo changed before decoding " + photoEntry.getId());
+                }
+                Optional<LibrawService.DecodedImage> decodedImage = librawService.decodeRaw(imgPath, stale);
+                if (decodedImage.isPresent()) {
+                    return decodedImage.get();
+                }
+                if (stale.getAsBoolean()) {
+                    throw new CancellationException("Photo changed while decoding " + photoEntry.getId());
+                }
+                logger.error("Failed to decode raw image: {}", imgPath);
+                Platform.runLater(() -> photoEntry.missingPhotoProperty().set(true));
+                throw new CineGradeException(ErrorCode.FILE_READ_FAILED, "Failed to decode raw image");
+            }, decoderThread);
+        } else {
+            return CompletableFuture.supplyAsync(() -> {
+                if (stale.getAsBoolean()) {
+                    throw new CancellationException("Photo changed before decoding " + photoEntry.getId());
+                }
+                try {
+                    return readImage(imgPath);
+                } catch (IOException exception) {
+                    logger.error("Failed to read image file", exception);
+                    Platform.runLater(() -> photoEntry.missingPhotoProperty().set(true));
+                    throw new CineGradeException(ErrorCode.FILE_READ_FAILED, exception, "Failed to read image file");
+                }
+            }, cpuPool);
         }
+    }
+
+    public void autoWhiteBalance(ViewportNavigator.UV uv) {
+        // TODO
+    }
+
+    public void setViewportSize(int w, int h) {
+        viewportRenderer.resize(w, h);
+    }
+
+    public void setView(hu.elte.ik.thesis.cinegrade.javafx.ui.input.ViewportNavigator.ViewTransform view) {
+        viewportRenderer.requestView(view);
     }
 
     @Override
     public void close() throws Exception {
+        decoderThread.shutdown();
+        try {
+            if (!decoderThread.awaitTermination(10, TimeUnit.SECONDS)) {
+                decoderThread.shutdownNow();
+            }
+        } catch (InterruptedException ex) {
+            decoderThread.shutdownNow();
+        }
 
+        logger.debug("{} Executor was succesfully shutdown!", decoderThread.getClass().getName());
     }
 }
