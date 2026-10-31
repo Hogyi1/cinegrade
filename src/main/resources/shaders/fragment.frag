@@ -1,4 +1,4 @@
-#version 330
+#version 430
 
 // multiple of 16
 layout(std140, binding = 0) uniform BasicBlock {
@@ -16,6 +16,16 @@ layout(std140, binding = 0) uniform BasicBlock {
     float saturation; // offset 36 - 4 bytes
     float pad1;
     float pad2;
+
+    // per color: x = hue, y = sat, z = lum shift (-100..100), w = padding. Names with '__' are reserved in GLSL
+    vec4 hsl_red;
+    vec4 hsl_orange;
+    vec4 hsl_yellow;
+    vec4 hsl_green;
+    vec4 hsl_aqua;
+    vec4 hsl_blue;
+    vec4 hsl_purple;
+    vec4 hsl_magenta;
 };
 
 // View transform, not part of the edit: x = zoom (uv scale, 1 = whole image), yz = pan offset in [0,1] uv space

@@ -1,4 +1,4 @@
-#version 330
+#version 430
 
 // VBO-ból érkező változók
 layout( location = 0 ) in vec3 vs_in_position;

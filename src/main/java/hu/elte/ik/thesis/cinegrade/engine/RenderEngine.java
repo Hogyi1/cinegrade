@@ -26,7 +26,7 @@ public class RenderEngine implements AutoCloseable {
         if (!glfwInit())
             throw new CineGradeException(ErrorCode.OPENGL_INIT_FAILED);
         glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
-        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
         glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
         glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
         interactiveWindowID = glfwCreateWindow(1, 1, "GL", 0, 0);

@@ -22,7 +22,8 @@ public class BaseBlockUniform extends UniformBuffer<EditState> {
 
     public static final String BLOCK_NAME = "BasicBlock";
     public static final int BINDING = 0;
-    private static final int BYTE_BUFFER_SIZE = 48;
+    // 48 bytes of basic params + 8 vec4 for the color mixer
+    private static final int BYTE_BUFFER_SIZE = 48 + EditState.HSL_COLORS * 16;
 
     public BaseBlockUniform() {
         super(BINDING, BLOCK_NAME, BYTE_BUFFER_SIZE);
@@ -47,5 +48,10 @@ public class BaseBlockUniform extends UniformBuffer<EditState> {
         buffer.putFloat(editState.getSaturation());
         buffer.putFloat(0.0f); // pad1
         buffer.putFloat(0.0f); // pad2
+
+        // 8 x 16 bytes: hsl_red .. hsl_magenta, each vec4(hue, sat, lum, pad); the array already has this layout
+        for (float value : editState.getHsl()) {
+            buffer.putFloat(value);
+        }
     }
 }

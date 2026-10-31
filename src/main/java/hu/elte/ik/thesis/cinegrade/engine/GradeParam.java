@@ -37,7 +37,33 @@ public enum GradeParam {
     SHARPEN("Sharpen", Group.DETAIL, 0.0f, 100.0f, 0.0f, ""),
     NOISE_REDUCTION("Noise Reduction", Group.DETAIL, 0.0f, 100.0f, 0.0f, ""),
     GRAIN("Grain", Group.EFFECTS, 0.0f, 100.0f, 0.0f, ""),
-    VIGNETTE("Vignette", Group.EFFECTS, -100.0f, 100.0f, 0.0f, "");
+    VIGNETTE("Vignette", Group.EFFECTS, -100.0f, 100.0f, 0.0f, ""),
+
+    // Color mixer (HSL): shift of each of the 8 hue ranges, same order in all three groups
+    HUE_RED("Red", Group.HSL_HUE, -100.0f, 100.0f, 0.0f, ""),
+    HUE_ORANGE("Orange", Group.HSL_HUE, -100.0f, 100.0f, 0.0f, ""),
+    HUE_YELLOW("Yellow", Group.HSL_HUE, -100.0f, 100.0f, 0.0f, ""),
+    HUE_GREEN("Green", Group.HSL_HUE, -100.0f, 100.0f, 0.0f, ""),
+    HUE_AQUA("Aqua", Group.HSL_HUE, -100.0f, 100.0f, 0.0f, ""),
+    HUE_BLUE("Blue", Group.HSL_HUE, -100.0f, 100.0f, 0.0f, ""),
+    HUE_PURPLE("Purple", Group.HSL_HUE, -100.0f, 100.0f, 0.0f, ""),
+    HUE_MAGENTA("Magenta", Group.HSL_HUE, -100.0f, 100.0f, 0.0f, ""),
+    SAT_RED("Red", Group.HSL_SATURATION, -100.0f, 100.0f, 0.0f, ""),
+    SAT_ORANGE("Orange", Group.HSL_SATURATION, -100.0f, 100.0f, 0.0f, ""),
+    SAT_YELLOW("Yellow", Group.HSL_SATURATION, -100.0f, 100.0f, 0.0f, ""),
+    SAT_GREEN("Green", Group.HSL_SATURATION, -100.0f, 100.0f, 0.0f, ""),
+    SAT_AQUA("Aqua", Group.HSL_SATURATION, -100.0f, 100.0f, 0.0f, ""),
+    SAT_BLUE("Blue", Group.HSL_SATURATION, -100.0f, 100.0f, 0.0f, ""),
+    SAT_PURPLE("Purple", Group.HSL_SATURATION, -100.0f, 100.0f, 0.0f, ""),
+    SAT_MAGENTA("Magenta", Group.HSL_SATURATION, -100.0f, 100.0f, 0.0f, ""),
+    LUM_RED("Red", Group.HSL_LUMINANCE, -100.0f, 100.0f, 0.0f, ""),
+    LUM_ORANGE("Orange", Group.HSL_LUMINANCE, -100.0f, 100.0f, 0.0f, ""),
+    LUM_YELLOW("Yellow", Group.HSL_LUMINANCE, -100.0f, 100.0f, 0.0f, ""),
+    LUM_GREEN("Green", Group.HSL_LUMINANCE, -100.0f, 100.0f, 0.0f, ""),
+    LUM_AQUA("Aqua", Group.HSL_LUMINANCE, -100.0f, 100.0f, 0.0f, ""),
+    LUM_BLUE("Blue", Group.HSL_LUMINANCE, -100.0f, 100.0f, 0.0f, ""),
+    LUM_PURPLE("Purple", Group.HSL_LUMINANCE, -100.0f, 100.0f, 0.0f, ""),
+    LUM_MAGENTA("Magenta", Group.HSL_LUMINANCE, -100.0f, 100.0f, 0.0f, "");
 
     private final String name;
     private final Group group;
@@ -70,7 +96,7 @@ public enum GradeParam {
             case BLACKS -> editState.getBlacks();
             case VIBRANCE -> editState.getVibrance();
             case SATURATION -> editState.getSaturation();
-            default -> defVal;
+            default -> isHsl() ? editState.getHsl()[hslIndex()] : defVal;
         };
     }
 
@@ -90,9 +116,27 @@ public enum GradeParam {
             case VIBRANCE -> editState.setVibrance(value);
             case SATURATION -> editState.setSaturation(value);
             default -> {
-                // not in EditState / the shader yet
+                if (isHsl()) {
+                    editState.getHsl()[hslIndex()] = value;
+                }
             }
         }
+    }
+
+    private boolean isHsl() {
+        return group.getSection() == Section.COLOR_MIXER;
+    }
+
+    /**
+     * Index in {@link EditState#getHsl()}, which is laid out per color (hue, sat, lum, pad).
+     * The constants are declared as 8 HUE_, then 8 SAT_, then 8 LUM_, so the position in that run
+     * gives the channel (0 hue, 1 sat, 2 lum) and the color.
+     */
+    private int hslIndex() {
+        int position = ordinal() - HUE_RED.ordinal();
+        int channel = position / EditState.HSL_COLORS;
+        int color = position % EditState.HSL_COLORS;
+        return color * EditState.HSL_STRIDE + channel;
     }
 
     /**
@@ -101,6 +145,7 @@ public enum GradeParam {
     @Getter
     public enum Section {
         BASIC("Basic"),
+        COLOR_MIXER("Color Mixer"),
         COLOR_WHEELS("Color Wheels"),
         DETAIL("Detail & Effects");
 
@@ -120,6 +165,10 @@ public enum GradeParam {
         TONE("Tone", Section.BASIC),
         PRESENCE("Presence", Section.BASIC),
         COLOR("Color", Section.BASIC),
+        // Color mixer groups are tabs, not headers
+        HSL_HUE("Hue", Section.COLOR_MIXER),
+        HSL_SATURATION("Saturation", Section.COLOR_MIXER),
+        HSL_LUMINANCE("Luminance", Section.COLOR_MIXER),
         WHEELS("", Section.COLOR_WHEELS),
         DETAIL("Detail", Section.DETAIL),
         EFFECTS("Effects", Section.DETAIL);

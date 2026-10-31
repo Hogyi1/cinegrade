@@ -5,6 +5,8 @@ import hu.elte.ik.thesis.cinegrade.domain.editing.EditState;
 import hu.elte.ik.thesis.cinegrade.engine.GpuWorker;
 import hu.elte.ik.thesis.cinegrade.engine.gl.*;
 import hu.elte.ik.thesis.cinegrade.engine.grade.BaseBlockUniform;
+import hu.elte.ik.thesis.cinegrade.infra.services.libraw.LibrawService;
+import hu.elte.ik.thesis.cinegrade.javafx.ui.input.ViewportNavigator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -15,30 +17,28 @@ import java.util.concurrent.TimeUnit;
 import static hu.elte.ik.thesis.cinegrade.infra.utils.thumbnail.ThumbnailFactory.MAX_EDGE;
 
 /**
- * Renders a graded thumbnail of the photo that is open in the viewport.
+ * Renders graded thumbnails of any photo, independent of the viewport.
  * <p>
- * It has no texture of its own: it samples the {@link ViewportRenderer}'s {@link ImageTexture}. Both run on the
- * same GPU worker (one GL context), so the texture id is valid here too, and jobs run in submit order, so a
- * render submitted before the next {@code show} still sees the current photo.
+ * Runs on the background GPU worker with its own {@link ImageTexture}, so it never waits behind the viewport's
+ * frames. It renders whatever was {@link #load loaded} last: the caller makes sure the edit belongs to that photo.
  */
 public class ThumbnailRenderer implements AutoCloseable {
 
     private static final Logger logger = LogManager.getLogger(ThumbnailRenderer.class);
     private final GpuWorker worker;
-    private final ViewportRenderer viewport;
     private final ResourceStack resources = new ResourceStack();
     // GPU thread only
+    private ImageTexture imageTexture;
     private FrameBuffer fbo;
     private BaseBlockUniform gradeBlock;
     private PixelReader pixelReader;
     private int width, height;
 
-    // [AI-GENERATED METHOD]
-    public ThumbnailRenderer(GpuWorker worker, ViewportRenderer viewport) {
+    public ThumbnailRenderer(GpuWorker worker) {
         this.worker = worker;
-        this.viewport = viewport;
 
         worker.submit(() -> {
+            imageTexture = resources.push(new ImageTexture());
             fbo = resources.push(new FrameBuffer(1, 1));
             pixelReader = resources.push(new PixelReader(1, 1));
             gradeBlock = resources.push(new BaseBlockUniform());
@@ -46,30 +46,38 @@ public class ThumbnailRenderer implements AutoCloseable {
         });
     }
 
-    // [AI-GENERATED METHOD]
+    /**
+     * Uploads a photo into this renderer's own texture; the next renders use it. Does not take ownership of
+     * {@code decoded.data()}: the caller frees it once this future completed.
+     */
+    public CompletableFuture<Void> load(LibrawService.DecodedImage decoded) {
+        return worker.submit(() -> {
+            imageTexture.uploadTexture(decoded);
+            applySize();
+            return null;
+        });
+    }
 
     /**
-     * Renders the viewport's photo with these edit settings, fitted into MAX_EDGE, never zoomed.
+     * Renders the loaded photo with these edit settings, fitted into MAX_EDGE, never zoomed.
      * The edit is read on the GPU thread, so pass a copy that is not changed afterwards.
      *
-     * @return BGRA pixels, or empty if the viewport has no photo yet
+     * @return BGRA pixels, or empty if nothing was loaded yet
      */
     public CompletableFuture<Optional<Pixels>> render(EditState editState) {
         return worker.submit(() -> {
-            ImageTexture source = viewport.getImageTexture();
-            if (source == null || source.getWidth() == 0) {
+            if (width == 0) {
                 return Optional.empty();
             }
-            applySize(source);
 
             fbo.bind();
             try {
                 ShaderProgram shader = worker.getShader();
                 shader.use();
                 gradeBlock.upload(editState);
-                // The program keeps the viewport's last zoom/pan, always reset it to the whole image
-                shader.bindVec3Uniform("uvZoom_OffsetX_OffsetY", ViewportRenderer.ViewTransform.FIT.vec3());
-                source.bind();
+                gradeBlock.bindBase();
+                shader.bindVec3Uniform("uvZoom_OffsetX_OffsetY", ViewportNavigator.ViewTransform.FIT.vec3());
+                imageTexture.bind();
                 worker.getFullscreenQuad().draw();
 
                 byte[] bgra = new byte[width * height * 4];
@@ -81,15 +89,13 @@ public class ThumbnailRenderer implements AutoCloseable {
         });
     }
 
-    // [AI-GENERATED METHOD]
-
     /**
      * Sizes the FBO and PBOs to the photo's aspect ratio fitted into MAX_EDGE (never upscaled). GPU thread only.
      */
-    private void applySize(ImageTexture source) {
-        double scale = Math.min(1.0, Math.min((double) MAX_EDGE / source.getWidth(), (double) MAX_EDGE / source.getHeight()));
-        int w = Math.max(1, (int) Math.round(source.getWidth() * scale));
-        int h = Math.max(1, (int) Math.round(source.getHeight() * scale));
+    private void applySize() {
+        double scale = Math.min(1.0, Math.min((double) MAX_EDGE / imageTexture.getWidth(), (double) MAX_EDGE / imageTexture.getHeight()));
+        int w = Math.max(1, (int) Math.round(imageTexture.getWidth() * scale));
+        int h = Math.max(1, (int) Math.round(imageTexture.getHeight() * scale));
         if (w == width && h == height) {
             return;
         }
