@@ -70,7 +70,8 @@
         <!-- EditPanes (Basic, Tone Curve, Color Wheels, Detail & Effects), built from GradeParam by the controller -->
         <ScrollPane fitToWidth="true" hbarPolicy="NEVER" styleClass="sidebar-scroll" VBox.vgrow="ALWAYS">
             <content>
-                <VBox fx:id="panelsContainer" spacing="1.0"/>
+                <!-- minWidth 0: fitToWidth then always sizes it to the viewport, a wider child can no longer scroll it sideways -->
+                <VBox fx:id="panelsContainer" minWidth="0.0" spacing="1.0"/>
             </content>
         </ScrollPane>
     </children>

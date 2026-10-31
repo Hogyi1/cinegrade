@@ -66,8 +66,6 @@ public class DevelopEditPanelController {
         showEditState(editingManager.currentEditStateProperty().get());
     }
 
-    // [AI-GENERATED METHOD]
-
     /**
      * One EditPane per GradeParam.Section, one header per Group, one EditSlider per param.
      * The tone curve is not a GradeParam, its body comes from the FXML.

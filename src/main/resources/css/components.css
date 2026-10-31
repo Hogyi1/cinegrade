@@ -480,9 +480,6 @@
     -fx-padding: 12px 14px;
 }
 
-.edit-pane:bypassed > .content {
-    -fx-opacity: 0.45;
-}
 
 .edit-pane-body {
     -fx-spacing: 6px;

@@ -10,12 +10,17 @@ import hu.elte.ik.thesis.cinegrade.domain.error.ErrorHandler;
 import hu.elte.ik.thesis.cinegrade.infra.utils.format.FormatUtils;
 import hu.elte.ik.thesis.cinegrade.javafx.ui.components.ImportPhotoCard;
 import hu.elte.ik.thesis.cinegrade.javafx.ui.components.SearchBar;
+import hu.elte.ik.thesis.cinegrade.javafx.ui.input.InputListener;
 import javafx.beans.binding.Bindings;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.input.Dragboard;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyCodeCombination;
+import javafx.scene.input.KeyCombination;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.TransferMode;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import javafx.stage.Window;
@@ -42,6 +47,8 @@ public class ImportPanelController implements PanelController {
     private static final double THUMBNAIL_ASPECT_RATIO = 1.5; // 3:2
     private static final double FOOTER_HEIGHT = 68.0;
 
+    @FXML
+    private StackPane importPanelRoot;
     @FXML
     private Label stagedCountLabel;
     @FXML
@@ -85,6 +92,7 @@ public class ImportPanelController implements PanelController {
     @FXML
     private VBox stageProgressOverlay;
 
+    private InputListener inputListener;
 
     public ImportPanelController(ImportManager importManager, StagingArea stagingArea) {
         this.importManager = importManager;
@@ -100,6 +108,25 @@ public class ImportPanelController implements PanelController {
         setupOthers();
         setupGridView();
         setupDropZone();
+        setupInput();
+    }
+
+    /**
+     * Alt+Enter imports, Ctrl+A selects every staged photo, Ctrl+Shift+A deselects them; not while typing in the search.
+     */
+    private void setupInput() {
+        inputListener = new InputListener(importPanelRoot, InputListener.focusedNotTyping(importPanelRoot));
+        inputListener.bind(new InputListener.InputKeyAction(new KeyCodeCombination(KeyCode.ENTER, KeyCombination.ALT_DOWN),
+                this::importSelected, () -> !importButton.isDisabled()));
+        inputListener.bind(new InputListener.InputKeyAction(new KeyCodeCombination(KeyCode.A, KeyCombination.SHORTCUT_DOWN),
+                () -> stagingArea.selectAll(true), () -> !selectAllButton.isDisabled()));
+        inputListener.bind(new InputListener.InputKeyAction(new KeyCodeCombination(KeyCode.A, KeyCombination.SHORTCUT_DOWN, KeyCombination.SHIFT_DOWN),
+                () -> stagingArea.selectAll(false), () -> !deselectAllButton.isDisabled()));
+    }
+
+    private void importSelected() {
+        importManager.importPhotos(importMethodComboBox.getValue());
+        navigationController.switchTo(WorkspacePanel.DEVELOPMENT);
     }
 
     @Override
@@ -219,10 +246,7 @@ public class ImportPanelController implements PanelController {
                         )
                 )
         );
-        importButton.setOnMouseClicked(e -> {
-            importManager.importPhotos(importMethodComboBox.getValue());
-            navigationController.switchTo(WorkspacePanel.DEVELOPMENT);
-        });
+        importButton.setOnMouseClicked(e -> importSelected());
 
         cancelButton.disableProperty().bind(stagingArea.getStagingProperty());
         selectAllButton.disableProperty().bind(stagingArea.getStagingProperty());

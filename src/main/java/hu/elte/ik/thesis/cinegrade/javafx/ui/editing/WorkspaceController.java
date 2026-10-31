@@ -26,6 +26,8 @@ public class WorkspaceController {
     private final ControllerFactory controllerFactory;
     private final ConcurrentHashMap<WorkspacePanel, CachedPanel> cachedPanels = new ConcurrentHashMap<>();
     @FXML
+    private Parent editPage;
+    @FXML
     private StackPane workspacePanelContainer;
     @FXML
     private NavigationController navigationBarController;
@@ -56,6 +58,7 @@ public class WorkspaceController {
                     changeWorkspacePanel(newValue);
                     rememberPanel(newValue);
                 });
+        navigationBarController.installShortcuts(editPage);
         navigationBarController.setWorkspaceMode(true, catalogScope.catalog().getCatalogName(), catalogScope.catalog().getLastPanel());
     }
 

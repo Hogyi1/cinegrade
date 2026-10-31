@@ -10,8 +10,10 @@ import hu.elte.ik.thesis.cinegrade.javafx.ui.components.CommentEditor;
 import hu.elte.ik.thesis.cinegrade.javafx.ui.components.ConfirmDialog;
 import hu.elte.ik.thesis.cinegrade.javafx.ui.components.FilmstripCell;
 import hu.elte.ik.thesis.cinegrade.javafx.ui.components.SearchBar;
+import hu.elte.ik.thesis.cinegrade.javafx.ui.input.InputListener;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.DoubleBinding;
+import javafx.beans.property.BooleanProperty;
 import javafx.collections.ListChangeListener;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
@@ -26,7 +28,8 @@ import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.control.skin.VirtualFlow;
 import javafx.scene.input.KeyCode;
-import javafx.scene.input.KeyEvent;
+import javafx.scene.input.KeyCodeCombination;
+import javafx.scene.input.KeyCombination;
 import javafx.scene.input.ScrollEvent;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
@@ -35,6 +38,8 @@ import org.apache.logging.log4j.Logger;
 
 import java.util.List;
 import java.util.Objects;
+
+// [AI-GENERATED]
 
 /**
  * Filmstrip of the development page: filter bar and the photo strip.
@@ -58,6 +63,7 @@ public class DevelopFilmstripController {
 
     // Set while the library's selection is copied into the ListView, so that copy is not sent back
     private boolean syncingSelection;
+    private InputListener inputListener;
 
     @FXML
     private VBox filmstripRoot;
@@ -123,6 +129,7 @@ public class DevelopFilmstripController {
         setupFilters();
         setupRatingFilter();
         setupColorLabels();
+        setupInput();
     }
 
     private void setupList() {
@@ -145,7 +152,6 @@ public class DevelopFilmstripController {
         filmstripList.setCellFactory(list -> new FilmstripCell(thumbnailService, library.getSelectedPhotoProperty(), cardSize, actions));
         filmstripList.setPlaceholder(new Label("No photos match the filters"));
         filmstripList.addEventFilter(ScrollEvent.SCROLL, this::scrollSideways);
-        filmstripList.addEventFilter(KeyEvent.KEY_PRESSED, this::onListKey);
     }
 
     /**
@@ -287,33 +293,45 @@ public class DevelopFilmstripController {
     }
 
     /**
-     * Shortcuts while the strip has the focus: 0-5 rate, C comments, Space likes, Delete removes from the catalog,
-     * Shift+Delete deletes from the disk. To be moved to the app-wide input listener.
+     * Shortcuts while the strip has the focus (and the search field does not):
+     * 0-5 rate, Q W E R T color labels (red, yellow, green, blue, none), Ctrl+C comment, Ctrl+L like,
+     * Delete removes from the catalog, Shift+Delete deletes from the disk,
+     * Ctrl+Alt+L / C / E toggle the liked / commented / edited filters.
      */
-    private void onListKey(KeyEvent event) {
-        List<PhotoEntry> selection = library.getSelection();
-        String key = event.getText();
-        boolean plain = !event.isShortcutDown() && !event.isAltDown();
+    private void setupInput() {
+        inputListener = new InputListener(filmstripRoot, InputListener.focusedNotTyping(filmstripRoot));
 
-        if (plain && key.length() == 1 && key.charAt(0) >= '0' && key.charAt(0) <= '5') {
-            photoManager.updateRating(selection, key.charAt(0) - '0');
-        } else if (plain && !event.isShiftDown() && event.getCode() == KeyCode.C) {
+        KeyCode[] digits = {KeyCode.DIGIT0, KeyCode.DIGIT1, KeyCode.DIGIT2, KeyCode.DIGIT3, KeyCode.DIGIT4, KeyCode.DIGIT5};
+        KeyCode[] numpad = {KeyCode.NUMPAD0, KeyCode.NUMPAD1, KeyCode.NUMPAD2, KeyCode.NUMPAD3, KeyCode.NUMPAD4, KeyCode.NUMPAD5};
+        for (int rating = 0; rating < digits.length; rating++) {
+            int value = rating;
+            inputListener.bind(new KeyCodeCombination(digits[rating]), () -> photoManager.updateRating(library.getSelection(), value));
+            inputListener.bind(new KeyCodeCombination(numpad[rating]), () -> photoManager.updateRating(library.getSelection(), value));
+        }
+
+        inputListener.bind(new KeyCodeCombination(KeyCode.Q), () -> applyColorLabel(ColorLabel.RED));
+        inputListener.bind(new KeyCodeCombination(KeyCode.W), () -> applyColorLabel(ColorLabel.YELLOW));
+        inputListener.bind(new KeyCodeCombination(KeyCode.E), () -> applyColorLabel(ColorLabel.GREEN));
+        inputListener.bind(new KeyCodeCombination(KeyCode.R), () -> applyColorLabel(ColorLabel.BLUE));
+        inputListener.bind(new KeyCodeCombination(KeyCode.T), () -> applyColorLabel(null));
+
+        inputListener.bind(new KeyCodeCombination(KeyCode.C, KeyCombination.SHORTCUT_DOWN, KeyCombination.SHIFT_DOWN), () -> {
             PhotoEntry active = library.getSelectedPhotoProperty().get();
             if (active != null) {
                 editComment(active);
             }
-        } else if (plain && !event.isShiftDown() && event.getCode() == KeyCode.SPACE) {
-            toggleLike(selection);
-        } else if (plain && event.getCode() == KeyCode.DELETE) {
-            if (event.isShiftDown()) {
-                confirmDelete(selection);
-            } else {
-                confirmRemove(selection);
-            }
-        } else {
-            return;
-        }
-        event.consume();
+        });
+        inputListener.bind(new KeyCodeCombination(KeyCode.L, KeyCombination.SHORTCUT_DOWN), () -> toggleLike(library.getSelection()));
+        inputListener.bind(new KeyCodeCombination(KeyCode.DELETE), () -> confirmRemove(library.getSelection()));
+        inputListener.bind(new KeyCodeCombination(KeyCode.DELETE, KeyCombination.SHIFT_DOWN), () -> confirmDelete(library.getSelection()));
+
+        inputListener.bind(new KeyCodeCombination(KeyCode.L, KeyCombination.SHORTCUT_DOWN, KeyCombination.ALT_DOWN), () -> toggle(library.getLikedProperty()));
+        inputListener.bind(new KeyCodeCombination(KeyCode.C, KeyCombination.SHORTCUT_DOWN, KeyCombination.ALT_DOWN), () -> toggle(library.getCommentedProperty()));
+        inputListener.bind(new KeyCodeCombination(KeyCode.E, KeyCombination.SHORTCUT_DOWN, KeyCombination.ALT_DOWN), () -> toggle(library.getEditedProperty()));
+    }
+
+    private static void toggle(BooleanProperty filter) {
+        filter.set(!filter.get());
     }
 
     /**

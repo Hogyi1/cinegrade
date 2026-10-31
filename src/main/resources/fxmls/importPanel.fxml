@@ -21,7 +21,7 @@
 <?import javafx.scene.layout.VBox?>
 
 <?import org.controlsfx.control.GridView?>
-<StackPane alignment="CENTER" prefHeight="850.0" prefWidth="1380.0"
+<StackPane fx:id="importPanelRoot" alignment="CENTER" prefHeight="850.0" prefWidth="1380.0"
            styleClass="import-panel-root"
            xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
            fx:controller="hu.elte.ik.thesis.cinegrade.javafx.ui.editing.ImportPanelController">

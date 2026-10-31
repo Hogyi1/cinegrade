@@ -34,6 +34,7 @@ import java.io.IOException;
 import java.util.Objects;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+// [AI-GENERATED]
 
 /**
  * One photo of the filmstrip: a rounded card around the thumbnail, tinted by the color label, with clickable
@@ -337,7 +338,8 @@ public class FilmstripCell extends ListCell<PhotoEntry> {
             cellRoot.getStyleClass().add(label.styleClass());
         }
 
-        setTooltip(new Tooltip(photo.getFileName()));
+        // hovering the card shows the comment under the file name
+        setTooltip(new Tooltip(commented ? photo.getFileName() + "\n\n" + photo.getComment() : photo.getFileName()));
     }
 
     private void refreshActive() {

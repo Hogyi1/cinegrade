@@ -7,6 +7,7 @@ import hu.elte.ik.thesis.cinegrade.domain.enums.WorkspacePanel;
 import hu.elte.ik.thesis.cinegrade.domain.navigation.SceneManager;
 import hu.elte.ik.thesis.cinegrade.domain.theme.ThemeManager;
 import hu.elte.ik.thesis.cinegrade.javafx.ui.animations.TransitionFactory;
+import hu.elte.ik.thesis.cinegrade.javafx.ui.input.InputListener;
 import javafx.animation.ParallelTransition;
 import javafx.animation.Transition;
 import javafx.application.Platform;
@@ -16,9 +17,13 @@ import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.fxml.FXML;
 import javafx.geometry.Bounds;
+import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ToggleButton;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyCodeCombination;
+import javafx.scene.input.KeyCombination;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
@@ -63,6 +68,7 @@ public class NavigationController {
     private ChangeListener<Number> pendingTabWidthListener;
     private ThemeManager themeManager;
     private Label pendingTab;
+    private InputListener inputListener;
 
     public NavigationController(SceneManager sceneManager, UserManager userManager, ThemeManager themeManager) {
         this.sceneManager = sceneManager;
@@ -103,6 +109,15 @@ public class NavigationController {
         themeToggleBtn.setSelected(themeManager.getTheme() == Theme.DARK);
         themeManager.themeProperty().addListener((obs, oldTheme, newTheme) -> {
             themeToggleBtn.setSelected(newTheme == Theme.DARK);
+        });
+
+        // The tabs follow the current panel, whoever changed it (click, Ctrl+Tab, import, back)
+        currentPanelProperty.addListener((obs, oldPanel, newPanel) -> {
+            Label activeTab = getTabForPanel(newPanel);
+            if (newPanel != null && activeTab != null) {
+                updateTabStyles(activeTab);
+                animateBubbleTo(activeTab, true);
+            }
         });
 
         // Keep bubble aligned when window or capsule resizes
@@ -201,11 +216,21 @@ public class NavigationController {
         ViewHistory previousHistory = viewHistories.peek();
         viewHistories.push(new ViewHistory(previousHistory, currentPanelProperty.get(), nextPanel));
         currentPanelProperty.set(nextPanel);
+    }
 
-        if (targetTab != null) {
-            updateTabStyles(targetTab);
-            animateBubbleTo(targetTab, true);
-        }
+    /**
+     * Ctrl+Tab cycles Import -> Develop -> Export. Installed on the workspace root, the ancestor of every panel,
+     * so it works whichever panel has the focus.
+     */
+    public void installShortcuts(Node workspaceRoot) {
+        inputListener = new InputListener(workspaceRoot);
+        inputListener.bind(new KeyCodeCombination(KeyCode.TAB, KeyCombination.SHORTCUT_DOWN), this::switchToNextPanel);
+    }
+
+    private void switchToNextPanel() {
+        WorkspacePanel current = currentPanelProperty.get();
+        WorkspacePanel[] panels = WorkspacePanel.values();
+        switchTo(current == null ? panels[0] : panels[(current.ordinal() + 1) % panels.length]);
     }
 
     // [AI-GENERATED METHOD]
