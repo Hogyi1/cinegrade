@@ -1,9 +1,13 @@
 package hu.elte.ik.thesis.cinegrade.javafx.ui.editing;
 
 import hu.elte.ik.thesis.cinegrade.app.managers.editing.EditingManager;
+import hu.elte.ik.thesis.cinegrade.domain.editing.PhotoEntry;
 import hu.elte.ik.thesis.cinegrade.domain.error.ErrorHandler;
 import hu.elte.ik.thesis.cinegrade.engine.renderer.ViewportRenderer;
 import hu.elte.ik.thesis.cinegrade.infra.services.libraw.LibrawService;
+import hu.elte.ik.thesis.cinegrade.infra.utils.format.FormatUtils;
+import hu.elte.ik.thesis.cinegrade.javafx.ui.input.InputListener;
+import hu.elte.ik.thesis.cinegrade.javafx.ui.input.ViewportNavigator;
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
@@ -12,7 +16,13 @@ import javafx.scene.control.Label;
 import javafx.scene.control.Slider;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.KeyCharacterCombination;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyCodeCombination;
+import javafx.scene.input.KeyCombination;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import javafx.stage.Screen;
 import javafx.util.Duration;
 import org.apache.logging.log4j.LogManager;
@@ -33,12 +43,6 @@ public class DevelopViewportController {
 
     private static final Logger logger = LogManager.getLogger(DevelopViewportController.class);
     private final EditingManager editingManager;
-    private final ViewportRenderer renderer;
-
-    // TODO remove: engine test files
-    private static final File TEST_RAW = new File("C:\\Photos\\Us\\_1033581.RW2");
-    private static final File TEST_JPEG = new File("C:\\Photos\\Us\\_1033571.JPG");
-    private boolean testShowRawNext = true;
 
     // Resizing the FBO on every pixel of a window drag is slow: wait until the size settles
     private final PauseTransition resizeDebounce = new PauseTransition(Duration.millis(120));
@@ -50,28 +54,40 @@ public class DevelopViewportController {
     @FXML
     private ImageView viewportImageView;
     @FXML
+    private ImageView thumbnailImageView;
+    @FXML
     private Label photoNameLabel;
     @FXML
     private Label photoMetaLabel;
-    @FXML
-    private Button testLoadBtn;
     @FXML
     private ToggleButton splitViewToggle;
     @FXML
     private Button zoomFitBtn;
     @FXML
-    private Button zoom100Btn;
+    private Button zoom150Btn;
+    @FXML
+    private Button zoom200Btn;
     @FXML
     private Slider zoomSlider;
+    @FXML
+    private VBox loadProgressOverlay;
 
-    public DevelopViewportController(EditingManager editingManager, ViewportRenderer renderer) {
+    private ViewportNavigator viewportNavigator;
+    private InputListener inputListener;
+
+    public DevelopViewportController(EditingManager editingManager) {
         this.editingManager = editingManager;
-        this.renderer = renderer;
     }
 
     @FXML
     private void initialize() {
-        viewportImageView.imageProperty().bind(renderer.frameProperty());
+        viewportImageView.imageProperty().bind(editingManager.viewportImageProperty());
+        thumbnailImageView.imageProperty().bind(editingManager.placeholderImageProperty());
+        thumbnailImageView.visibleProperty().bind(editingManager.loadingProperty());
+        if (loadProgressOverlay != null) {
+            loadProgressOverlay.visibleProperty().bind(editingManager.loadingProperty());
+            loadProgressOverlay.managedProperty().bind(editingManager.loadingProperty());
+        }
 
         // The frame is rendered in device pixels; the ImageView scales it back to layout size
         viewportImageView.setPreserveRatio(true);
@@ -83,8 +99,57 @@ public class DevelopViewportController {
         resizeDebounce.setOnFinished(e -> pushAreaSize());
         viewportImageContainer.widthProperty().addListener((obs, o, n) -> resizeDebounce.playFromStart());
         viewportImageContainer.heightProperty().addListener((obs, o, n) -> resizeDebounce.playFromStart());
+        viewportImageView.visibleProperty().bind(editingManager.loadingProperty().not());
 
-        testLoadBtn.setOnAction(e -> loadTestImage());
+        // the toggle and Ctrl+Shift+B both flip the manager's flag, which resets itself on a photo change
+        splitViewToggle.selectedProperty().bindBidirectional(editingManager.showOriginalProperty());
+        editingManager.currentPhotoProperty().addListener((obs, old, photo) -> showPhotoInfo(photo));
+        showPhotoInfo(editingManager.currentPhotoProperty().get());
+
+        setupNavigation();
+        setupInput();
+    }
+
+    private void showPhotoInfo(PhotoEntry photo) {
+        if (photo == null) {
+            photoNameLabel.setText("No photo selected");
+            photoMetaLabel.setText("");
+            return;
+        }
+        String name = photo.getFileName();
+        int dot = name.lastIndexOf('.');
+        String type = photo.isRaw() ? "RAW" : dot >= 0 ? name.substring(dot + 1).toUpperCase() : "";
+        photoNameLabel.setText(name);
+        photoMetaLabel.setText(String.format("%s · %s", type, FormatUtils.formatBytes(photo.getFileSize())));
+    }
+
+    private void setupNavigation() {
+        viewportNavigator = new ViewportNavigator(viewportImageView, editingManager::setView);
+
+        // a new photo starts at fit
+        editingManager.loadingProperty().addListener((obs, was, loading) -> {
+            if (loading) viewportNavigator.fit();
+        });
+
+        zoomFitBtn.setOnAction(e -> viewportNavigator.fit());
+        zoom150Btn.setOnAction(e -> viewportNavigator.zoomTo(ViewportNavigator.ZoomType.X150));
+        zoom200Btn.setOnAction(e -> viewportNavigator.zoomTo(ViewportNavigator.ZoomType.X200));
+
+        // both ways: setMagnification ignores the value it just reported, so this does not loop
+        zoomSlider.setMax(ViewportNavigator.MAX_MAGNIFICATION);
+        viewportNavigator.magnificationProperty().addListener((obs, o, n) -> zoomSlider.setValue(n.doubleValue()));
+        zoomSlider.valueProperty().addListener((obs, o, n) -> viewportNavigator.setMagnification(n.doubleValue()));
+    }
+
+    private void setupInput() {
+        viewportRoot.addEventFilter(MouseEvent.MOUSE_PRESSED, e -> viewportRoot.requestFocus());
+
+        inputListener = new InputListener(viewportRoot, InputListener.focusedNotTyping(viewportRoot));
+        inputListener.bind(new KeyCodeCombination(KeyCode.TAB), viewportNavigator::cycleZoomType);
+        inputListener.bind(new KeyCharacterCombination("+", KeyCombination.SHIFT_ANY), zoomSlider::increment);
+        inputListener.bind(new KeyCodeCombination(KeyCode.ADD), zoomSlider::increment);
+        inputListener.bind(new KeyCharacterCombination("-", KeyCombination.SHIFT_ANY), zoomSlider::decrement);
+        inputListener.bind(new KeyCodeCombination(KeyCode.SUBTRACT), zoomSlider::decrement);
     }
 
     private void pushAreaSize() {
@@ -94,73 +159,7 @@ public class DevelopViewportController {
         int w = (int) Math.round(viewportImageContainer.getWidth() * scale);
         int h = (int) Math.round(viewportImageContainer.getHeight() * scale);
         if (w > 0 && h > 0) {
-            renderer.resize(w, h);
+            editingManager.setViewportSize(w, h);
         }
-    }
-
-    // TODO remove: engine test. Decodes off the FX thread, then hands the pixels to the renderer
-    private void loadTestImage() {
-        File file = testShowRawNext ? TEST_RAW : TEST_JPEG;
-        testShowRawNext = !testShowRawNext;
-        testLoadBtn.setDisable(true);
-        photoNameLabel.setText(file.getName() + " (decoding...)");
-        long start = System.nanoTime();
-
-        CompletableFuture
-                .supplyAsync(() -> file == TEST_RAW ? decodeRaw(file) : decodeImage(file))
-                .thenCompose(renderer::show)
-                .whenComplete((v, ex) -> Platform.runLater(() -> {
-                    testLoadBtn.setDisable(false);
-                    testLoadBtn.setText(testShowRawNext ? "Test: load RAW" : "Test: load JPEG");
-                    if (ex != null) {
-                        photoNameLabel.setText(file.getName() + " (failed)");
-                        ErrorHandler.getInstance().handle(ex);
-                        return;
-                    }
-                    photoNameLabel.setText(file.getName());
-                    photoMetaLabel.setText("%s, %d ms".formatted(file == TEST_RAW ? "RAW 16-bit" : "JPEG 8-bit",
-                            (System.nanoTime() - start) / 1_000_000));
-                    pushAreaSize();
-                }));
-    }
-
-    private static LibrawService.DecodedImage decodeRaw(File file) {
-        // One LibrawService (one native handle) per decode: never shared between threads
-        try (LibrawService librawService = new LibrawService()) {
-            return librawService.decodeRaw(file)
-                    .orElseThrow(() -> new IllegalStateException("LibRaw could not decode " + file));
-        } catch (RuntimeException ex) {
-            throw ex;
-        } catch (Exception ex) {
-            throw new IllegalStateException(ex);
-        }
-    }
-
-    /**
-     * JPEG/PNG through ImageIO into a native RGBA8 buffer. ImageIO ignores the EXIF orientation.
-     */
-    private static LibrawService.DecodedImage decodeImage(File file) {
-        BufferedImage image;
-        try {
-            image = ImageIO.read(file);
-        } catch (IOException ex) {
-            throw new IllegalStateException("Could not read " + file, ex);
-        }
-        if (image == null) {
-            throw new IllegalStateException("No ImageIO reader for " + file);
-        }
-
-        int w = image.getWidth();
-        int h = image.getHeight();
-        ByteBuffer pixels = MemoryUtil.memAlloc(w * h * 4);
-        int[] row = new int[w];
-        for (int y = 0; y < h; y++) {
-            image.getRGB(0, y, w, 1, row, 0, w);
-            for (int argb : row) {
-                pixels.put((byte) (argb >> 16)).put((byte) (argb >> 8)).put((byte) argb).put((byte) (argb >>> 24));
-            }
-        }
-        pixels.flip();
-        return new LibrawService.DecodedImage(pixels, w, h, 8);
     }
 }

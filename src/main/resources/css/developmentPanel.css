@@ -38,6 +38,23 @@
     -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.65), 30, 0, 0, 8);
 }
 
+/* [AI-GENERATED] loading placeholder + spinner */
+.viewport-placeholder {
+    -fx-opacity: 1;
+}
+
+.viewport-loading-overlay {
+    -fx-background-color: transparent;
+}
+
+.viewport-spinner {
+    -fx-progress-color: -clr-blue;
+}
+
+.viewport-spinner .indeterminate-indicator .progress {
+    -fx-background-color: -clr-blue;
+}
+
 /* Floating Viewport HUD Bar */
 .viewport-hud {
     -fx-background-color: -clr-surface;
