@@ -1,9 +1,6 @@
 package hu.elte.ik.thesis.cinegrade.infra.services.libraw;
 
-import com.sun.jna.Library;
-import com.sun.jna.Native;
-import com.sun.jna.Pointer;
-import com.sun.jna.Structure;
+import com.sun.jna.*;
 import hu.elte.ik.thesis.cinegrade.infra.utils.process.NativeBinaryLocator;
 import org.lwjgl.system.MemoryUtil;
 
@@ -14,11 +11,10 @@ public interface LibRaw extends Library {
     String path = NativeBinaryLocator.getBinaryPath("libraw.dll").get().toString();
     LibRaw INSTANCE = Native.load(path, LibRaw.class);
 
-    // ── Core structs ──────────────────────────────────────────────────────
-
     @Structure.FieldOrder({
             "type", "height", "width", "colors", "bits", "data_size"
     })
+    // libraw image
     class ProcessedImage extends Structure {
         public int    type;
         public short  height;
@@ -56,25 +52,25 @@ public interface LibRaw extends Library {
         }
     }
 
-    // ── Lifecycle ─────────────────────────────────────────────────────────
+    // recycle
     Pointer libraw_init(int flags);
     void    libraw_recycle(Pointer lr);
     void    libraw_close(Pointer lr);
 
-    // ── File I/O ──────────────────────────────────────────────────────────
+    // File
     int libraw_open_file(Pointer lr, String filename);
 
-    // ── Processing ────────────────────────────────────────────────────────
+    // Processing
     int libraw_unpack(Pointer lr);
     int libraw_unpack_thumb(Pointer lr);
     int libraw_dcraw_process(Pointer lr);
 
-    // ── Output ────────────────────────────────────────────────────────────
+    // Output
     ProcessedImage.ByReference libraw_dcraw_make_mem_image(Pointer lr, int[] errc);
     ProcessedImage.ByReference libraw_dcraw_make_mem_thumb(Pointer lr, int[] errc);
     void libraw_dcraw_clear_mem(Pointer img);
 
-    // ── Settings ──────────────────────────────────────────────────────────
+    // Settings
     void libraw_set_demosaic(Pointer lr, int value);
     void libraw_set_output_bps(Pointer lr, int value);
     void libraw_set_output_color(Pointer lr, int value);
@@ -84,11 +80,19 @@ public interface LibRaw extends Library {
     int libraw_get_flip(Pointer lr);
     //void libraw_set_output_rotate(Pointer lr, int value);
 
-    void libraw_set_user_mul(Pointer lr, int value, float value2);
+    // void libraw_set_user_mul(Pointer lr, int value, float value2);
+
+    // cancellable methods callback, binds to libraw memory of cancel
+    interface ProgressCallback extends Callback {
+        int invoke(Pointer data, int stage, int iteration, int expected);
+    }
+
+    void libraw_set_progress_handler(Pointer lr, ProgressCallback callback, Pointer data);
+
     // Others
     String libraw_version();
 
-    // ── Metadata getters ──────────────────────────────────────────────────
+    // metadata - deprecated
     int libraw_get_iwidth(Pointer lr);
     int libraw_get_iheight(Pointer lr);
 }

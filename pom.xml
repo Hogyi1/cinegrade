@@ -166,6 +166,18 @@
             <scope>provided</scope>
         </dependency>
 
+        <!-- [AI-GENERATED] ImageIO plugins: CMYK/YCCK JPEGs and TIFFs, which the JDK readers reject or return null for -->
+        <dependency>
+            <groupId>com.twelvemonkeys.imageio</groupId>
+            <artifactId>imageio-jpeg</artifactId>
+            <version>3.12.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.twelvemonkeys.imageio</groupId>
+            <artifactId>imageio-tiff</artifactId>
+            <version>3.12.0</version>
+        </dependency>
+
         <!-- Source: https://mvnrepository.com/artifact/org.xerial/sqlite-jdbc -->
         <dependency>
             <groupId>org.xerial</groupId>

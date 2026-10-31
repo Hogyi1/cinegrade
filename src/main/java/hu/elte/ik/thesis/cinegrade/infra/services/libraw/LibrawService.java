@@ -9,6 +9,7 @@ import org.apache.logging.log4j.Logger;
 import java.io.File;
 import java.nio.ByteBuffer;
 import java.util.Optional;
+import java.util.function.BooleanSupplier;
 
 public class LibrawService implements AutoCloseable {
 
@@ -16,6 +17,10 @@ public class LibrawService implements AutoCloseable {
     private final LibRaw libRaw;
     private final Pointer handler;
     private volatile boolean closed = false;
+    // Asked by LibRaw between steps of the decode; set for the duration of one decodeRaw call
+    private volatile BooleanSupplier cancelled = () -> false;
+    // Kept in a field: JNA only holds a weak reference, a collected callback crashes the JVM inside LibRaw
+    private final LibRaw.ProgressCallback progressCallback = (data, stage, iteration, expected) -> cancelled.getAsBoolean() ? 1 : 0;
 
     public LibrawService() {
         this.libRaw = LibRaw.INSTANCE;
@@ -25,6 +30,7 @@ public class LibrawService implements AutoCloseable {
             logger.error("Failed to initialize native LibRaw context");
             throw new CineGradeException(ErrorCode.REQ_LIBRAW_LOAD_FAILED, "Failed to initialize LibRaw native handler");
         }
+        libRaw.libraw_set_progress_handler(handler, progressCallback, null);
     }
 
     public Optional<RawThumbnail> extractThumbnail(File rawFile) {
@@ -73,19 +79,13 @@ public class LibrawService implements AutoCloseable {
     }
 
     /**
-     * Decodes a RAW file into 16-bit sRGB pixels.
-     * <p>
-     * The returned {@link DecodedImage#data()} is native memory owned by the caller: free it with
-     * {@code MemoryUtil.memFree} once it was uploaded (the GC never frees it).
-     * <p>
-     * Not thread-safe: one LibrawService (one native handle) per thread, like {@code ThumbnailFactory} does.
-     *
-     * @param rawFile the RAW file
-     * @return the decoded image, or empty if LibRaw could not open or process the file
+     * Same, but LibRaw asks {@code cancelled} between its processing steps and stops early when it returns true
+     * (the result is then empty). Call it on the thread that owns this service, never recycle from another one.
      */
-    public Optional<DecodedImage> decodeRaw(File rawFile) {
-        if (closed) return Optional.empty();
+    public Optional<DecodedImage> decodeRaw(File rawFile, BooleanSupplier cancelled) {
+        if (closed || cancelled.getAsBoolean()) return Optional.empty();
 
+        this.cancelled = cancelled;
         try {
             libRaw.libraw_set_output_bps(handler, LibRawOptions.OutputBits.BITS_16.value);
             libRaw.libraw_set_demosaic(handler, LibRawOptions.Demosaic.PPG.value);
@@ -108,6 +108,10 @@ public class LibrawService implements AutoCloseable {
             }
 
             err = libRaw.libraw_dcraw_process(handler);
+            if (err != 0 && cancelled.getAsBoolean()) {
+                logger.debug("Decode cancelled: {}", rawFile.getAbsolutePath());
+                return Optional.empty();
+            }
             if (err != 0) {
                 logger.error("Failed to process raw file (code {}): {}", err, rawFile.getAbsolutePath());
                 return Optional.empty();
@@ -131,6 +135,7 @@ public class LibrawService implements AutoCloseable {
             }
         } finally {
             libRaw.libraw_recycle(handler);
+            this.cancelled = () -> false;
         }
     }
 
