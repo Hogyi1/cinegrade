@@ -77,6 +77,7 @@ public class ThumbnailRenderer implements AutoCloseable {
                 gradeBlock.upload(editState);
                 gradeBlock.bindBase();
                 shader.bindVec3Uniform("uvZoom_OffsetX_OffsetY", ViewportNavigator.ViewTransform.FIT.vec3());
+                shader.bindIntUniform("linearInput", imageTexture.isLinear() ? 1 : 0);
                 imageTexture.bind();
                 worker.getFullscreenQuad().draw();
 

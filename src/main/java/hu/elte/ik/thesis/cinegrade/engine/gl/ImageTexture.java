@@ -19,6 +19,8 @@ public class ImageTexture implements AutoCloseable {
     private final int sourceTextureID;
     private int width;
     private int height;
+    // RAWs come from LibRaw in linear light, JPEG/PNG are sRGB encoded: the shader decodes only the latter
+    private boolean linear;
 
     public ImageTexture() {
         sourceTextureID = glGenTextures();
@@ -49,6 +51,7 @@ public class ImageTexture implements AutoCloseable {
 
         width = decodedRaw.width();
         height = decodedRaw.height();
+        linear = is16Bit;
     }
 
     public void bind() {

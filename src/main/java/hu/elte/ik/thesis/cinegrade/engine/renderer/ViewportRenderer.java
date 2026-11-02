@@ -180,6 +180,7 @@ public class ViewportRenderer implements AutoCloseable {
         // binding 0 is shared with the thumbnail renderer's UBO in this context: point it back at ours
         gradeBlock.bindBase();
         shader.bindVec3Uniform("uvZoom_OffsetX_OffsetY", view.vec3());
+        shader.bindIntUniform("linearInput", imageTexture.isLinear() ? 1 : 0);
         imageTexture.bind();
         quad.draw();
 
