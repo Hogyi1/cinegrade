@@ -14,14 +14,17 @@ import javafx.scene.image.Image;
 import javafx.scene.image.PixelFormat;
 import javafx.scene.image.WritableImage;
 import lombok.Getter;
+import lombok.Setter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.lwjgl.system.MemoryUtil;
 
+import java.nio.ByteBuffer;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 
 /**
  * Renders the open photo for the development viewport on the interactive GPU worker.
@@ -44,13 +47,7 @@ public class ViewportRenderer implements AutoCloseable {
     private final AtomicReference<EditState> latestEdit = new AtomicReference<>(new EditState());
     private final AtomicReference<ViewportNavigator.ViewTransform> latestView = new AtomicReference<>(ViewportNavigator.ViewTransform.FIT);
     private final AtomicBoolean renderQueued = new AtomicBoolean();
-    /**
-     * -- GETTER --
-     *  The uploaded photo, shared with
-     * . GPU thread only; null until the setup job ran.
-     */
-    // GPU thread only
-    @Getter
+
     private ImageTexture imageTexture;
     private FrameBuffer fbo;
     private BaseBlockUniform gradeBlock;
@@ -59,6 +56,8 @@ public class ViewportRenderer implements AutoCloseable {
     private int writeIndex, width, height;
     private int areaWidth, areaHeight;
     private boolean hasImage;
+    @Setter
+    private volatile Consumer<ByteBuffer> histogramDraw;
 
     public ViewportRenderer(GpuWorker gpuWorker) {
         this.worker = gpuWorker;
@@ -191,6 +190,9 @@ public class ViewportRenderer implements AutoCloseable {
             WritableImage target = writableImages[writeIndex];
             target.getPixelWriter().setPixels(0, 0, w, h, PixelFormat.getByteBgraInstance(), bytes, w * 4);
             writeIndex = 1 - writeIndex;
+            if (histogramDraw != null) {
+                histogramDraw.accept(bytes);
+            }
             Platform.runLater(() -> frame.set(target));
         }, last);
         fbo.unbind();

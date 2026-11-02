@@ -3,9 +3,12 @@ package hu.elte.ik.thesis.cinegrade.app.managers.editing;
 import hu.elte.ik.thesis.cinegrade.app.managers.photos.PhotoManager;
 import hu.elte.ik.thesis.cinegrade.domain.editing.EditState;
 import hu.elte.ik.thesis.cinegrade.domain.editing.PhotoEntry;
+import hu.elte.ik.thesis.cinegrade.domain.editing.PhotoMetadata;
 import hu.elte.ik.thesis.cinegrade.domain.enums.ErrorCode;
+import hu.elte.ik.thesis.cinegrade.domain.enums.WhiteBalanceType;
 import hu.elte.ik.thesis.cinegrade.domain.exceptions.CineGradeException;
 import hu.elte.ik.thesis.cinegrade.engine.GradeParam;
+import hu.elte.ik.thesis.cinegrade.engine.grade.AsShotWhiteBalance;
 import hu.elte.ik.thesis.cinegrade.engine.renderer.ThumbnailRenderer;
 import hu.elte.ik.thesis.cinegrade.engine.renderer.ViewportRenderer;
 import hu.elte.ik.thesis.cinegrade.infra.database.TransactionRunner;
@@ -14,6 +17,7 @@ import hu.elte.ik.thesis.cinegrade.infra.database.dao.catalog.MetadataDao;
 import hu.elte.ik.thesis.cinegrade.infra.services.libraw.LibrawService;
 import hu.elte.ik.thesis.cinegrade.infra.services.storage.ThumbnailService;
 import hu.elte.ik.thesis.cinegrade.javafx.ui.input.ViewportNavigator;
+import hu.elte.ik.thesis.cinegrade.javafx.ui.presenters.HistogramService;
 import javafx.application.Platform;
 import javafx.beans.property.*;
 import javafx.scene.image.Image;
@@ -55,6 +59,7 @@ public class EditingManager implements AutoCloseable {
     private final Map<String, PhotoEntry> thumbnailPhotos = new HashMap<>();
     private final Deque<String> thumbnailQueue = new ArrayDeque<>();
     private boolean thumbnailRunning = false;
+    private HistogramService histogramService;
 
     // The photo the user wants now; a decode for any other photo is stale and gets skipped / cancelled
     private volatile String requestedPhotoId;
@@ -63,6 +68,8 @@ public class EditingManager implements AutoCloseable {
     // The photo in the thumbnail renderer's texture; only read and written inside the chain, so no re-decode
     // while the same photo is edited again and again
     private volatile String thumbnailPhotoId;
+    // As-shot white balance of the photo in the thumbnail texture, null if it has none
+    private volatile AsShotWhiteBalance.AsShot thumbnailAsShot;
 
     public EditingManager(TransactionRunner catalogTx, EditStateDao editStateDao, MetadataDao metadataDao, PhotoManager photoManager, ViewportRenderer viewportRenderer, ThumbnailRenderer thumbnailRenderer, ExecutorService cpuPool, ThumbnailService thumbnailService, LibrawService librawService) throws ExecutionException, InterruptedException {
         this.catalogTx = catalogTx;
@@ -147,7 +154,7 @@ public class EditingManager implements AutoCloseable {
         if (editState == null) {
             return;
         }
-        param.write(editState, value);
+        write(editState, param, value);
         viewportRenderer.requestRender(effective(editState));
     }
 
@@ -159,7 +166,29 @@ public class EditingManager implements AutoCloseable {
         if (editState == null) {
             return;
         }
+        write(editState, param, value);
+        applySettings(photoManager.selectedPhoto().get());
+    }
+
+    /**
+     * A moved temperature / tint slider turns the preset into CUSTOM (or back to AS_SHOT at the camera's values).
+     */
+    private void write(EditState editState, GradeParam param, float value) {
         param.write(editState, value);
+        if (param.isWhiteBalance()) {
+            editState.updateWhiteBalanceType();
+        }
+    }
+
+    /**
+     * White balance preset picked: sets the temperature / tint it stands for, saved like a slider commit.
+     */
+    public void setWhiteBalance(WhiteBalanceType type) {
+        EditState editState = currentEditState.get();
+        if (editState == null || type == editState.getWhiteBalance()) {
+            return;
+        }
+        editState.applyWhiteBalance(type);
         applySettings(photoManager.selectedPhoto().get());
     }
 
@@ -213,6 +242,10 @@ public class EditingManager implements AutoCloseable {
                 MemoryUtil.memFree(decoded.data());
                 return CompletableFuture.completedFuture(null);
             }
+            AsShotWhiteBalance.AsShot asShot = asShotOf(decoded);
+            if (asShot != null) {
+                Platform.runLater(() -> applyAsShot(photo, asShot));
+            }
             return viewportRenderer.show(decoded)
                     .whenComplete((v, ex) -> MemoryUtil.memFree(decoded.data()))
                     .thenRun(() -> Platform.runLater(() -> {
@@ -235,6 +268,47 @@ public class EditingManager implements AutoCloseable {
         });
     }
 
+    /**
+     * The camera's white balance, known once the RAW is decoded: stored in the edit (and saved), and with AS_SHOT the
+     * temperature / tint sliders move to it. The image itself is already decoded with it, so nothing visible changes.
+     */
+    private void applyAsShot(PhotoEntry photo, AsShotWhiteBalance.AsShot asShot) {
+        EditState editState = currentEditState.get();
+        if (photo != currentPhotoEntry.get() || editState == null) {
+            return;
+        }
+        if (editState.getAsShotTemperature() == asShot.temperature() && editState.getAsShotTint() == asShot.tint()) {
+            return;
+        }
+        EditState updated = new EditState(editState.getPhotoId(), editState);
+        updated.applyAsShot(asShot.temperature(), asShot.tint());
+        // a new object: the panel listens to the property and shows the new slider values
+        currentEditState.set(updated);
+        viewportRenderer.requestRender(effective(updated));
+        saveEditState(new EditState(updated.getPhotoId(), updated));
+    }
+
+    private static AsShotWhiteBalance.AsShot asShotOf(LibrawService.DecodedImage decoded) {
+        LibrawService.WhiteBalanceMultipliers multipliers = decoded.multipliers();
+        if (multipliers == null) {
+            return null;
+        }
+        return AsShotWhiteBalance.estimate(multipliers.asShot(), multipliers.daylight()).orElse(null);
+    }
+
+    /**
+     * The edit with this photo's as-shot white balance filled in, a copy if anything changes.
+     */
+    private static EditState withAsShot(EditState editState, AsShotWhiteBalance.AsShot asShot) {
+        if (asShot == null || (editState.getAsShotTemperature() == asShot.temperature()
+                && editState.getAsShotTint() == asShot.tint())) {
+            return editState;
+        }
+        EditState copy = new EditState(editState.getPhotoId(), editState);
+        copy.applyAsShot(asShot.temperature(), asShot.tint());
+        return copy;
+    }
+
     public void pasteSettings() {
         if (copiedEditState.get() == null) {
             return;
@@ -247,15 +321,17 @@ public class EditingManager implements AutoCloseable {
         if (currentEditState.get() != null) {
             String photoId = currentEditState.get().getPhotoId();
             EditState pastedEditState = new EditState(photoId, copiedEditState.get());
+            pastedEditState.applyAsShot(currentEditState.get().getAsShotTemperature(), currentEditState.get().getAsShotTint());
             currentEditState.set(pastedEditState);
             applySettings(currentPhotoEntry.get());
         }
 
         for (PhotoEntry entry : copyWithoutSelected) {
             EditState snapshot = new EditState(entry.getId(), copied);
+            snapshot.applyAsShot(0.0f, 0.0f);
 
             saveEditState(snapshot);
-            boolean edited = !snapshot.equals(new EditState(entry.getId()));
+            boolean edited = !snapshot.equals(snapshot.defaults());
             photoManager.updateIsEdited(entry, edited);
             updateThumbnail(entry, snapshot, false);
         }
@@ -268,7 +344,7 @@ public class EditingManager implements AutoCloseable {
         if (currentEditState.get() == null) {
             return;
         }
-        currentEditState.set(new EditState(currentEditState.get().getPhotoId()));
+        currentEditState.set(currentEditState.get().defaults());
         if (photoManager.selectedPhoto().get() != null) {
             applySettings(photoManager.selectedPhoto().get());
         }
@@ -282,7 +358,7 @@ public class EditingManager implements AutoCloseable {
         EditState snapshot = new EditState(currentEditState.get().getPhotoId(), currentEditState.get());
 
         saveEditState(snapshot);
-        boolean edited = !snapshot.equals(new EditState(photoEntry.getId()));
+        boolean edited = !snapshot.equals(snapshot.defaults());
         photoManager.updateIsEdited(photoEntry, edited);
         viewportRenderer.requestRender(effective(snapshot));
         updateThumbnail(photoEntry, snapshot, true);
@@ -341,12 +417,16 @@ public class EditingManager implements AutoCloseable {
         CompletableFuture<Void> loaded = photoEntry.getId().equals(thumbnailPhotoId)
                 ? CompletableFuture.completedFuture(null)
                 : CompletableFuture.supplyAsync(() -> decodeForThumbnail(photoEntry), cpuPool)
-                .thenCompose(decoded -> thumbnailRenderer.load(decoded)
-                        .whenComplete((v, ex) -> MemoryUtil.memFree(decoded.data())))
+                .thenCompose(decoded -> {
+                    thumbnailAsShot = asShotOf(decoded);
+                    return thumbnailRenderer.load(decoded)
+                            .whenComplete((v, ex) -> MemoryUtil.memFree(decoded.data()));
+                })
                 .thenRun(() -> thumbnailPhotoId = photoEntry.getId());
 
         return loaded
-                .thenCompose(v -> thumbnailRenderer.render(editState))
+                // not saved here: a queued job's edit can be older than what is in the database by now
+                .thenCompose(v -> thumbnailRenderer.render(withAsShot(editState, thumbnailAsShot)))
                 .thenCompose(pixels -> pixels
                         .map(p -> thumbnailService.putPixels(photoEntry.getId(), p.bgra(), p.width(), p.height()).thenApply(v -> true))
                         .orElseGet(() -> CompletableFuture.completedFuture(false)))
@@ -387,12 +467,13 @@ public class EditingManager implements AutoCloseable {
      */
     private EditState effective(EditState editState) {
         if (showOriginal.get()) {
-            return new EditState(editState.getPhotoId());
+            return editState.defaults();
         }
+        EditState defaults = editState.defaults();
         EditState copy = new EditState(editState.getPhotoId(), editState);
         for (GradeParam param : GradeParam.values()) {
-            if (bypassed.contains(param.getGroup().getSection())) {
-                param.write(copy, param.getDefVal());
+            if (bypassed.contains(param.getSection())) {
+                param.write(copy, param.read(defaults));
             }
         }
         return copy;
@@ -453,6 +534,10 @@ public class EditingManager implements AutoCloseable {
         }
     }
 
+    public CompletableFuture<Optional<PhotoMetadata>> loadMetadata(PhotoEntry photo) {
+        return catalogTx.read(c -> metadataDao.findByPhotoId(photo.getId()));
+    }
+
     public void autoWhiteBalance(ViewportNavigator.UV uv) {
         // TODO
     }
@@ -461,7 +546,7 @@ public class EditingManager implements AutoCloseable {
         viewportRenderer.resize(w, h);
     }
 
-    public void setView(hu.elte.ik.thesis.cinegrade.javafx.ui.input.ViewportNavigator.ViewTransform view) {
+    public void setView(ViewportNavigator.ViewTransform view) {
         viewportRenderer.requestView(view);
     }
 
@@ -477,5 +562,10 @@ public class EditingManager implements AutoCloseable {
         }
 
         logger.debug("{} Executor was succesfully shutdown!", decoderThread.getClass().getName());
+    }
+
+    public void setHistogramService(HistogramService histogramService) {
+        this.histogramService = histogramService;
+        viewportRenderer.setHistogramDraw(histogramService::drawHistogram);
     }
 }

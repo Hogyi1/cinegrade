@@ -17,35 +17,6 @@
 <VBox fx:id="editPanelRoot" fx:controller="hu.elte.ik.thesis.cinegrade.javafx.ui.editing.DevelopEditPanelController" prefWidth="350.0" minWidth="330.0" maxWidth="380.0"
       styleClass="sidebar-panel-right"
       xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1">
-    <fx:define>
-        <!-- Tone curve body, put into an EditPane by the controller -->
-        <VBox fx:id="curveContent" spacing="10.0">
-            <children>
-                <!-- Channel Selector -->
-                <HBox alignment="CENTER" spacing="6.0">
-                    <children>
-                        <ToggleButton fx:id="curveRgbBtn" mnemonicParsing="false" selected="true" styleClass="curve-channel-btn" text="RGB"/>
-                        <ToggleButton fx:id="curveRedBtn" mnemonicParsing="false" styleClass="curve-channel-btn" text="Red"/>
-                        <ToggleButton fx:id="curveGreenBtn" mnemonicParsing="false" styleClass="curve-channel-btn" text="Green"/>
-                        <ToggleButton fx:id="curveBlueBtn" mnemonicParsing="false" styleClass="curve-channel-btn" text="Blue"/>
-                    </children>
-                </HBox>
-
-                <!-- Curve Canvas Container -->
-                <VBox styleClass="curve-canvas-box">
-                    <children>
-                        <Canvas fx:id="curveCanvas" height="190.0" width="298.0"/>
-                    </children>
-                </VBox>
-
-                <HBox alignment="CENTER_RIGHT" spacing="8.0">
-                    <children>
-                        <Button fx:id="resetCurveBtn" mnemonicParsing="false" styleClass="hud-btn" text="Reset Curve"/>
-                    </children>
-                </HBox>
-            </children>
-        </VBox>
-    </fx:define>
     <children>
         <!-- Histogram Section (Always visible at top of sidebar) -->
         <VBox styleClass="histogram-container">
@@ -54,24 +25,39 @@
                     <children>
                         <Label styleClass="clipping-badge-shadow" text="◀ SHADOWS"/>
                         <Region HBox.hgrow="ALWAYS"/>
-                        <Label fx:id="cameraExifLabel" styleClass="histogram-exif" text="ISO 400 • 50mm • ƒ/2.8 • 1/250s"/>
-                        <Region HBox.hgrow="ALWAYS"/>
                         <Label styleClass="clipping-badge-highlight" text="HIGHLIGHTS ▶"/>
                     </children>
                 </HBox>
-                <StackPane alignment="CENTER" styleClass="histogram-canvas">
+                <!-- The canvas is unmanaged and bound to this holder by the controller: it follows the panel width -->
+                <StackPane fx:id="histogramHolder" minHeight="110.0" prefHeight="110.0" maxHeight="110.0" minWidth="0.0" styleClass="histogram-canvas">
                     <children>
-                        <Canvas fx:id="histogramCanvas" height="110.0" width="318.0"/>
+                        <Canvas fx:id="histogramCanvas" managed="false"/>
                     </children>
                 </StackPane>
+                <Label fx:id="cameraExifLabel" alignment="CENTER" maxWidth="Infinity" styleClass="histogram-exif"/>
             </children>
         </VBox>
 
-        <!-- EditPanes (Basic, Tone Curve, Color Wheels, Detail & Effects), built from GradeParam by the controller -->
-        <ScrollPane fitToWidth="true" hbarPolicy="NEVER" styleClass="sidebar-scroll" VBox.vgrow="ALWAYS">
+        <!-- Edit / Metadata switch -->
+        <HBox alignment="CENTER" spacing="6.0" styleClass="panel-tab-bar">
+            <children>
+                <ToggleButton fx:id="editTabBtn" mnemonicParsing="false" styleClass="curve-channel-btn" text="Edit"/>
+                <ToggleButton fx:id="metadataTabBtn" mnemonicParsing="false" styleClass="curve-channel-btn" text="Metadata"/>
+            </children>
+        </HBox>
+
+        <!-- Edit tab: the EditPanes (Basic, Color Mixer, Detail & Effects), added by the controller -->
+        <ScrollPane fx:id="editTab" fitToWidth="true" hbarPolicy="NEVER" styleClass="sidebar-scroll" VBox.vgrow="ALWAYS">
             <content>
                 <!-- minWidth 0: fitToWidth then always sizes it to the viewport, a wider child can no longer scroll it sideways -->
                 <VBox fx:id="panelsContainer" minWidth="0.0" spacing="1.0"/>
+            </content>
+        </ScrollPane>
+
+        <!-- Metadata tab: one name | value row per field, added by the controller -->
+        <ScrollPane fx:id="metadataTab" fitToWidth="true" hbarPolicy="NEVER" styleClass="sidebar-scroll" VBox.vgrow="ALWAYS">
+            <content>
+                <VBox fx:id="metadataTable" minWidth="0.0" styleClass="metadata-table"/>
             </content>
         </ScrollPane>
     </children>
