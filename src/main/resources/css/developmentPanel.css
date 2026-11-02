@@ -317,6 +317,41 @@
     -fx-text-fill: -clr-text-primary;
 }
 
+/* Edit / Metadata switch below the histogram */
+.panel-tab-bar {
+    -fx-background-color: -clr-dark;
+    -fx-border-color: -clr-border-subtle;
+    -fx-border-width: 0 0 1px 0;
+    -fx-padding: 8px 14px;
+}
+
+/* Metadata tab: name | value rows */
+.metadata-table {
+    -fx-padding: 12px 14px;
+    -fx-spacing: 8px;
+}
+
+.metadata-row {
+    -fx-spacing: 10px;
+}
+
+.metadata-name {
+    -fx-text-fill: -clr-text-muted;
+    -fx-font-size: 11px;
+    -fx-min-width: 90px;
+    -fx-pref-width: 90px;
+}
+
+.metadata-value {
+    -fx-text-fill: -clr-text-primary;
+    -fx-font-size: 11px;
+}
+
+/* Color mixer: Hue / Saturation / Luminance tabs above the 8 sliders */
+.mixer-tab-bar {
+    -fx-padding: 4px 0 8px 0;
+}
+
 /* --------------------------------------------------------------------------
    Color Wheels Component Placeholder
    -------------------------------------------------------------------------- */

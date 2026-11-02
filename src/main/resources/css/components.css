@@ -547,6 +547,7 @@
     -fx-font-size: 11.5px;
     -fx-min-width: 76px;
     -fx-pref-width: 76px;
+    -fx-max-width: 76px;
 }
 
 .edit-slider .slider {
@@ -597,5 +598,184 @@
 .edit-slider-unit {
     -fx-text-fill: -clr-text-muted;
     -fx-font-size: 10.5px;
+    /* fixed, also when empty: the same slider width in every row */
     -fx-min-width: 18px;
+    -fx-pref-width: 18px;
+    -fx-max-width: 18px;
+}
+
+/* --------------------------------------------------------------------------
+   White balance preset box (first row of the White Balance group)
+   -------------------------------------------------------------------------- */
+.white-balance-box {
+    -fx-background-color: -clr-surface-input;
+    -fx-background-radius: 4px;
+    -fx-border-color: -clr-border-subtle;
+    -fx-border-radius: 4px;
+    -fx-border-width: 1px;
+    -fx-padding: 0 6px;
+    -fx-pref-height: 22px;
+    -fx-cursor: hand;
+}
+
+.white-balance-box:hover, .white-balance-box:focused {
+    -fx-border-color: -clr-blue;
+}
+
+.white-balance-box .list-cell {
+    -fx-background-color: transparent;
+    -fx-text-fill: -clr-text-primary;
+    -fx-font-size: 11.5px;
+    -fx-padding: 0;
+}
+
+.white-balance-box .arrow-button {
+    -fx-background-color: transparent;
+    -fx-padding: 0 0 0 6px;
+}
+
+.white-balance-box .arrow {
+    -fx-background-color: -clr-text-secondary;
+}
+
+.white-balance-box .combo-box-popup .list-view {
+    -fx-background-color: -clr-surface-input;
+    -fx-background-radius: 6px;
+    -fx-border-color: -clr-border;
+    -fx-border-radius: 6px;
+    -fx-padding: 4px;
+}
+
+.white-balance-box .combo-box-popup .list-cell {
+    -fx-padding: 5px 10px;
+    -fx-background-radius: 4px;
+}
+
+.white-balance-box .combo-box-popup .list-cell:hover {
+    -fx-background-color: -clr-darkgrey;
+}
+
+.white-balance-box .combo-box-popup .list-cell:selected {
+    -fx-background-color: -clr-blue;
+}
+
+/* --------------------------------------------------------------------------
+   Colored edit slider tracks: the track shows what moving the slider does
+   (EditSlider adds param-<name> to its row)
+   -------------------------------------------------------------------------- */
+.edit-slider.param-temperature .slider .track {
+    -fx-background-color: linear-gradient(to right, -clr-wb-cool, -clr-wb-neutral, -clr-wb-warm);
+    -fx-pref-height: 4px;
+}
+.edit-slider.param-temperature-offset .slider .track {
+    -fx-background-color: linear-gradient(to right, -clr-wb-cool, -clr-wb-neutral, -clr-wb-warm);
+    -fx-pref-height: 4px;
+}
+.edit-slider.param-tint .slider .track {
+    -fx-background-color: linear-gradient(to right, -clr-tint-green, -clr-wb-neutral, -clr-tint-magenta);
+    -fx-pref-height: 4px;
+}
+/* red */
+.edit-slider.param-hue-red .slider .track {
+    -fx-background-color: linear-gradient(to right, -clr-hue-magenta, -clr-hue-red, -clr-hue-orange);
+    -fx-pref-height: 4px;
+}
+.edit-slider.param-sat-red .slider .track {
+    -fx-background-color: linear-gradient(to right, -clr-hue-grey, -clr-hue-red);
+    -fx-pref-height: 4px;
+}
+.edit-slider.param-lum-red .slider .track {
+    -fx-background-color: linear-gradient(to right, derive(-clr-hue-red, -60%), -clr-hue-red, derive(-clr-hue-red, 60%));
+    -fx-pref-height: 4px;
+}
+/* orange */
+.edit-slider.param-hue-orange .slider .track {
+    -fx-background-color: linear-gradient(to right, -clr-hue-red, -clr-hue-orange, -clr-hue-yellow);
+    -fx-pref-height: 4px;
+}
+.edit-slider.param-sat-orange .slider .track {
+    -fx-background-color: linear-gradient(to right, -clr-hue-grey, -clr-hue-orange);
+    -fx-pref-height: 4px;
+}
+.edit-slider.param-lum-orange .slider .track {
+    -fx-background-color: linear-gradient(to right, derive(-clr-hue-orange, -60%), -clr-hue-orange, derive(-clr-hue-orange, 60%));
+    -fx-pref-height: 4px;
+}
+/* yellow */
+.edit-slider.param-hue-yellow .slider .track {
+    -fx-background-color: linear-gradient(to right, -clr-hue-orange, -clr-hue-yellow, -clr-hue-green);
+    -fx-pref-height: 4px;
+}
+.edit-slider.param-sat-yellow .slider .track {
+    -fx-background-color: linear-gradient(to right, -clr-hue-grey, -clr-hue-yellow);
+    -fx-pref-height: 4px;
+}
+.edit-slider.param-lum-yellow .slider .track {
+    -fx-background-color: linear-gradient(to right, derive(-clr-hue-yellow, -60%), -clr-hue-yellow, derive(-clr-hue-yellow, 60%));
+    -fx-pref-height: 4px;
+}
+/* green */
+.edit-slider.param-hue-green .slider .track {
+    -fx-background-color: linear-gradient(to right, -clr-hue-yellow, -clr-hue-green, -clr-hue-aqua);
+    -fx-pref-height: 4px;
+}
+.edit-slider.param-sat-green .slider .track {
+    -fx-background-color: linear-gradient(to right, -clr-hue-grey, -clr-hue-green);
+    -fx-pref-height: 4px;
+}
+.edit-slider.param-lum-green .slider .track {
+    -fx-background-color: linear-gradient(to right, derive(-clr-hue-green, -60%), -clr-hue-green, derive(-clr-hue-green, 60%));
+    -fx-pref-height: 4px;
+}
+/* aqua */
+.edit-slider.param-hue-aqua .slider .track {
+    -fx-background-color: linear-gradient(to right, -clr-hue-green, -clr-hue-aqua, -clr-hue-blue);
+    -fx-pref-height: 4px;
+}
+.edit-slider.param-sat-aqua .slider .track {
+    -fx-background-color: linear-gradient(to right, -clr-hue-grey, -clr-hue-aqua);
+    -fx-pref-height: 4px;
+}
+.edit-slider.param-lum-aqua .slider .track {
+    -fx-background-color: linear-gradient(to right, derive(-clr-hue-aqua, -60%), -clr-hue-aqua, derive(-clr-hue-aqua, 60%));
+    -fx-pref-height: 4px;
+}
+/* blue */
+.edit-slider.param-hue-blue .slider .track {
+    -fx-background-color: linear-gradient(to right, -clr-hue-aqua, -clr-hue-blue, -clr-hue-purple);
+    -fx-pref-height: 4px;
+}
+.edit-slider.param-sat-blue .slider .track {
+    -fx-background-color: linear-gradient(to right, -clr-hue-grey, -clr-hue-blue);
+    -fx-pref-height: 4px;
+}
+.edit-slider.param-lum-blue .slider .track {
+    -fx-background-color: linear-gradient(to right, derive(-clr-hue-blue, -60%), -clr-hue-blue, derive(-clr-hue-blue, 60%));
+    -fx-pref-height: 4px;
+}
+/* purple */
+.edit-slider.param-hue-purple .slider .track {
+    -fx-background-color: linear-gradient(to right, -clr-hue-blue, -clr-hue-purple, -clr-hue-magenta);
+    -fx-pref-height: 4px;
+}
+.edit-slider.param-sat-purple .slider .track {
+    -fx-background-color: linear-gradient(to right, -clr-hue-grey, -clr-hue-purple);
+    -fx-pref-height: 4px;
+}
+.edit-slider.param-lum-purple .slider .track {
+    -fx-background-color: linear-gradient(to right, derive(-clr-hue-purple, -60%), -clr-hue-purple, derive(-clr-hue-purple, 60%));
+    -fx-pref-height: 4px;
+}
+/* magenta */
+.edit-slider.param-hue-magenta .slider .track {
+    -fx-background-color: linear-gradient(to right, -clr-hue-purple, -clr-hue-magenta, -clr-hue-red);
+    -fx-pref-height: 4px;
+}
+.edit-slider.param-sat-magenta .slider .track {
+    -fx-background-color: linear-gradient(to right, -clr-hue-grey, -clr-hue-magenta);
+    -fx-pref-height: 4px;
+}
+.edit-slider.param-lum-magenta .slider .track {
+    -fx-background-color: linear-gradient(to right, derive(-clr-hue-magenta, -60%), -clr-hue-magenta, derive(-clr-hue-magenta, 60%));
+    -fx-pref-height: 4px;
 }

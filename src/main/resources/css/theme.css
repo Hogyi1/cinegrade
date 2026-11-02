@@ -47,6 +47,22 @@
     -clr-text-secondary: #AAB8C2;
     -clr-text-muted: #848484;
     -clr-text-dim: #5e5e5e;
+
+    /* Edit slider tracks: what the slider does to the photo, the same in both themes */
+    -clr-wb-cool: #4a8ae8;
+    -clr-wb-neutral: #d8d8d8;
+    -clr-wb-warm: #e8b84a;
+    -clr-tint-green: #5cc05c;
+    -clr-tint-magenta: #d05cc8;
+    -clr-hue-grey: #7a7a7a;
+    -clr-hue-red: #e04848;
+    -clr-hue-orange: #e8873a;
+    -clr-hue-yellow: #e8d23a;
+    -clr-hue-green: #4cbf4c;
+    -clr-hue-aqua: #3ac8c8;
+    -clr-hue-blue: #3a6be8;
+    -clr-hue-purple: #8a4ae8;
+    -clr-hue-magenta: #d84ac0;
 }
 
 .theme-dark {
