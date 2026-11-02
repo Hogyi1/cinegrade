@@ -91,7 +91,9 @@ public class LibrawService implements AutoCloseable {
             libRaw.libraw_set_demosaic(handler, LibRawOptions.Demosaic.PPG.value);
             libRaw.libraw_set_output_color(handler, LibRawOptions.OutputColor.SRGB.value);
             libRaw.libraw_set_no_auto_bright(handler, LibRawOptions.Toggle.ON.value);
-            libRaw.libraw_set_use_camera_wb(handler, LibRawOptions.Toggle.OFF.value);
+            libRaw.libraw_set_use_camera_wb(handler, LibRawOptions.Toggle.ON.value);
+            libRaw.libraw_set_gamma(handler, 0, 1.0f);
+            libRaw.libraw_set_gamma(handler, 1, 1.0f);
 
             libRaw.libraw_set_user_flip(handler, LibRawOptions.Flip.FROM_FILE.value);
 
@@ -100,6 +102,14 @@ public class LibrawService implements AutoCloseable {
                 logger.error("Failed to open raw file (code {}): {}", err, rawFile.getAbsolutePath());
                 return Optional.empty();
             }
+
+            float[] asShot = new float[3];
+            float[] daylight = new float[3];
+            for (int i = 0; i < 3; i++) {
+                asShot[i] = libRaw.libraw_get_cam_mul(handler, i);
+                daylight[i] = libRaw.libraw_get_pre_mul(handler, i);
+            }
+            WhiteBalanceMultipliers multipliers = new WhiteBalanceMultipliers(asShot, daylight);
 
             err = libRaw.libraw_unpack(handler);
             if (err != 0) {
@@ -129,7 +139,7 @@ public class LibrawService implements AutoCloseable {
                 ByteBuffer pixels = image.copyPixelsNative();
                 logger.debug("{}x{} decoded, {} bits, {} bytes", (int) image.width, (int) image.height,
                         (int) image.bits, image.data_size);
-                return Optional.of(new DecodedImage(pixels, image.width, image.height, image.bits));
+                return Optional.of(new DecodedImage(pixels, image.width, image.height, image.bits, multipliers));
             } finally {
                 libRaw.libraw_dcraw_clear_mem(image.getPointer());
             }
@@ -148,11 +158,33 @@ public class LibrawService implements AutoCloseable {
         }
     }
 
+    /**
+     * A raw thumbnail image.
+     *
+     * @param data    the thumbnail data
+     * @param type    the thumbnail type
+     * @param width   the thumbnail width
+     * @param height  the thumbnail height
+     * @param colors  the number of color channels
+     * @param bits    the number of bits per channel
+     */
     public record RawThumbnail(byte[] data, int type, int width, int height, int colors, int bits) { }
     /**
-     * A decoded image ready for upload: 16 bits = RGB16 (RAW), 8 bits = RGBA8 (JPEG/PNG).
+     * A decoded image ready for upload: 16 bits = linear RGB16 (RAW), 8 bits = sRGB RGBA8 (JPEG/PNG).
      *
-     * @param data native pixel memory, owned by whoever holds the record; free it with {@code MemoryUtil.memFree}
+     * @param data        native pixel memory, owned by whoever holds the record; free it with {@code MemoryUtil.memFree}
+     * @param multipliers white balance of a RAW, null for other images
      */
-    public record DecodedImage(ByteBuffer data, int width, int height, int bits) { }
+    public record DecodedImage(ByteBuffer data, int width, int height, int bits, WhiteBalanceMultipliers multipliers) {
+        public DecodedImage(ByteBuffer data, int width, int height, int bits) {
+            this(data, width, height, bits, null);
+        }
+    }
+    /**
+     * LibRaw's white balance multipliers, R, G, B.
+     *
+     * @param asShot   cam_mul, what the camera recorded
+     * @param daylight pre_mul, daylight for this camera
+     */
+    public record WhiteBalanceMultipliers(float[] asShot, float[] daylight) { }
 }

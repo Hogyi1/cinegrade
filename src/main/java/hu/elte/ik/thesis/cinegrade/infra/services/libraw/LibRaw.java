@@ -81,6 +81,7 @@ public interface LibRaw extends Library {
     //void libraw_set_output_rotate(Pointer lr, int value);
 
     // void libraw_set_user_mul(Pointer lr, int value, float value2);
+    void libraw_set_gamma(Pointer lr, int index, float value);
 
     // cancellable methods callback, binds to libraw memory of cancel
     interface ProgressCallback extends Callback {
@@ -95,4 +96,8 @@ public interface LibRaw extends Library {
     // metadata - deprecated
     int libraw_get_iwidth(Pointer lr);
     int libraw_get_iheight(Pointer lr);
+    // White balance multipliers per channel (0 R, 1 G, 2 B, 3 second G), valid after libraw_open_file
+    // cam_mul: what the camera recorded "as shot", pre_mul: daylight
+    float libraw_get_cam_mul(Pointer lr, int index);
+    float libraw_get_pre_mul(Pointer lr, int index);
 }
