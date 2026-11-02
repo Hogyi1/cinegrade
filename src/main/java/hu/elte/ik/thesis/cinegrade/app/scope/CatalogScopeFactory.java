@@ -2,7 +2,7 @@ package hu.elte.ik.thesis.cinegrade.app.scope;
 
 import hu.elte.ik.thesis.cinegrade.app.managers.concurrency.ThreadPoolManager;
 import hu.elte.ik.thesis.cinegrade.app.managers.editing.EditingManager;
-import hu.elte.ik.thesis.cinegrade.app.managers.editing.ExportManager;
+import hu.elte.ik.thesis.cinegrade.app.managers.export.ExportManager;
 import hu.elte.ik.thesis.cinegrade.app.managers.imports.ImportManager;
 import hu.elte.ik.thesis.cinegrade.app.managers.imports.StagingArea;
 import hu.elte.ik.thesis.cinegrade.app.managers.photos.PhotoManager;
@@ -104,7 +104,7 @@ public class CatalogScopeFactory {
                     thumbnailService,
                     librawService));
 
-            ExportManager exportManager = resources.push(new ExportManager(db.getConnection(), catalog));
+            ExportManager exportManager = resources.push(new ExportManager());
 
             return new CatalogScope(resources, catalog, thumbnailService, catalogService, stagingArea, importManager, editingManager, exportManager, photoManager, photoLibrary);
         } catch (Exception e) {

@@ -1,11 +1,11 @@
-package hu.elte.ik.thesis.cinegrade.app.managers.editing;
+package hu.elte.ik.thesis.cinegrade.app.managers.export;
 
 import hu.elte.ik.thesis.cinegrade.domain.catalog.Catalog;
 
 import java.sql.Connection;
 
 public class ExportManager implements AutoCloseable {
-    public ExportManager(Connection connection, Catalog catalog) {
+    public ExportManager() {
     }
 
     @Override

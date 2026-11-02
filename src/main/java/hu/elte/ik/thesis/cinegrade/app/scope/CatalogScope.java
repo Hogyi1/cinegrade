@@ -1,7 +1,7 @@
 package hu.elte.ik.thesis.cinegrade.app.scope;
 
 import hu.elte.ik.thesis.cinegrade.app.managers.editing.EditingManager;
-import hu.elte.ik.thesis.cinegrade.app.managers.editing.ExportManager;
+import hu.elte.ik.thesis.cinegrade.app.managers.export.ExportManager;
 import hu.elte.ik.thesis.cinegrade.app.managers.imports.ImportManager;
 import hu.elte.ik.thesis.cinegrade.app.managers.imports.StagingArea;
 import hu.elte.ik.thesis.cinegrade.app.managers.photos.PhotoManager;
