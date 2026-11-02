@@ -161,26 +161,20 @@ public class MetadataDao {
 
     /**
      * Maps the current row of the result set to a {@link PhotoMetadata}. A SQL {@code NULL} ISO or
-     * aperture becomes {@code null}.
+     * aperture becomes {@code 0}, the model's "unknown" value (see {@link #bind}).
      *
      * @param rs result set positioned on a row containing all {@link #COLUMNS}
      * @return the mapped metadata
      * @throws SQLException if a column cannot be read
      */
     private PhotoMetadata mapRowToMetadata(ResultSet rs) throws SQLException {
-        int isoVal = rs.getInt("iso");
-        Integer iso = rs.wasNull() ? null : isoVal;
-
-        double apertureVal = rs.getDouble("aperture");
-        Double aperture = rs.wasNull() ? null : apertureVal;
-
         return new PhotoMetadata(
                 rs.getString("photo_id"),
                 rs.getString("make"),
                 rs.getString("model"),
                 rs.getString("lens"),
-                iso,
-                aperture,
+                rs.getInt("iso"),
+                rs.getDouble("aperture"),
                 rs.getString("shutter_speed"),
                 rs.getString("focal_length"),
                 rs.getString("capture_date"),

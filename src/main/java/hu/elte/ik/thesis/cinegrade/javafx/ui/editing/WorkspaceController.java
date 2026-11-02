@@ -131,7 +131,7 @@ public class WorkspaceController {
             logger.info("Workspace panel {} loaded successfully", panel);
             return new CachedPanel(controller, root);
         } catch (Exception e) {
-            throw new CineGradeException(ErrorCode.UNKNOWN_ERROR, "Failed to load workspace panel: " + panel, e);
+            throw new CineGradeException(ErrorCode.UNKNOWN_ERROR, "Failed to load workspace panel: " + panel, e.getCause());
         }
     }
 
