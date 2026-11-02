@@ -1,6 +1,7 @@
 // [AI-GENERATED]
 package hu.elte.ik.thesis.cinegrade.domain.editing;
 
+import hu.elte.ik.thesis.cinegrade.domain.enums.WhiteBalanceType;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -14,6 +15,8 @@ public class EditState {
     // hue, sat, lum, padding: one std140 vec4 per color
     public transient static final int HSL_STRIDE = 4;
     public transient  static final int HSL_SIZE = HSL_STRIDE * HSL_COLORS;
+    // Neutral of photos without an as-shot white balance, the shader's fallback too
+    public static final float DAYLIGHT_KELVIN = 5500.0f;
     private String photoId;
     private float exposure = 0.0f;
     private float contrast = 0.0f;
@@ -21,10 +24,17 @@ public class EditState {
     private float shadows = 0.0f;
     private float whites = 0.0f;
     private float blacks = 0.0f;
-    private float temperature = 5500.0f;
+    private float temperature = DAYLIGHT_KELVIN;
     private float tint = 0.0f;
+    private float temperatureOffset = 0.0f;
+    private WhiteBalanceType whiteBalance = WhiteBalanceType.AS_SHOT;
+    private float asShotTemperature = 0.0f;
+    private float asShotTint = 0.0f;
     private float saturation = 0.0f;
     private float vibrance = 0.0f;
+    private float texture = 0.0f;
+    private float clarity = 0.0f;
+    private float dehaze = 0.0f;
     // Color mixer, per color: red_hue, red_sat, red_lum, pad, orange_hue, ... for
     // red, orange, yellow, green, aqua, blue, purple, magenta (same layout as hsl_* in fragment.frag)
     private float[] hsl = new float[HSL_SIZE];
@@ -69,13 +79,75 @@ public class EditState {
         this.blacks = editState.getBlacks();
         this.temperature = editState.getTemperature();
         this.tint = editState.getTint();
+        this.temperatureOffset = editState.getTemperatureOffset();
+        this.whiteBalance = editState.getWhiteBalance();
+        this.asShotTemperature = editState.getAsShotTemperature();
+        this.asShotTint = editState.getAsShotTint();
         this.saturation = editState.getSaturation();
         this.vibrance = editState.getVibrance();
+        this.texture = editState.getTexture();
+        this.clarity = editState.getClarity();
+        this.dehaze = editState.getDehaze();
         // a copy, the snapshot must not change with the live edit
         this.hsl = editState.getHsl().clone();
         this.lutPath = editState.getLutPath();
         this.curvesJson = editState.getCurvesJson();
         this.updatedAt = Instant.now();
+    }
+
+    /**
+     * The temperature the image is decoded with: the as-shot one of a RAW, daylight when unknown.
+     */
+    public float getNeutralTemperature() {
+        return asShotTemperature > 0.0f ? asShotTemperature : DAYLIGHT_KELVIN;
+    }
+
+    /**
+     * A fresh edit of the same photo: every setting at its default, white balance as shot.
+     */
+    public EditState defaults() {
+        EditState defaults = new EditState(photoId);
+        defaults.asShotTemperature = asShotTemperature;
+        defaults.asShotTint = asShotTint;
+        defaults.temperature = getNeutralTemperature();
+        defaults.tint = asShotTint;
+        return defaults;
+    }
+
+    /**
+     * Stores the camera's white balance (known once the RAW is decoded); with AS_SHOT the sliders follow it.
+     */
+    public void applyAsShot(float temperature, float tint) {
+        this.asShotTemperature = temperature;
+        this.asShotTint = tint;
+        if (whiteBalance == WhiteBalanceType.AS_SHOT) {
+            this.temperature = getNeutralTemperature();
+            this.tint = tint;
+        }
+    }
+
+    /**
+     * Sets the temperature / tint of a preset. CUSTOM keeps the current values.
+     */
+    public void applyWhiteBalance(WhiteBalanceType type) {
+        whiteBalance = type;
+        if (type == WhiteBalanceType.AS_SHOT) {
+            temperature = getNeutralTemperature();
+            tint = asShotTint;
+            temperatureOffset = 0.0f;
+        } else if (type.hasFixedValues()) {
+            temperature = type.getTemperature();
+            tint = type.getTint();
+            temperatureOffset = 0.0f;
+        }
+    }
+
+    /**
+     * After a temperature / tint slider moved: AS_SHOT if it is back at the camera's values, CUSTOM otherwise.
+     */
+    public void updateWhiteBalanceType() {
+        boolean asShot = temperature == getNeutralTemperature() && tint == asShotTint && temperatureOffset == 0.0f;
+        whiteBalance = asShot ? WhiteBalanceType.AS_SHOT : WhiteBalanceType.CUSTOM;
     }
 
     @Override
@@ -91,8 +163,15 @@ public class EditState {
                 && Float.compare(that.blacks, blacks) == 0
                 && Float.compare(that.temperature, temperature) == 0
                 && Float.compare(that.tint, tint) == 0
+                && Float.compare(that.temperatureOffset, temperatureOffset) == 0
+                && whiteBalance == that.whiteBalance
+                && Float.compare(that.asShotTemperature, asShotTemperature) == 0
+                && Float.compare(that.asShotTint, asShotTint) == 0
                 && Float.compare(that.saturation, saturation) == 0
                 && Float.compare(that.vibrance, vibrance) == 0
+                && Float.compare(that.texture, texture) == 0
+                && Float.compare(that.clarity, clarity) == 0
+                && Float.compare(that.dehaze, dehaze) == 0
                 && java.util.Arrays.equals(hsl, that.hsl)
                 && Objects.equals(lutPath, that.lutPath)
                 && Objects.equals(curvesJson, that.curvesJson);
@@ -109,8 +188,15 @@ public class EditState {
                 blacks,
                 temperature,
                 tint,
+                temperatureOffset,
+                whiteBalance,
+                asShotTemperature,
+                asShotTint,
                 saturation,
                 vibrance,
+                texture,
+                clarity,
+                dehaze,
                 lutPath,
                 curvesJson
         );
