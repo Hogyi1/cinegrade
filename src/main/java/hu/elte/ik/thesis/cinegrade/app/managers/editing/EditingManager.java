@@ -1,39 +1,29 @@
 package hu.elte.ik.thesis.cinegrade.app.managers.editing;
 
+import hu.elte.ik.thesis.cinegrade.app.managers.catalog.HistoryManager;
 import hu.elte.ik.thesis.cinegrade.app.managers.photos.PhotoManager;
 import hu.elte.ik.thesis.cinegrade.domain.editing.EditState;
 import hu.elte.ik.thesis.cinegrade.domain.editing.PhotoEntry;
 import hu.elte.ik.thesis.cinegrade.domain.editing.PhotoMetadata;
-import hu.elte.ik.thesis.cinegrade.domain.enums.ErrorCode;
 import hu.elte.ik.thesis.cinegrade.domain.enums.WhiteBalanceType;
-import hu.elte.ik.thesis.cinegrade.domain.exceptions.CineGradeException;
+import hu.elte.ik.thesis.cinegrade.domain.error.ErrorHandler;
 import hu.elte.ik.thesis.cinegrade.engine.GradeParam;
-import hu.elte.ik.thesis.cinegrade.engine.grade.AsShotWhiteBalance;
-import hu.elte.ik.thesis.cinegrade.engine.renderer.ThumbnailRenderer;
+import hu.elte.ik.thesis.cinegrade.engine.grade.WhiteBalancer;
 import hu.elte.ik.thesis.cinegrade.engine.renderer.ViewportRenderer;
 import hu.elte.ik.thesis.cinegrade.infra.database.TransactionRunner;
 import hu.elte.ik.thesis.cinegrade.infra.database.dao.catalog.EditStateDao;
 import hu.elte.ik.thesis.cinegrade.infra.database.dao.catalog.MetadataDao;
-import hu.elte.ik.thesis.cinegrade.infra.services.libraw.LibrawService;
-import hu.elte.ik.thesis.cinegrade.infra.services.storage.ThumbnailService;
+import hu.elte.ik.thesis.cinegrade.infra.services.libraw.PhotoDecoder;
 import hu.elte.ik.thesis.cinegrade.javafx.ui.input.ViewportNavigator;
 import hu.elte.ik.thesis.cinegrade.javafx.ui.presenters.HistogramService;
 import javafx.application.Platform;
-import javafx.beans.property.*;
-import javafx.scene.image.Image;
+import lombok.Getter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.lwjgl.system.MemoryUtil;
 
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.function.BooleanSupplier;
 
 public class EditingManager implements AutoCloseable {
 
@@ -43,114 +33,54 @@ public class EditingManager implements AutoCloseable {
     private final MetadataDao metadataDao;
     private final PhotoManager photoManager;
     private final ViewportRenderer viewportRenderer;
-    private final ThumbnailRenderer thumbnailRenderer;
-    private final ExecutorService cpuPool;
-    private final ThumbnailService thumbnailService;
-    private final LibrawService librawService;
-    private final ObjectProperty<EditState> currentEditState = new SimpleObjectProperty<>();
-    private final ObjectProperty<EditState> copiedEditState = new SimpleObjectProperty<>();
-    private final ObjectProperty<PhotoEntry> currentPhotoEntry = new SimpleObjectProperty<>();
-    private final ObjectProperty<Image> placeholder = new SimpleObjectProperty<>(null);
+    private final ThumbnailRefresher thumbnails;
+    @Getter
+    private final EditingStage viewModel;
+    private final PhotoDecoder viewportDecoder;
+    private final ExecutorService decoderThread = Executors.newSingleThreadExecutor();
     // Sections whose eye toggle is off: rendered with defaults, still saved with their values. FX thread only
     private final Set<GradeParam.Section> bypassed = EnumSet.noneOf(GradeParam.Section.class);
-    private final BooleanProperty loading = new SimpleBooleanProperty(false), showOriginal = new SimpleBooleanProperty(false);
-    private final ExecutorService decoderThread = Executors.newSingleThreadExecutor();
-    private final Map<String, EditState> thumbnailEdits = new HashMap<>();
-    private final Map<String, PhotoEntry> thumbnailPhotos = new HashMap<>();
-    private final Deque<String> thumbnailQueue = new ArrayDeque<>();
-    private boolean thumbnailRunning = false;
+    private EditState copiedEditState;
     private HistogramService histogramService;
+    @Getter
+    private final HistoryManager historyManager;
 
     // The photo the user wants now; a decode for any other photo is stale and gets skipped / cancelled
     private volatile String requestedPhotoId;
-    // Thumbnail jobs run one after another (decode → upload → render → store), each chained on the previous one.
+    // The edit as last saved: preview changes the live one while a slider moves, so this is the "before" of a step.
+    // Never changed, never made live. FX thread only
+    private EditState lastCommitted;
 
-    // The photo in the thumbnail renderer's texture; only read and written inside the chain, so no re-decode
-    // while the same photo is edited again and again
-    private volatile String thumbnailPhotoId;
-    // As-shot white balance of the photo in the thumbnail texture, null if it has none
-    private volatile AsShotWhiteBalance.AsShot thumbnailAsShot;
-
-    public EditingManager(TransactionRunner catalogTx, EditStateDao editStateDao, MetadataDao metadataDao, PhotoManager photoManager, ViewportRenderer viewportRenderer, ThumbnailRenderer thumbnailRenderer, ExecutorService cpuPool, ThumbnailService thumbnailService, LibrawService librawService) throws ExecutionException, InterruptedException {
+    public EditingManager(HistoryManager historyManager, TransactionRunner catalogTx, EditStateDao editStateDao, MetadataDao metadataDao, PhotoManager photoManager, ViewportRenderer viewportRenderer, ThumbnailRefresher thumbnailRefresher) throws ExecutionException, InterruptedException {
+        this.historyManager = historyManager;
         this.catalogTx = catalogTx;
         this.editStateDao = editStateDao;
         this.metadataDao = metadataDao;
         this.photoManager = photoManager;
         this.viewportRenderer = viewportRenderer;
-        this.thumbnailRenderer = thumbnailRenderer;
-        this.cpuPool = cpuPool;
-        this.thumbnailService = thumbnailService;
-        this.librawService = decoderThread.submit(LibrawService::new).get();
+        this.thumbnails = thumbnailRefresher;
+        this.viewModel = new EditingStage(viewportRenderer.frameProperty(), photoManager.selectedPhoto());
+        this.viewportDecoder = decoderThread.submit(PhotoDecoder::new).get();
         photoManager.selectedPhoto().addListener((obs, oldVal, newVal) -> changeEditState(newVal));
-        currentPhotoEntry.bind(photoManager.selectedPhoto());
-        showOriginal.addListener((obs, was, on) -> {
-            if (currentEditState.get() != null) {
-                viewportRenderer.requestRender(effective(currentEditState.get()));
+        viewModel.showOriginalProperty().addListener((obs, was, on) -> {
+            if (viewModel.getEditState() != null) {
+                viewportRenderer.requestRender(effective(viewModel.getEditState()));
             }
         });
-    }
-
-    /**
-     * JPEG/PNG/TIFF → RGBA8 in native memory (the caller frees it), shared by the viewport and the thumbnail chain.
-     */
-    private LibrawService.DecodedImage readImage(File imgPath) throws IOException {
-        BufferedImage bufferedImage = ImageIO.read(imgPath);
-        if (bufferedImage == null) {
-            throw new CineGradeException(ErrorCode.FILE_READ_FAILED, "Failed to read image file");
-        }
-        int w = bufferedImage.getWidth();
-        int h = bufferedImage.getHeight();
-
-        int[] pixels = bufferedImage.getRGB(0, 0, bufferedImage.getWidth(), bufferedImage.getHeight(), null, 0, bufferedImage.getWidth());
-        ByteBuffer buffer = MemoryUtil.memAlloc(w * h * 4).order(ByteOrder.nativeOrder());
-
-        for (int argb : pixels) {
-            buffer.put((byte) ((argb >> 16) & 0xFF)); // R
-            buffer.put((byte) ((argb >> 8) & 0xFF)); // G
-            buffer.put((byte) (argb & 0xFF)); // B
-            buffer.put((byte) ((argb >> 24) & 0xFF)); // A
-        }
-        buffer.flip();
-
-        return new LibrawService.DecodedImage(buffer, w, h, 8);
     }
 
     /**
      * Before: renders the photo with every setting at its default; the edit itself is untouched.
      */
     public void showBefore(boolean before) {
-        showOriginal.set(before);
-    }
-
-    public BooleanProperty showOriginalProperty() {
-        return showOriginal;
-    }
-
-    public ReadOnlyObjectProperty<PhotoEntry> currentPhotoProperty() {
-        return currentPhotoEntry;
-    }
-
-    public ReadOnlyBooleanProperty loadingProperty() {
-        return loading;
-    }
-
-    public ReadOnlyObjectProperty<Image> viewportImageProperty() {
-        return viewportRenderer.frameProperty();
-    }
-
-    public ReadOnlyObjectProperty<Image> placeholderImageProperty() {
-        return placeholder;
-    }
-
-    public ReadOnlyObjectProperty<EditState> currentEditStateProperty() {
-        return currentEditState;
+        viewModel.setShowOriginal(before);
     }
 
     /**
      * Slider is moving: change the edit in memory and redraw the viewport. Nothing is saved.
      */
     public void preview(GradeParam param, float value) {
-        EditState editState = currentEditState.get();
+        EditState editState = viewModel.getEditState();
         if (editState == null) {
             return;
         }
@@ -162,12 +92,62 @@ public class EditingManager implements AutoCloseable {
      * Slider released / value typed: change the edit, save it and refresh the thumbnail.
      */
     public void commit(GradeParam param, float value) {
-        EditState editState = currentEditState.get();
+        EditState editState = viewModel.getEditState();
         if (editState == null) {
             return;
         }
+        EditState before = lastCommitted;
+        PhotoEntry photo = photoManager.selectedPhoto().get();
         write(editState, param, value);
-        applySettings(photoManager.selectedPhoto().get());
+        applySettings(photo);
+        recordEdit(describe(param, value), photo, before, lastCommitted);
+    }
+
+    /**
+     * The text of a slider step, e.g. "Exposure +0.5 EV", "Temperature 6500 K", "Hue Red +12".
+     */
+    private static String describe(GradeParam param, float value) {
+        String group = switch (param.name().substring(0, 4)) {
+            case "HUE_" -> "Hue ";
+            case "SAT_" -> "Saturation ";
+            case "LUM_" -> "Luminance ";
+            default -> "";
+        };
+        int decimals = param.getIncrement() < 0.1f ? 2 : param.getIncrement() < 1.0f ? 1 : 0;
+        String number = String.format(Locale.ROOT, (param.getMinVal() < 0.0f ? "%+." : "%.") + decimals + "f", value);
+        return (group + param.getName() + " " + number + " " + param.getUnit()).strip();
+    }
+
+    /**
+     * One undo step of one photo. Pass snapshots: they are kept, so nothing may change them later. A commit that
+     * changed nothing (focus left the slider) is not a step.
+     */
+    private void recordEdit(String description, PhotoEntry photo, EditState before, EditState after) {
+        if (photo == null || before == null || !photo.getId().equals(after.getPhotoId()) || before.equals(after)) {
+            return;
+        }
+        historyManager.record(new HistoryManager.HistoryEntry(description, Set.of(photo.getId()),
+                () -> restoreEdit(photo, before),
+                () -> restoreEdit(photo, after)));
+    }
+
+    /**
+     * Undo / redo of an edit. Always a copy: the live edit is changed by the sliders, the history's snapshot must not be.
+     */
+    private void restoreEdit(PhotoEntry entry, EditState editState) {
+        EditState copy = new EditState(entry.getId(), editState);
+        EditState current = viewModel.getEditState();
+        if (entry == viewModel.getPhoto() && current != null && entry.getId().equals(current.getPhotoId())) {
+            // an old snapshot of a photo that was not open can be missing the as-shot values
+            copy.applyAsShot(current.getAsShotTemperature(), current.getAsShotTint());
+            viewModel.setEditState(copy);
+            applySettings(entry);
+        } else {
+            saveEditState(copy);
+            boolean edited = !copy.equals(copy.defaults());
+            photoManager.updateIsEdited(entry, edited);
+            thumbnails.update(entry, copy, false);
+        }
     }
 
     /**
@@ -184,12 +164,15 @@ public class EditingManager implements AutoCloseable {
      * White balance preset picked: sets the temperature / tint it stands for, saved like a slider commit.
      */
     public void setWhiteBalance(WhiteBalanceType type) {
-        EditState editState = currentEditState.get();
+        EditState editState = viewModel.getEditState();
         if (editState == null || type == editState.getWhiteBalance()) {
             return;
         }
+        EditState before = lastCommitted;
+        PhotoEntry photo = photoManager.selectedPhoto().get();
         editState.applyWhiteBalance(type);
-        applySettings(photoManager.selectedPhoto().get());
+        applySettings(photo);
+        recordEdit("White balance " + type, photo, before, lastCommitted);
     }
 
     /**
@@ -201,272 +184,239 @@ public class EditingManager implements AutoCloseable {
         } else {
             bypassed.add(section);
         }
-        if (currentEditState.get() != null) {
-            viewportRenderer.requestRender(effective(currentEditState.get()));
+        if (viewModel.getEditState() != null) {
+            viewportRenderer.requestRender(effective(viewModel.getEditState()));
         }
     }
 
     public void changeEditState(PhotoEntry photo) {
         // queued decodes of the previous photos are skipped, a running one is cancelled through LibRaw's callback
         requestedPhotoId = photo == null ? null : photo.getId();
-        showOriginal.set(false);
+        viewModel.setShowOriginal(false);
         if (photo == null) {
-            loading.set(false);
-            currentEditState.set(null);
+            viewModel.setLoading(false);
+            viewModel.setEditState(null);
+            lastCommitted = null;
             viewportRenderer.clear();
             return;
         }
-        loading.set(true);
-        placeholder.set(null);
-        thumbnailService.loadImage(photo)
-                .thenAcceptAsync(imageOpt -> {
-                    if (photo != currentPhotoEntry.get()) return;
-                    placeholder.set(imageOpt.orElse(null));
+        viewModel.setLoading(true);
+        viewModel.setPlaceholder(null);
+        thumbnails.loadThumbnail(photo).thenAcceptAsync(imageOpt -> {
+                    if (photo != viewModel.getPhoto()) return;
+                    viewModel.setPlaceholder(imageOpt.orElse(null));
                 }, Platform::runLater)
                 .thenCompose(v -> catalogTx.read(c -> editStateDao.findByPhotoId(photo.getId())))
                 .exceptionally(ex -> {
                     logger.error("Failed to find edit state for photo: {}", photo.getFile(), ex);
+                    hu.elte.ik.thesis.cinegrade.domain.error.ErrorHandler.getInstance().handle(ex);
                     return Optional.empty();
                 })
                 .thenAcceptAsync(found -> {
-                    if (photo != currentPhotoEntry.get()) return;
-                    currentEditState.set(found.orElseGet(() -> new EditState(photo.getId())));
-                    viewportRenderer.requestRender(effective(currentEditState.get()));
+                    if (photo != viewModel.getPhoto()) return;
+                    viewModel.setEditState(found.orElseGet(() -> new EditState(photo.getId())));
+                    lastCommitted = new EditState(photo.getId(), viewModel.getEditState());
+                    viewportRenderer.requestRender(effective(viewModel.getEditState()));
                     showOnGpu(photo);
                 }, Platform::runLater);
     }
 
     private void showOnGpu(PhotoEntry photo) {
-        extractBytes(photo).thenCompose(decoded -> {
-            if (!photo.getId().equals(requestedPhotoId)) {
-                MemoryUtil.memFree(decoded.data());
-                return CompletableFuture.completedFuture(null);
-            }
-            AsShotWhiteBalance.AsShot asShot = asShotOf(decoded);
-            if (asShot != null) {
-                Platform.runLater(() -> applyAsShot(photo, asShot));
-            }
-            return viewportRenderer.show(decoded)
-                    .whenComplete((v, ex) -> MemoryUtil.memFree(decoded.data()))
-                    .thenRun(() -> Platform.runLater(() -> {
-                        if (photo == currentPhotoEntry.get()) {
-                            loading.set(false);
+        CompletableFuture.supplyAsync(() -> viewportDecoder.decode(photo, () -> !photo.getId().equals(requestedPhotoId)), decoderThread)
+                .thenCompose(decoded -> {
+                    if (!photo.getId().equals(requestedPhotoId)) {
+                        MemoryUtil.memFree(decoded.data());
+                        return CompletableFuture.completedFuture(null);
+                    }
+                    WhiteBalancer.WhiteBalance asShot = WhiteBalancer.asShotOf(decoded);
+                    Platform.runLater(() -> applyAsShot(photo, asShot));
+                    return viewportRenderer.show(decoded)
+                            .whenComplete((v, ex) -> MemoryUtil.memFree(decoded.data()))
+                            .thenRun(() -> Platform.runLater(() -> {
+                                if (photo == viewModel.getPhoto()) {
+                                    viewModel.setLoading(false);
+                                }
+                            }));
+                }).exceptionally(ex -> {
+                    if (ex instanceof CancellationException || ex.getCause() instanceof CancellationException) {
+                        return null;
+                    }
+                    logger.error("Failed to show photo on GPU: {}", photo.getFile(), ex);
+                    ErrorHandler.getInstance().handle(ex);
+                    Platform.runLater(() -> {
+                        if (photo == viewModel.getPhoto()) {
+                            viewModel.setLoading(false);
                         }
-                    }));
-        }).exceptionally(ex -> {
-            //cancelled
-            if (ex instanceof CancellationException || ex.getCause() instanceof CancellationException) {
-                return null;
-            }
-            logger.error("Failed to show photo on GPU: {}", photo.getFile(), ex);
-            Platform.runLater(() -> {
-                if (photo == currentPhotoEntry.get()) {
-                    loading.set(false);
-                }
-            });
-            return null;
-        });
+                        // a corrupt file is not a missing one
+                        if (!photo.getFile().exists()) {
+                            photo.missingPhotoProperty().set(true);
+                        }
+                    });
+                    return null;
+                });
     }
 
     /**
      * The camera's white balance, known once the RAW is decoded: stored in the edit (and saved), and with AS_SHOT the
      * temperature / tint sliders move to it. The image itself is already decoded with it, so nothing visible changes.
      */
-    private void applyAsShot(PhotoEntry photo, AsShotWhiteBalance.AsShot asShot) {
-        EditState editState = currentEditState.get();
-        if (photo != currentPhotoEntry.get() || editState == null) {
+    private void applyAsShot(PhotoEntry photo, WhiteBalancer.WhiteBalance asShot) {
+        EditState editState = viewModel.getEditState();
+        if (photo != viewModel.getPhoto() || editState == null) {
             return;
         }
-        if (editState.getAsShotTemperature() == asShot.temperature() && editState.getAsShotTint() == asShot.tint()) {
+        EditState updated = WhiteBalancer.withAsShot(editState, asShot);
+        if (updated == editState) {
             return;
         }
-        EditState updated = new EditState(editState.getPhotoId(), editState);
-        updated.applyAsShot(asShot.temperature(), asShot.tint());
         // a new object: the panel listens to the property and shows the new slider values
-        currentEditState.set(updated);
+        viewModel.setEditState(updated);
         viewportRenderer.requestRender(effective(updated));
-        saveEditState(new EditState(updated.getPhotoId(), updated));
-    }
-
-    private static AsShotWhiteBalance.AsShot asShotOf(LibrawService.DecodedImage decoded) {
-        LibrawService.WhiteBalanceMultipliers multipliers = decoded.multipliers();
-        if (multipliers == null) {
-            return null;
-        }
-        return AsShotWhiteBalance.estimate(multipliers.asShot(), multipliers.daylight()).orElse(null);
+        lastCommitted = new EditState(updated.getPhotoId(), updated);
+        saveEditState(lastCommitted);
     }
 
     /**
-     * The edit with this photo's as-shot white balance filled in, a copy if anything changes.
+     * Eyedropper: sets the white balance that turns the photo's color at this texture uv neutral, saved like a slider
+     * commit. RAWs use the Kelvin temperature, other photos the offset slider.
+     *
+     * @return completes on the FX thread with false if nothing was set (the spot is near black or clipped)
      */
-    private static EditState withAsShot(EditState editState, AsShotWhiteBalance.AsShot asShot) {
-        if (asShot == null || (editState.getAsShotTemperature() == asShot.temperature()
-                && editState.getAsShotTint() == asShot.tint())) {
-            return editState;
+    public CompletableFuture<Boolean> pickWhiteBalance(ViewportNavigator.UV uv) {
+        PhotoEntry photo = viewModel.getPhoto();
+        EditState editState = viewModel.getEditState();
+        if (photo == null || editState == null) {
+            return CompletableFuture.completedFuture(false);
         }
-        EditState copy = new EditState(editState.getPhotoId(), editState);
-        copy.applyAsShot(asShot.temperature(), asShot.tint());
-        return copy;
+        return viewportRenderer.sample(editState.defaults(), uv).thenApplyAsync(rgb -> {
+            EditState current = viewModel.getEditState();
+            if (rgb == null || photo != viewModel.getPhoto() || current == null) {
+                return false;
+            }
+            Optional<WhiteBalancer.WhiteBalance> picked = WhiteBalancer.fromSample(rgb[0], rgb[1], rgb[2], current);
+            if (picked.isEmpty()) {
+                return false;
+            }
+            // a new object: the panel listens to the property and shows the new slider values
+            EditState updated = new EditState(current.getPhotoId(), current);
+            if (photo.isRaw()) {
+                GradeParam.TEMPERATURE.write(updated, picked.get().temperature());
+            } else {
+                GradeParam.TEMPERATURE_OFFSET.write(updated, (float) (100.0 * GradeParam.TEMPERATURE.toSliderPosition(picked.get().temperature())));
+            }
+            GradeParam.TINT.write(updated, picked.get().tint());
+            updated.updateWhiteBalanceType();
+            EditState before = lastCommitted;
+            viewModel.setEditState(updated);
+            applySettings(photo);
+            recordEdit(String.format(Locale.ROOT, "White balance %.0f K", picked.get().temperature()), photo, before, lastCommitted);
+            return true;
+        }, Platform::runLater).exceptionally(ex -> {
+            ErrorHandler.getInstance().handle(ex);
+            return false;
+        });
     }
 
     public void pasteSettings() {
-        if (copiedEditState.get() == null) {
+        if (copiedEditState == null) {
             return;
         }
 
-        EditState copied = new EditState(null, copiedEditState.get());
+        EditState copied = new EditState(null, copiedEditState);
         List<PhotoEntry> copyWithoutSelected = new ArrayList<>(photoManager.selectedPhotos());
-        copyWithoutSelected.remove(currentPhotoEntry.get());
+        copyWithoutSelected.remove(viewModel.getPhoto());
 
-        if (currentEditState.get() != null) {
-            String photoId = currentEditState.get().getPhotoId();
-            EditState pastedEditState = new EditState(photoId, copiedEditState.get());
-            pastedEditState.applyAsShot(currentEditState.get().getAsShotTemperature(), currentEditState.get().getAsShotTint());
-            currentEditState.set(pastedEditState);
-            applySettings(currentPhotoEntry.get());
+        // one undo step for the whole paste: photo -> its edit before and after
+        Map<PhotoEntry, EditState> before = new HashMap<>();
+        Map<PhotoEntry, EditState> after = new HashMap<>();
+
+        EditState current = viewModel.getEditState();
+        if (current != null) {
+            PhotoEntry photo = viewModel.getPhoto();
+            if (lastCommitted != null) {
+                before.put(photo, lastCommitted);
+            }
+            EditState pastedEditState = new EditState(current.getPhotoId(), copiedEditState);
+            pastedEditState.applyAsShot(current.getAsShotTemperature(), current.getAsShotTint());
+            viewModel.setEditState(pastedEditState);
+            applySettings(photo);
+            after.put(photo, lastCommitted);
         }
 
-        for (PhotoEntry entry : copyWithoutSelected) {
-            EditState snapshot = new EditState(entry.getId(), copied);
-            snapshot.applyAsShot(0.0f, 0.0f);
+        // the other photos are not open: their "before" is in the database, read it before the paste overwrites it
+        catalogTx.read(c -> {
+            Map<PhotoEntry, EditState> saved = new HashMap<>();
+            for (PhotoEntry entry : copyWithoutSelected) {
+                saved.put(entry, editStateDao.findByPhotoId(entry.getId()).orElseGet(() -> new EditState(entry.getId())));
+            }
+            return saved;
+        }).thenAcceptAsync(saved -> {
+            before.putAll(saved);
+            for (PhotoEntry entry : copyWithoutSelected) {
+                EditState snapshot = new EditState(entry.getId(), copied);
+                snapshot.applyAsShot(0.0f, 0.0f);
 
-            saveEditState(snapshot);
-            boolean edited = !snapshot.equals(snapshot.defaults());
-            photoManager.updateIsEdited(entry, edited);
-            updateThumbnail(entry, snapshot, false);
+                saveEditState(snapshot);
+                boolean edited = !snapshot.equals(snapshot.defaults());
+                photoManager.updateIsEdited(entry, edited);
+                thumbnails.update(entry, snapshot, false);
+                after.put(entry, snapshot);
+            }
+            recordPaste(before, after);
+        }, Platform::runLater).exceptionally(ex -> {
+            ErrorHandler.getInstance().handle(ex);
+            return null;
+        });
+    }
+
+    private void recordPaste(Map<PhotoEntry, EditState> before, Map<PhotoEntry, EditState> after) {
+        if (after.isEmpty()) {
+            return;
         }
+        Set<String> ids = new HashSet<>();
+        after.keySet().forEach(photo -> ids.add(photo.getId()));
+        String text = after.size() > 1 ? "Paste settings (" + after.size() + " photos)" : "Paste settings";
+        historyManager.record(new HistoryManager.HistoryEntry(text, ids,
+                () -> before.forEach(this::restoreEdit),
+                () -> after.forEach(this::restoreEdit)));
     }
 
     /**
      * Ctrl+Shift+R: every setting of the photo back to its default, saved like a paste.
      */
     public void resetSettings() {
-        if (currentEditState.get() == null) {
+        if (viewModel.getEditState() == null) {
             return;
         }
-        currentEditState.set(currentEditState.get().defaults());
-        if (photoManager.selectedPhoto().get() != null) {
-            applySettings(photoManager.selectedPhoto().get());
+        EditState before = lastCommitted;
+        PhotoEntry photo = photoManager.selectedPhoto().get();
+        viewModel.setEditState(viewModel.getEditState().defaults());
+        if (photo != null) {
+            applySettings(photo);
+            recordEdit("Reset settings", photo, before, lastCommitted);
         }
     }
 
     public void applySettings(PhotoEntry photoEntry) {
-        if (currentEditState.get() == null) {
+        if (viewModel.getEditState() == null) {
             return;
         }
         // the DB and GPU threads read it later while the sliders keep changing the live one
-        EditState snapshot = new EditState(currentEditState.get().getPhotoId(), currentEditState.get());
+        EditState snapshot = new EditState(viewModel.getEditState().getPhotoId(), viewModel.getEditState());
+        lastCommitted = snapshot;
 
         saveEditState(snapshot);
         boolean edited = !snapshot.equals(snapshot.defaults());
         photoManager.updateIsEdited(photoEntry, edited);
         viewportRenderer.requestRender(effective(snapshot));
-        updateThumbnail(photoEntry, snapshot, true);
-    }
-
-    /**
-     * Queues a thumbnail job behind the previous ones, for any photo (open or not), so a paste to 20 photos decodes
-     * and renders them one by one instead of 20 decodes at once. Pass a snapshot: it is read later on other threads.
-     */
-    private void updateThumbnail(PhotoEntry photoEntry, EditState editState, boolean urgent) {
-        if (photoEntry == null) {
-            return;
-        }
-
-        String id = photoEntry.getId();
-        boolean waiting = thumbnailEdits.put(id, editState) != null;
-        thumbnailPhotos.put(id, photoEntry);
-        if (waiting) {
-            if (urgent) {
-                thumbnailQueue.remove(id);
-                thumbnailQueue.addFirst(id);
-            }
-        } else if (urgent) {
-            thumbnailQueue.addFirst(id);
-        } else {
-            thumbnailQueue.addLast(id);
-        }
-
-        pumpThumbnails();
-    }
-
-    private void pumpThumbnails() {
-        if (thumbnailRunning || thumbnailQueue.isEmpty()) {
-            return;
-        }
-        thumbnailRunning = true;
-        String id = thumbnailQueue.poll();
-        EditState editState = thumbnailEdits.remove(id);
-        PhotoEntry photoEntry = thumbnailPhotos.remove(id);
-
-        renderThumbnail(photoEntry, editState).whenCompleteAsync((v, ex) -> {
-            if (ex != null) {
-                thumbnailPhotoId = null;
-                logger.warn("Failed to update thumbnail of {}", photoEntry.getFile(), ex);
-            }
-            thumbnailRunning = false;
-            pumpThumbnails();
-        }, Platform::runLater);
-    }
-
-    /**
-     * One thumbnail job: decode + upload (skipped if the photo is already in the texture) → GPU render →
-     * JPEG on the CPU pool → preview DB, then bumps the version so the filmstrip reloads it.
-     */
-    private CompletableFuture<Void> renderThumbnail(PhotoEntry photoEntry, EditState editState) {
-        CompletableFuture<Void> loaded = photoEntry.getId().equals(thumbnailPhotoId)
-                ? CompletableFuture.completedFuture(null)
-                : CompletableFuture.supplyAsync(() -> decodeForThumbnail(photoEntry), cpuPool)
-                .thenCompose(decoded -> {
-                    thumbnailAsShot = asShotOf(decoded);
-                    return thumbnailRenderer.load(decoded)
-                            .whenComplete((v, ex) -> MemoryUtil.memFree(decoded.data()));
-                })
-                .thenRun(() -> thumbnailPhotoId = photoEntry.getId());
-
-        return loaded
-                // not saved here: a queued job's edit can be older than what is in the database by now
-                .thenCompose(v -> thumbnailRenderer.render(withAsShot(editState, thumbnailAsShot)))
-                .thenCompose(pixels -> pixels
-                        .map(p -> thumbnailService.putPixels(photoEntry.getId(), p.bgra(), p.width(), p.height()).thenApply(v -> true))
-                        .orElseGet(() -> CompletableFuture.completedFuture(false)))
-                .thenAccept(stored -> {
-                    if (stored) {
-                        Platform.runLater(() -> photoEntry.getThumbnailVersion().set(photoEntry.getThumbnailVersion().get() + 1));
-                    }
-                });
-    }
-
-    /**
-     * Decode for the thumbnail chain, on the CPU pool. RAWs get their own short-lived LibRaw handle: the viewport's
-     * one belongs to the decoder thread. The chain runs one job at a time, so only one of these exists at once.
-     */
-    private LibrawService.DecodedImage decodeForThumbnail(PhotoEntry photoEntry) {
-        File file = photoEntry.getFile();
-        if (!photoEntry.isRaw()) {
-            try {
-                return readImage(file);
-            } catch (IOException exception) {
-                throw new CineGradeException(ErrorCode.FILE_READ_FAILED, exception, "Failed to read image file");
-            }
-        }
-        try (LibrawService service = new LibrawService()) {
-            // never canceled: a queued thumbnail is still wanted after the user moved on
-            return service.decodeRaw(file, () -> false)
-                    .orElseThrow(() -> new CineGradeException(ErrorCode.FILE_READ_FAILED, "Failed to decode raw image"));
-        } catch (CineGradeException exception) {
-            throw exception;
-        } catch (Exception exception) {
-            // close() of the LibRaw handle
-            throw new CineGradeException(ErrorCode.FILE_READ_FAILED, exception, "Failed to decode raw image");
-        }
+        thumbnails.update(photoEntry, snapshot, true);
     }
 
     /**
      * Copy of the edit with the bypassed sections set back to their defaults; this is what gets rendered.
      */
     private EditState effective(EditState editState) {
-        if (showOriginal.get()) {
+        if (viewModel.isShowOriginal()) {
             return editState.defaults();
         }
         EditState defaults = editState.defaults();
@@ -480,66 +430,33 @@ public class EditingManager implements AutoCloseable {
     }
 
     public void copySettings() {
-        if (currentEditState.get() == null) {
-            return;
+        if (viewModel.getEditState() != null) {
+            copiedEditState = new EditState(null, viewModel.getEditState());
+            historyManager.notifyListeners("Copy settings", false);
         }
-        // a copy, otherwise later slider moves would change the copied settings too
-        copiedEditState.set(new EditState(null, currentEditState.get()));
     }
 
     public void saveEditState(EditState editState) {
         catalogTx.execute(c -> editStateDao.upsert(editState)).exceptionally(ex -> {
-            logger.error("Failed to save edit state to database", ex);
+            ErrorHandler.getInstance().handle(ex);
             return null;
         });
     }
 
-    private CompletableFuture<LibrawService.DecodedImage> extractBytes(PhotoEntry photoEntry) {
-
-        File imgPath = photoEntry.getFile();
-
-        // asked before the decode starts (queued behind another one) and by LibRaw while it runs
-        BooleanSupplier stale = () -> !photoEntry.getId().equals(requestedPhotoId);
-
-        if (photoEntry.isRaw()) {
-            // the decoder thread owns the one LibRaw handle: decodes run one by one, the stale ones are skipped
-            return CompletableFuture.supplyAsync(() -> {
-                if (stale.getAsBoolean()) {
-                    throw new CancellationException("Photo changed before decoding " + photoEntry.getId());
-                }
-                Optional<LibrawService.DecodedImage> decodedImage = librawService.decodeRaw(imgPath, stale);
-                if (decodedImage.isPresent()) {
-                    return decodedImage.get();
-                }
-                if (stale.getAsBoolean()) {
-                    throw new CancellationException("Photo changed while decoding " + photoEntry.getId());
-                }
-                logger.error("Failed to decode raw image: {}", imgPath);
-                Platform.runLater(() -> photoEntry.missingPhotoProperty().set(true));
-                throw new CineGradeException(ErrorCode.FILE_READ_FAILED, "Failed to decode raw image");
-            }, decoderThread);
-        } else {
-            return CompletableFuture.supplyAsync(() -> {
-                if (stale.getAsBoolean()) {
-                    throw new CancellationException("Photo changed before decoding " + photoEntry.getId());
-                }
-                try {
-                    return readImage(imgPath);
-                } catch (IOException exception) {
-                    logger.error("Failed to read image file", exception);
-                    Platform.runLater(() -> photoEntry.missingPhotoProperty().set(true));
-                    throw new CineGradeException(ErrorCode.FILE_READ_FAILED, exception, "Failed to read image file");
-                }
-            }, cpuPool);
-        }
+    public CompletableFuture<HashMap<PhotoEntry, EditState>> loadEditStates(List<PhotoEntry> photos) {
+        List<PhotoEntry> snapshot = List.copyOf(photos); // the selection is a live list
+        return catalogTx.read(c -> {
+            HashMap<PhotoEntry, EditState> states = new LinkedHashMap<>(); // keeps the selection order
+            for (PhotoEntry photo : snapshot) {
+                states.put(photo, editStateDao.findByPhotoId(photo.getId())
+                        .orElseGet(() -> new EditState(photo.getId())));
+            }
+            return states;
+        });
     }
 
     public CompletableFuture<Optional<PhotoMetadata>> loadMetadata(PhotoEntry photo) {
         return catalogTx.read(c -> metadataDao.findByPhotoId(photo.getId()));
-    }
-
-    public void autoWhiteBalance(ViewportNavigator.UV uv) {
-        // TODO
     }
 
     public void setViewportSize(int w, int h) {
@@ -552,6 +469,9 @@ public class EditingManager implements AutoCloseable {
 
     @Override
     public void close() throws Exception {
+        // the running decode stops, queued ones are skipped, then the handle closes on the thread that owns it
+        requestedPhotoId = null;
+        decoderThread.submit(viewportDecoder::close);
         decoderThread.shutdown();
         try {
             if (!decoderThread.awaitTermination(10, TimeUnit.SECONDS)) {

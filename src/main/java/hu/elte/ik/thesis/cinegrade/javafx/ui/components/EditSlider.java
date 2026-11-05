@@ -83,8 +83,8 @@ public class EditSlider extends HBox {
         setupSlider();
         setupField();
 
-        editingManager.currentEditStateProperty().addListener((obs, oldState, newState) -> show(newState));
-        show(editingManager.currentEditStateProperty().get());
+        editingManager.getViewModel().currentEditStateProperty().addListener((obs, oldState, newState) -> show(newState));
+        show(editingManager.getViewModel().currentEditStateProperty().get());
     }
 
     /**

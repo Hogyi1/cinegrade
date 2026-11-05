@@ -10,6 +10,7 @@ import javafx.fxml.FXMLLoader;
 import javafx.geometry.Pos;
 import javafx.scene.Parent;
 import javafx.scene.layout.StackPane;
+import javafx.scene.shape.Rectangle;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -51,6 +52,12 @@ public class WorkspaceController {
     @FXML
     private void initialize() {
         logger.info("Initializing workspace for catalog '{}'", catalogScope.catalog().getCatalogName());
+        // A panel taller than the space under the bar (its min height wins) is centered and spills over the bar;
+        // the clip stops the spill from covering the bar and taking its mouse events
+        Rectangle clip = new Rectangle();
+        clip.widthProperty().bind(workspacePanelContainer.widthProperty());
+        clip.heightProperty().bind(workspacePanelContainer.heightProperty());
+        workspacePanelContainer.setClip(clip);
         navigationBarController
                 .getNavigationProperty()
                 .addListener((obs, oldValue, newValue) -> {
@@ -138,7 +145,7 @@ public class WorkspaceController {
     /**
      * Creates an FXML loader configured to use the workspace's controller factory.
      *
-     * @param fxmlPath the resource path of the FXML document
+     * @param fxmlPath the resource destination of the FXML document
      * @return the configured loader
      */
     private FXMLLoader createLoader(String fxmlPath) {

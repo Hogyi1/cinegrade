@@ -11,6 +11,8 @@ import hu.elte.ik.thesis.cinegrade.javafx.ui.components.EditPane;
 import hu.elte.ik.thesis.cinegrade.javafx.ui.components.EditSlider;
 import hu.elte.ik.thesis.cinegrade.javafx.ui.presenters.HistogramService;
 import javafx.application.Platform;
+import javafx.beans.binding.BooleanBinding;
+import javafx.beans.binding.BooleanExpression;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -85,10 +87,10 @@ public class DevelopEditPanelController {
 
         buildPanes();
 
-        editingManager.currentPhotoProperty().addListener((obs, oldPhoto, newPhoto) -> showPhoto(newPhoto));
-        editingManager.currentEditStateProperty().addListener((obs, oldState, newState) -> showEditState(newState));
-        showPhoto(editingManager.currentPhotoProperty().get());
-        showEditState(editingManager.currentEditStateProperty().get());
+        editingManager.getViewModel().currentPhotoProperty().addListener((obs, oldPhoto, newPhoto) -> showPhoto(newPhoto));
+        editingManager.getViewModel().currentEditStateProperty().addListener((obs, oldState, newState) -> showEditState(newState));
+        showPhoto(editingManager.getViewModel().currentPhotoProperty().get());
+        showEditState(editingManager.getViewModel().currentEditStateProperty().get());
     }
 
     private void buildPanes() {
@@ -116,10 +118,6 @@ public class DevelopEditPanelController {
                 new EditSlider(GradeParam.SHADOWS, editingManager),
                 new EditSlider(GradeParam.WHITES, editingManager),
                 new EditSlider(GradeParam.BLACKS, editingManager),
-                header("Presence"),
-                new EditSlider(GradeParam.TEXTURE, editingManager),
-                new EditSlider(GradeParam.CLARITY, editingManager),
-                new EditSlider(GradeParam.DEHAZE, editingManager),
                 header("Color"),
                 new EditSlider(GradeParam.VIBRANCE, editingManager),
                 new EditSlider(GradeParam.SATURATION, editingManager));
@@ -216,7 +214,7 @@ public class DevelopEditPanelController {
             }
             editingManager.setWhiteBalance(type);
             // the preset moved the temperature / tint
-            EditState editState = editingManager.currentEditStateProperty().get();
+            EditState editState = editingManager.getViewModel().currentEditStateProperty().get();
             temperature.show(editState);
             temperatureOffset.show(editState);
             tint.show(editState);
@@ -249,18 +247,24 @@ public class DevelopEditPanelController {
             editingManager.loadMetadata(photo)
                     .exceptionally(ex -> {
                         logger.error("Failed to load metadata of photo: {}", photo.getFile(), ex);
+                        hu.elte.ik.thesis.cinegrade.domain.error.ErrorHandler.getInstance().handle(ex);
                         return Optional.empty();
                     })
                     .thenAcceptAsync(metadata -> {
-                        if (photo == editingManager.currentPhotoProperty().get()) {
+                        if (photo == editingManager.getViewModel().currentPhotoProperty().get()) {
                             showMetadata(photo, metadata.orElse(null));
                         }
                     }, Platform::runLater);
         }
+
+        if (photo != null && photo.isRaw()) {
+            histogramService.clear();
+            panelsContainer.setDisable(true);
+        }
     }
 
     private void showCurrentWhiteBalance() {
-        showWhiteBalanceType(editingManager.currentEditStateProperty().get());
+        showWhiteBalanceType(editingManager.getViewModel().currentEditStateProperty().get());
     }
 
     /**

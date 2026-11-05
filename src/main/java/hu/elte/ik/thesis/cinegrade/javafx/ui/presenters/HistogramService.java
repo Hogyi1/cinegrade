@@ -78,4 +78,9 @@ public class HistogramService {
         graphicsContext.closePath();
         graphicsContext.fill();
     }
+
+    public void clear() {
+        last = null;
+        graphicsContext.clearRect(0, 0, canvas.getWidth(), canvas.getHeight());
+    }
 }

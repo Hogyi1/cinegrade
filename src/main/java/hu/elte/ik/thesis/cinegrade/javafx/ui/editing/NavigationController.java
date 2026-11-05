@@ -225,6 +225,10 @@ public class NavigationController {
     public void installShortcuts(Node workspaceRoot) {
         inputListener = new InputListener(workspaceRoot);
         inputListener.bind(new KeyCodeCombination(KeyCode.TAB, KeyCombination.SHORTCUT_DOWN), this::switchToNextPanel);
+        inputListener.bind(new KeyCodeCombination(KeyCode.D, KeyCombination.SHIFT_ANY, KeyCombination.SHORTCUT_DOWN), () -> switchTo(WorkspacePanel.DEVELOPMENT));
+        inputListener.bind(new KeyCodeCombination(KeyCode.I, KeyCombination.SHIFT_ANY, KeyCombination.SHORTCUT_DOWN), () -> switchTo(WorkspacePanel.IMPORT));
+        inputListener.bind(new KeyCodeCombination(KeyCode.M, KeyCombination.SHIFT_ANY, KeyCombination.SHORTCUT_DOWN), () -> switchTo(WorkspacePanel.EXPORT));
+        inputListener.bind(new KeyCodeCombination(KeyCode.E, KeyCombination.SHIFT_ANY, KeyCombination.SHORTCUT_DOWN), () -> switchTo(WorkspacePanel.EXPORT));
     }
 
     private void switchToNextPanel() {
