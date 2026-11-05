@@ -72,9 +72,9 @@ public class PhotoEntry extends Entry {
     }
 
     /**
-     * Converts the photo's path into what should be stored in the database.
-     * If COPY/MOVE and inside the catalog, returns relative path (e.g. "media/Import_xxx/pic.jpg").
-     * If ADD, returns absolute path.
+     * Converts the photo's destination into what should be stored in the database.
+     * If COPY/MOVE and inside the catalog, returns relative destination (e.g. "media/Import_xxx/pic.jpg").
+     * If ADD, returns absolute destination.
      */
     public String getDatabaseFilePath(Path catalogPath) {
         if (file == null) {

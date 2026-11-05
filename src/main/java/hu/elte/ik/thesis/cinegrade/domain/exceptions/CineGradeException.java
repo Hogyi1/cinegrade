@@ -2,11 +2,13 @@ package hu.elte.ik.thesis.cinegrade.domain.exceptions;
 
 import hu.elte.ik.thesis.cinegrade.domain.enums.ErrorCode;
 import hu.elte.ik.thesis.cinegrade.domain.enums.Severity;
+import lombok.Getter;
 
 public class CineGradeException extends RuntimeException {
 
     private final ErrorCode ERROR_CODE;
     private final Severity SEVERITY;
+    @Getter
     private Throwable cause = null;
 
     public CineGradeException(ErrorCode errorCode) {
@@ -43,6 +45,4 @@ public class CineGradeException extends RuntimeException {
     public int getErrorCodeValue() {
         return ERROR_CODE.getCode();
     }
-
-    public Throwable getCause() { return cause; }
 }

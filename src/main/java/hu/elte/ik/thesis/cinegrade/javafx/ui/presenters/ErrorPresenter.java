@@ -2,7 +2,7 @@ package hu.elte.ik.thesis.cinegrade.javafx.ui.presenters;
 
 import hu.elte.ik.thesis.cinegrade.domain.enums.Severity;
 import hu.elte.ik.thesis.cinegrade.domain.error.ErrorHandler;
-import hu.elte.ik.thesis.cinegrade.domain.error.ErrorListener;
+import hu.elte.ik.thesis.cinegrade.domain.listener.ErrorListener;
 import hu.elte.ik.thesis.cinegrade.domain.exceptions.CineGradeException;
 import hu.elte.ik.thesis.cinegrade.javafx.ui.dialog.ErrorDialogController;
 import hu.elte.ik.thesis.cinegrade.javafx.ui.dialog.ErrorModalController;

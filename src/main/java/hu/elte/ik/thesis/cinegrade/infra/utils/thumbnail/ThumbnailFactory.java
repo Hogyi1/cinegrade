@@ -1,7 +1,7 @@
 package hu.elte.ik.thesis.cinegrade.infra.utils.thumbnail;
 
 import hu.elte.ik.thesis.cinegrade.domain.enums.ErrorCode;
-import hu.elte.ik.thesis.cinegrade.domain.enums.PhotoExtensions;
+import hu.elte.ik.thesis.cinegrade.domain.enums.PhotoExtension;
 import hu.elte.ik.thesis.cinegrade.domain.exceptions.CineGradeException;
 import hu.elte.ik.thesis.cinegrade.infra.services.libraw.LibrawService;
 import net.coobird.thumbnailator.Thumbnails;
@@ -14,7 +14,6 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Path;
 
 // [AI-GENERATED JAVADOC]
 
@@ -193,7 +192,7 @@ public class ThumbnailFactory {
     private byte[] encode(Thumbnails.Builder<?> builder) throws IOException {
         ByteArrayOutputStream bao = new ByteArrayOutputStream();
         builder.outputQuality(JPEG_QUALITY)
-                .outputFormat(PhotoExtensions.JPEG.getExtension())
+                .outputFormat(PhotoExtension.JPEG.getExtension())
                 .size(MAX_EDGE, MAX_EDGE)
                 .allowOverwrite(true)
                 .toOutputStream(bao);

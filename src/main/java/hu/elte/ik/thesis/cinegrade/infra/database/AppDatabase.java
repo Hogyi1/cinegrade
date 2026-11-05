@@ -32,7 +32,7 @@ public class AppDatabase implements Database {
         this.appDbPath = path;
 
         if (appDbPath == null) {
-            logger.warn("No path provided for AppDatabase");
+            logger.warn("No destination provided for AppDatabase");
             return false;
         }
 

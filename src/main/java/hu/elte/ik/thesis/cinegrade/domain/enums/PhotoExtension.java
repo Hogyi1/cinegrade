@@ -2,7 +2,7 @@ package hu.elte.ik.thesis.cinegrade.domain.enums;
 
 import java.util.List;
 
-public enum PhotoExtensions {
+public enum PhotoExtension {
     JPG("JPG"),
     JPEG("JPEG"),
     PNG("PNG"),
@@ -31,7 +31,7 @@ public enum PhotoExtensions {
 
     private final String extension;
 
-    PhotoExtensions(String extension) {
+    PhotoExtension(String extension) {
         this.extension = extension;
     }
 
@@ -47,13 +47,13 @@ public enum PhotoExtensions {
 
     public static List<String> getAllWildcardPatterns() {
         List<String> patterns = new java.util.ArrayList<>();
-        for (PhotoExtensions ext : values()) {
+        for (PhotoExtension ext : values()) {
             String lower = "*." + ext.getExtension().toLowerCase();
             if (!patterns.contains(lower)) {
                 patterns.add(lower);
             }
         }
-        for (PhotoExtensions ext : values()) {
+        for (PhotoExtension ext : values()) {
             String upper = "*." + ext.getExtension().toUpperCase();
             if (!patterns.contains(upper)) {
                 patterns.add(upper);

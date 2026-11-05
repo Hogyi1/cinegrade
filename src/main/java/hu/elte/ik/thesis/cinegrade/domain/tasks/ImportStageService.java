@@ -4,7 +4,7 @@ import hu.elte.ik.thesis.cinegrade.domain.editing.PhotoEntry;
 import hu.elte.ik.thesis.cinegrade.domain.editing.imports.FileProbeResult;
 import hu.elte.ik.thesis.cinegrade.domain.editing.imports.StageEntry;
 import hu.elte.ik.thesis.cinegrade.domain.editing.imports.StageResult;
-import hu.elte.ik.thesis.cinegrade.domain.enums.PhotoExtensions;
+import hu.elte.ik.thesis.cinegrade.domain.enums.PhotoExtension;
 import hu.elte.ik.thesis.cinegrade.infra.utils.file.FileUtils;
 import hu.elte.ik.thesis.cinegrade.infra.utils.thumbnail.ThumbnailFactory;
 import javafx.concurrent.Service;
@@ -82,7 +82,7 @@ public class ImportStageService extends Service<StageResult> {
             return false;
         }
         String extension = name.substring(dot + 1).toUpperCase(Locale.ROOT);
-        return extension.equals(PhotoExtensions.JPG.getExtension()) || extension.equals(PhotoExtensions.JPEG.getExtension());
+        return extension.equals(PhotoExtension.JPG.getExtension()) || extension.equals(PhotoExtension.JPEG.getExtension());
     }
 
     /**
@@ -185,6 +185,7 @@ public class ImportStageService extends Service<StageResult> {
                                 }, cpuPool)
                                 .exceptionally(ex -> {
                                     logger.warn("Thumbnail failed for {}", photo.getFile(), ex);
+                                    hu.elte.ik.thesis.cinegrade.domain.error.ErrorHandler.getInstance().handle(ex);
                                     return null;
                                 }))
                         .toList();

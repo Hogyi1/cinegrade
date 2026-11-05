@@ -149,15 +149,6 @@ public class LibrawService implements AutoCloseable {
         }
     }
 
-    @Override
-    public void close() throws Exception {
-        if (!closed) {
-            libRaw.libraw_close(handler);
-            closed = true;
-            logger.debug("LibRaw handler closed");
-        }
-    }
-
     /**
      * A raw thumbnail image.
      *
@@ -168,6 +159,15 @@ public class LibrawService implements AutoCloseable {
      * @param colors  the number of color channels
      * @param bits    the number of bits per channel
      */
+    @Override
+    public void close() {
+        if (!closed) {
+            libRaw.libraw_close(handler);
+            closed = true;
+            logger.debug("LibRaw handler closed");
+        }
+    }
+
     public record RawThumbnail(byte[] data, int type, int width, int height, int colors, int bits) { }
     /**
      * A decoded image ready for upload: 16 bits = linear RGB16 (RAW), 8 bits = sRGB RGBA8 (JPEG/PNG).

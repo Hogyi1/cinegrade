@@ -6,7 +6,7 @@ public enum ErrorCode {
     // ==========================================
     // 1000–1099: Startup / RequirementChecker
     // ==========================================
-    REQ_LIBRAW_DLL_MISSING(1001, "LibRaw native library (libraw.dll) not found at expected path: %s", Severity.FATAL),
+    REQ_LIBRAW_DLL_MISSING(1001, "LibRaw native library (libraw.dll) not found at expected destination: %s", Severity.FATAL),
     REQ_LIBRAW_LOAD_FAILED(1002, "Failed to load LibRaw native library: %s", Severity.FATAL),
     REQ_FFMPEG_NOT_FOUND(1003, "FFmpeg executable not found on PATH or configured location.", Severity.FATAL),
     REQ_FFPROBE_NOT_FOUND(1004, "FFprobe executable not found on PATH or configured location.", Severity.FATAL),
@@ -34,9 +34,9 @@ public enum ErrorCode {
     // ==========================================
     // 2000–2099: Catalog Operations
     // ==========================================
-    CATALOG_CREATE_FAILED(2001, "Failed to create catalog at path: %s", Severity.ERROR),
-    CATALOG_NOT_FOUND(2002, "Catalog not found at path: %s", Severity.ERROR),
-    CATALOG_ALREADY_EXISTS(2003, "Catalog already exists at path: %s", Severity.ERROR),
+    CATALOG_CREATE_FAILED(2001, "Failed to create catalog at destination: %s", Severity.ERROR),
+    CATALOG_NOT_FOUND(2002, "Catalog not found at destination: %s", Severity.ERROR),
+    CATALOG_ALREADY_EXISTS(2003, "Catalog already exists at destination: %s", Severity.ERROR),
     CATALOG_CORRUPTED(2004, "Catalog manifest file is corrupted or unreadable: %s", Severity.ERROR),
     CATALOG_SAVE_FAILED(2005, "Failed to save catalog manifest: %s", Severity.ERROR),
     CATALOG_DELETE_FAILED(2006, "Failed to delete catalog directory: %s", Severity.ERROR),

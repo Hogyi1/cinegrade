@@ -291,6 +291,7 @@ public class FilmstripCell extends ListCell<PhotoEntry> {
                 }, Platform::runLater)
                 .exceptionally(ex -> {
                     logger.warn("Failed to load thumbnail of photo {}", requested.getId(), ex);
+                    hu.elte.ik.thesis.cinegrade.domain.error.ErrorHandler.getInstance().handle(ex);
                     return null;
                 });
     }

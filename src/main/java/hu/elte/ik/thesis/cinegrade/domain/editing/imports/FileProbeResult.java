@@ -1,12 +1,11 @@
 package hu.elte.ik.thesis.cinegrade.domain.editing.imports;
 
 import com.google.gson.annotations.SerializedName;
-import hu.elte.ik.thesis.cinegrade.domain.enums.PhotoExtensions;
+import hu.elte.ik.thesis.cinegrade.domain.enums.PhotoExtension;
 
 import java.io.File;
 import java.nio.file.Path;
 import java.util.Arrays;
-import java.util.Set;
 
 public record FileProbeResult(
         @SerializedName("SourceFile") String sourceFile,
@@ -22,9 +21,9 @@ public record FileProbeResult(
     }
 
     public boolean isRaw() {
-        return fileType != null && Arrays.stream(PhotoExtensions.values()).
-                filter(PhotoExtensions::isRaw)
-                .map(PhotoExtensions::getExtension)
+        return fileType != null && Arrays.stream(PhotoExtension.values()).
+                filter(PhotoExtension::isRaw)
+                .map(PhotoExtension::getExtension)
                 .toList()
                 .contains(fileType.toUpperCase());
     }

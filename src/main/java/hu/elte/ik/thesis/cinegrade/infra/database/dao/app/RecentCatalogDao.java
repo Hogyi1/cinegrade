@@ -61,7 +61,7 @@ public class RecentCatalogDao {
      *
      * @param name             display name of the catalog
      * @param projectDirectory directory containing the catalog
-     * @param projectFilePath  path of the catalog's project file
+     * @param projectFilePath  destination of the catalog's project file
      * @return the inserted catalog, or empty if the database returned no row
      * @throws SQLException if the insert fails
      */
@@ -84,10 +84,10 @@ public class RecentCatalogDao {
     }
 
     /**
-     * Finds a recent catalog by its project file path. The comparison is case-insensitive because
+     * Finds a recent catalog by its project file destination. The comparison is case-insensitive because
      * Windows paths are case-insensitive.
      *
-     * @param projectFilePath path of the catalog's project file
+     * @param projectFilePath destination of the catalog's project file
      * @return the matching catalog, or empty if there is none
      * @throws SQLException if the query fails
      */

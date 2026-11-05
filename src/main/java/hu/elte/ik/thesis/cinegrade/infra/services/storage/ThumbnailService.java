@@ -109,6 +109,7 @@ public class ThumbnailService implements AutoCloseable {
                         .supplyAsync(() -> Map.entry(photo.getId(), create(photo)), cpuPool)
                         .exceptionally(ex -> {
                             logger.warn("Thumbnail failed for {}", photo.getFile(), ex);
+                            hu.elte.ik.thesis.cinegrade.domain.error.ErrorHandler.getInstance().handle(ex);
                             return null;
                         }))
                 .toList();

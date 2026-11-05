@@ -37,6 +37,8 @@ public class StagingPipeline {
     private static final Logger logger = LogManager.getLogger(StagingPipeline.class);
     private static final int BATCH_COUNT = 25;
 
+    private final Object STAGING_GROUP = new Object();
+
     private final StagingArea stagingArea;
     private final ThumbnailFactory thumbnailFactory;
     private final ExifToolService exifToolService;

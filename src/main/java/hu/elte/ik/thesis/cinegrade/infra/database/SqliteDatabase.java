@@ -36,7 +36,7 @@ public abstract class SqliteDatabase implements Database {
         closeConnection();
 
         if (path == null) {
-            throw new CineGradeException(ErrorCode.DB_CONNECTION_FAILED, "Database path cannot be null");
+            throw new CineGradeException(ErrorCode.DB_CONNECTION_FAILED, "Database destination cannot be null");
         }
 
         this.path = path;

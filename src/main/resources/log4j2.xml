@@ -2,7 +2,7 @@
 <!-- status="WARN" controls Log4j's OWN internal logging — only shows warnings about itself -->
 <Configuration status="WARN" name="CineGradeLogging">
     <Properties>
-        <!-- Log file directory: set by LoggerSetup.init() via System.setProperty("cinegrade.log.dir", path) -->
+        <!-- Log file directory: set by LoggerSetup.init() via System.setProperty("cinegrade.log.dir", destination) -->
         <Property name="LOG_DIR">${sys:cinegrade.log.dir}</Property>
 
         <Property name="FILE_PATTERN">%d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n</Property>

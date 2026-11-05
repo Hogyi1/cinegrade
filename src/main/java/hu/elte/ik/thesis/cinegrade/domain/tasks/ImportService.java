@@ -13,6 +13,7 @@ import hu.elte.ik.thesis.cinegrade.infra.database.dao.catalog.PhotoDao;
 import hu.elte.ik.thesis.cinegrade.infra.services.exiftool.ExifToolService;
 import hu.elte.ik.thesis.cinegrade.infra.services.storage.StorageService;
 import hu.elte.ik.thesis.cinegrade.infra.services.storage.ThumbnailService;
+import hu.elte.ik.thesis.cinegrade.infra.utils.file.FileUtils;
 import javafx.concurrent.Service;
 import javafx.concurrent.Task;
 import org.apache.logging.log4j.LogManager;
@@ -160,7 +161,7 @@ public class ImportService extends Service<List<PhotoEntry>> {
         try {
             Path finalPath = source;
             if (importDirectory != null) {
-                copy = storageService.atomicCopy(source, uniqueTarget(importDirectory, source.getFileName().toString()));
+                copy = storageService.atomicCopy(source, FileUtils.uniqueTarget(importDirectory, source.getFileName().toString()));
                 finalPath = copy;
             }
 
@@ -231,21 +232,6 @@ public class ImportService extends Service<List<PhotoEntry>> {
             onBatchCommitted.accept(photos);
         }
         return photos;
-    }
-
-    /**
-     * Picks a free file name in the import directory: name.ext, name_1.ext, name_2.ext, ...
-     * Two cards can both hold IMG_0001.CR3, and the second must not overwrite the first.
-     */
-    private static Path uniqueTarget(Path directory, String fileName) {
-        Path target = directory.resolve(fileName);
-        int dot = fileName.lastIndexOf('.');
-        String base = dot > 0 ? fileName.substring(0, dot) : fileName;
-        String extension = dot > 0 ? fileName.substring(dot) : "";
-        for (int n = 1; Files.exists(target); n++) {
-            target = directory.resolve(base + "_" + n + extension);
-        }
-        return target;
     }
 
     private static void deleteQuietly(Path path) {

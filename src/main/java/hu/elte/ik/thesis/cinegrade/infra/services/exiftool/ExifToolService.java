@@ -29,7 +29,7 @@ public class ExifToolService {
     /**
      * Reads metadata from a file.
      *
-     * @param path       the file path to read metadata from
+     * @param path       the file destination to read metadata from
      * @param photoId    the ID of the photo
      * @param isCanceled a supplier to check if the operation is canceled
      * @return an Optional containing the photo metadata if successful, empty otherwise
@@ -129,7 +129,7 @@ public class ExifToolService {
     /**
      * Checks if a file is an image.
      *
-     * @param path       the file path to check
+     * @param path       the file destination to check
      * @param isCanceled a supplier to check if the operation is canceled
      * @return true if the file is an image, false otherwise
      */

@@ -1,5 +1,6 @@
-package hu.elte.ik.thesis.cinegrade.domain.error;
+package hu.elte.ik.thesis.cinegrade.domain.listener;
 
+import hu.elte.ik.thesis.cinegrade.domain.error.ErrorHandler;
 import hu.elte.ik.thesis.cinegrade.domain.exceptions.CineGradeException;
 
 public interface ErrorListener {

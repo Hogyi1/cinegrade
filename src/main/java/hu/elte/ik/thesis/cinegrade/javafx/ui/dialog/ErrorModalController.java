@@ -91,7 +91,7 @@ public class ErrorModalController {
                 Desktop.getDesktop().open(logDir.toFile());
             }
         } catch (Exception ex) {
-            logger.error("Log file / log directory not found at path:  {}", logDir.toString());
+            logger.error("Log file / log directory not found at destination:  {}", logDir.toString());
         }
     }
 

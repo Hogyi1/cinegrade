@@ -134,9 +134,9 @@ public class StorageService {
     /**
      * Performs an atomic move operation.
      *
-     * @param source the source path
-     * @param target the target path
-     * @return the target path if the operation was successful, {@code null} otherwise
+     * @param source the source destination
+     * @param target the target destination
+     * @return the target destination if the operation was successful, {@code null} otherwise
      */
     public Path atomicMove(Path source, Path target) {
         try {
@@ -155,9 +155,9 @@ public class StorageService {
     /**
      * Performs an atomic copy operation.
      *
-     * @param source the source path
-     * @param target the target path
-     * @return the target path if the operation was successful, {@code null} otherwise
+     * @param source the source destination
+     * @param target the target destination
+     * @return the target destination if the operation was successful, {@code null} otherwise
      */
     public Path atomicCopy(Path source, Path target) {
         try {
@@ -179,9 +179,9 @@ public class StorageService {
     }
 
     /**
-     * Checks if it's safe to delete the specified path.
+     * Checks if it's safe to delete the specified destination.
      *
-     * @param path the path to check
+     * @param path the destination to check
      * @return {@code true} if it's safe to delete, {@code false} otherwise
      */
     private boolean isSafeToDelete(Path path) {
@@ -210,9 +210,9 @@ public class StorageService {
     }
 
     /**
-     * Recursively deletes the specified path.
+     * Recursively deletes the specified destination.
      *
-     * @param path  the path to delete
+     * @param path  the destination to delete
      * @param round the current deletion round
      */
     private void deleteRecursively(Path path, int round) {
