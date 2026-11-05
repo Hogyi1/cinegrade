@@ -5,14 +5,16 @@ import javafx.beans.property.ReadOnlyDoubleProperty;
 import javafx.beans.property.ReadOnlyDoubleWrapper;
 import javafx.geometry.Bounds;
 import javafx.scene.Cursor;
+import javafx.scene.ImageCursor;
+import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import lombok.Getter;
 
+import java.util.Objects;
 import java.util.function.Consumer;
 
-// TODO review code
 /**
  * Zoom and pan of the development viewport's ImageView.
  * <p>
@@ -34,6 +36,9 @@ public class ViewportNavigator {
     // cursor size; the hotspot is the middle of the lens
     private static final Cursor ZOOM_IN_CURSOR = magnifier("/images/cursors/magnifier_plus.png");
     private static final Cursor ZOOM_OUT_CURSOR = magnifier("/images/cursors/magnifier_minus.png");
+    // The hotspot is the tip of the dropper
+    private static final Cursor PICK_CURSOR = new javafx.scene.ImageCursor(new javafx.scene.image.Image(
+            java.util.Objects.requireNonNull(ViewportNavigator.class.getResourceAsStream("/images/cursors/eyedropper.png")), 32, 32, true, true), 2, 28);
 
     private final ImageView viewport;
     private final Consumer<ViewTransform> onChange;
@@ -46,6 +51,8 @@ public class ViewportNavigator {
     private boolean dragging;
     // Where a click zooms to; the last zoom type picked with a button or Tab
     private ZoomType clickZoom = ZoomType.X200;
+    // Not null while picking: a click goes here as a texture uv instead of zooming
+    private Consumer<UV> pickHandler;
 
     public ViewportNavigator(ImageView viewport, Consumer<ViewTransform> onChange) {
         this.viewport = viewport;
@@ -143,6 +150,19 @@ public class ViewportNavigator {
         return new UV(offX + view.x() * zoomFactor, offY + view.y() * zoomFactor);
     }
 
+    /**
+     * From now on a click reports the texture uv under the cursor instead of zooming. Dragging still pans.
+     */
+    public void startPicking(Consumer<UV> onPicked) {
+        pickHandler = onPicked;
+        updateCursor();
+    }
+
+    public void stopPicking() {
+        pickHandler = null;
+        updateCursor();
+    }
+
     private void handleMousePressed(MouseEvent mouseEvent) {
         if (mouseEvent.getButton() != MouseButton.PRIMARY || !isZoomed) {
             return;
@@ -170,6 +190,11 @@ public class ViewportNavigator {
     private void handleMouseClicked(MouseEvent mouseEvent) {
         // the end of a pan is also a click: only a click without moving toggles
         if (mouseEvent.getButton() != MouseButton.PRIMARY || !mouseEvent.isStillSincePress()) {
+            return;
+        }
+        if (pickHandler != null) {
+            pickHandler.accept(toTextureUV(convertToUV(mouseEvent)));
+            mouseEvent.consume();
             return;
         }
         if (isZoomed) {
@@ -210,20 +235,23 @@ public class ViewportNavigator {
     private void updateCursor() {
         if (dragging) {
             viewport.setCursor(Cursor.CLOSED_HAND);
+        } else if (pickHandler != null) {
+            viewport.setCursor(PICK_CURSOR);
         } else {
             viewport.setCursor(isZoomed ? ZOOM_OUT_CURSOR : ZOOM_IN_CURSOR);
         }
     }
 
     private static Cursor magnifier(String path) {
-        javafx.scene.image.Image image = new javafx.scene.image.Image(
-                java.util.Objects.requireNonNull(ViewportNavigator.class.getResourceAsStream(path), path), 32, 32, true, true);
-        return new javafx.scene.ImageCursor(image, 13, 13);
+        Image image = new Image(
+                Objects.requireNonNull(ViewportNavigator.class.getResourceAsStream(path), path), 32, 32, true, true);
+        return new ImageCursor(image, 13, 13);
     }
 
     /**
      * The fixed zoom levels of the buttons and of Tab, relative to fit.
      */
+    @Getter
     public enum ZoomType {
         FIT(1.0),
         X150(1.5),
@@ -235,9 +263,6 @@ public class ViewportNavigator {
             this.magnification = magnification;
         }
 
-        public double getMagnification() {
-            return magnification;
-        }
     }
 
     /**

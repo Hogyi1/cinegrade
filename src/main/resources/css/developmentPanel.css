@@ -80,6 +80,17 @@
     -fx-font-size: 11px;
 }
 
+/* [AI-GENERATED] red badge in the HUD when the original file is missing (same look as the filmstrip badge) */
+.hud-missing-badge {
+    -fx-background-color: -clr-danger;
+    -fx-background-radius: 8px;
+    -fx-text-fill: #FFFFFF;
+    -fx-font-family: -font-family-primary;
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+    -fx-padding: 1px 7px;
+}
+
 .hud-btn {
     -fx-background-color: -clr-surface-card;
     -fx-background-radius: 6px;

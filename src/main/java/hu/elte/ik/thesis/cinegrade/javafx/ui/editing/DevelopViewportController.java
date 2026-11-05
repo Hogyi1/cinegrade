@@ -3,24 +3,27 @@ package hu.elte.ik.thesis.cinegrade.javafx.ui.editing;
 import hu.elte.ik.thesis.cinegrade.app.managers.editing.EditingManager;
 import hu.elte.ik.thesis.cinegrade.domain.editing.PhotoEntry;
 import hu.elte.ik.thesis.cinegrade.domain.error.ErrorHandler;
+import hu.elte.ik.thesis.cinegrade.domain.listener.HistoryListener;
 import hu.elte.ik.thesis.cinegrade.engine.renderer.ViewportRenderer;
 import hu.elte.ik.thesis.cinegrade.infra.services.libraw.LibrawService;
 import hu.elte.ik.thesis.cinegrade.infra.utils.format.FormatUtils;
+import hu.elte.ik.thesis.cinegrade.javafx.ui.animations.TransitionFactory;
 import hu.elte.ik.thesis.cinegrade.javafx.ui.input.InputListener;
 import hu.elte.ik.thesis.cinegrade.javafx.ui.input.ViewportNavigator;
 import javafx.animation.PauseTransition;
+import javafx.animation.SequentialTransition;
 import javafx.application.Platform;
+import javafx.beans.binding.BooleanBinding;
+import javafx.beans.binding.BooleanExpression;
+import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.Slider;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.image.ImageView;
-import javafx.scene.input.KeyCharacterCombination;
-import javafx.scene.input.KeyCode;
-import javafx.scene.input.KeyCodeCombination;
-import javafx.scene.input.KeyCombination;
-import javafx.scene.input.MouseEvent;
+import javafx.scene.input.*;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Screen;
@@ -39,7 +42,7 @@ import java.util.concurrent.CompletableFuture;
 /**
  * Center viewport of the development page: shows the rendered photo.
  */
-public class DevelopViewportController {
+public class DevelopViewportController implements HistoryListener {
 
     private static final Logger logger = LogManager.getLogger(DevelopViewportController.class);
     private final EditingManager editingManager;
@@ -58,6 +61,8 @@ public class DevelopViewportController {
     @FXML
     private Label photoNameLabel;
     @FXML
+    private Label missingBadge;
+    @FXML
     private Label photoMetaLabel;
     @FXML
     private ToggleButton splitViewToggle;
@@ -71,9 +76,28 @@ public class DevelopViewportController {
     private Slider zoomSlider;
     @FXML
     private VBox loadProgressOverlay;
+    @FXML
+    private ToggleButton eyedropperToggle;
+    @FXML
+    private HBox pickHintBar;
+    @FXML
+    private Label pickHintLabel;
+    @FXML
+    private HBox historyNoticeBar;
+    @FXML
+    private Label historyNoticeLabel;
 
+    private SequentialTransition noticeTransition;
     private ViewportNavigator viewportNavigator;
     private InputListener inputListener;
+
+    // On the scene while picking, so Esc cancels wherever the focus is
+    private final EventHandler<KeyEvent> pickEscape = e -> {
+        if (e.getCode() == KeyCode.ESCAPE) {
+            eyedropperToggle.setSelected(false);
+            e.consume();
+        }
+    };
 
     public DevelopViewportController(EditingManager editingManager) {
         this.editingManager = editingManager;
@@ -81,12 +105,18 @@ public class DevelopViewportController {
 
     @FXML
     private void initialize() {
-        viewportImageView.imageProperty().bind(editingManager.viewportImageProperty());
-        thumbnailImageView.imageProperty().bind(editingManager.placeholderImageProperty());
-        thumbnailImageView.visibleProperty().bind(editingManager.loadingProperty());
+        viewportImageView.imageProperty().bind(editingManager.getViewModel().viewportImageProperty());
+        thumbnailImageView.imageProperty().bind(editingManager.getViewModel().placeholderImageProperty());
+        // A missing original can't be decoded: keep its stored thumbnail up instead of the previous photo's frame
+        BooleanExpression missing = BooleanExpression.booleanExpression(editingManager.getViewModel().currentPhotoProperty()
+                .flatMap(PhotoEntry::missingPhotoProperty).orElse(false));
+        BooleanBinding showThumbnail = editingManager.getViewModel().loadingProperty().or(missing);
+        thumbnailImageView.visibleProperty().bind(showThumbnail);
+        missingBadge.visibleProperty().bind(missing);
+        missingBadge.managedProperty().bind(missing);
         if (loadProgressOverlay != null) {
-            loadProgressOverlay.visibleProperty().bind(editingManager.loadingProperty());
-            loadProgressOverlay.managedProperty().bind(editingManager.loadingProperty());
+            loadProgressOverlay.visibleProperty().bind(editingManager.getViewModel().loadingProperty());
+            loadProgressOverlay.managedProperty().bind(editingManager.getViewModel().loadingProperty());
         }
 
         // The frame is rendered in device pixels; the ImageView scales it back to layout size
@@ -99,15 +129,64 @@ public class DevelopViewportController {
         resizeDebounce.setOnFinished(e -> pushAreaSize());
         viewportImageContainer.widthProperty().addListener((obs, o, n) -> resizeDebounce.playFromStart());
         viewportImageContainer.heightProperty().addListener((obs, o, n) -> resizeDebounce.playFromStart());
-        viewportImageView.visibleProperty().bind(editingManager.loadingProperty().not());
+        viewportImageView.visibleProperty().bind(showThumbnail.not());
 
         // the toggle and Ctrl+Shift+B both flip the manager's flag, which resets itself on a photo change
-        splitViewToggle.selectedProperty().bindBidirectional(editingManager.showOriginalProperty());
-        editingManager.currentPhotoProperty().addListener((obs, old, photo) -> showPhotoInfo(photo));
-        showPhotoInfo(editingManager.currentPhotoProperty().get());
+        splitViewToggle.selectedProperty().bindBidirectional(editingManager.getViewModel().showOriginalProperty());
+        editingManager.getViewModel().currentPhotoProperty().addListener((obs, old, photo) -> showPhotoInfo(photo));
+        showPhotoInfo(editingManager.getViewModel().currentPhotoProperty().get());
 
         setupNavigation();
         setupInput();
+        setupEyedropper();
+        setupHistoryNotice();
+    }
+
+    /**
+     * What just happened, at the bottom of the viewport: 0.25 s fade in, 1 s shown, 0.25 s fade out. Only one at a
+     * time: a new one stops the running one and starts over.
+     */
+    private void setupHistoryNotice() {
+        noticeTransition = TransitionFactory
+                .createFadePauseTransition(historyNoticeBar, Duration.millis(250), Duration.seconds(1), null);
+        editingManager.getHistoryManager().registerListener(this);
+    }
+
+    private void setupEyedropper() {
+        eyedropperToggle.disableProperty().bind(editingManager.getViewModel().loadingProperty()
+                .or(editingManager.getViewModel().currentPhotoProperty().isNull()));
+        eyedropperToggle.selectedProperty().addListener((obs, was, picking) -> {
+            if (picking) {
+                startPicking();
+            } else {
+                stopPicking();
+            }
+        });
+        // a new photo ends the picking
+        editingManager.getViewModel().loadingProperty().addListener((obs, was, loading) -> {
+            if (loading) {
+                eyedropperToggle.setSelected(false);
+            }
+        });
+    }
+
+    private void startPicking() {
+        pickHintLabel.setText("Click something neutral grey  ·  Esc to cancel");
+        pickHintBar.setVisible(true);
+        viewportRoot.getScene().addEventFilter(javafx.scene.input.KeyEvent.KEY_PRESSED, pickEscape);
+        viewportNavigator.startPicking(uv -> editingManager.pickWhiteBalance(uv).thenAccept(picked -> {
+            if (picked) {
+                eyedropperToggle.setSelected(false);
+            } else {
+                pickHintLabel.setText("Too dark or too bright, pick another spot  ·  Esc to cancel");
+            }
+        }));
+    }
+
+    private void stopPicking() {
+        pickHintBar.setVisible(false);
+        viewportRoot.getScene().removeEventFilter(javafx.scene.input.KeyEvent.KEY_PRESSED, pickEscape);
+        viewportNavigator.stopPicking();
     }
 
     private void showPhotoInfo(PhotoEntry photo) {
@@ -127,7 +206,7 @@ public class DevelopViewportController {
         viewportNavigator = new ViewportNavigator(viewportImageView, editingManager::setView);
 
         // a new photo starts at fit
-        editingManager.loadingProperty().addListener((obs, was, loading) -> {
+        editingManager.getViewModel().loadingProperty().addListener((obs, was, loading) -> {
             if (loading) viewportNavigator.fit();
         });
 
@@ -161,5 +240,12 @@ public class DevelopViewportController {
         if (w > 0 && h > 0) {
             editingManager.setViewportSize(w, h);
         }
+    }
+
+    @Override
+    public void onHistory(String history, boolean isUndo) {
+        noticeTransition.stop();
+        historyNoticeLabel.setText(history);
+        noticeTransition.playFromStart();
     }
 }

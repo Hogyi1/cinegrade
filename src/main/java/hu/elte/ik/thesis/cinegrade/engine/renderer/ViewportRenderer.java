@@ -1,10 +1,12 @@
 package hu.elte.ik.thesis.cinegrade.engine.renderer;
 
+import com.sun.prism.impl.BufferUtil;
 import hu.elte.ik.thesis.cinegrade.app.scope.ResourceStack;
 import hu.elte.ik.thesis.cinegrade.domain.editing.EditState;
 import hu.elte.ik.thesis.cinegrade.engine.GpuWorker;
 import hu.elte.ik.thesis.cinegrade.engine.gl.*;
 import hu.elte.ik.thesis.cinegrade.engine.grade.BaseBlockUniform;
+import hu.elte.ik.thesis.cinegrade.engine.grade.WhiteBalancer;
 import hu.elte.ik.thesis.cinegrade.infra.services.libraw.LibrawService;
 import hu.elte.ik.thesis.cinegrade.javafx.ui.input.ViewportNavigator;
 import javafx.application.Platform;
@@ -20,11 +22,16 @@ import org.apache.logging.log4j.Logger;
 import org.lwjgl.system.MemoryUtil;
 
 import java.nio.ByteBuffer;
+import java.nio.FloatBuffer;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
+
+import static hu.elte.ik.thesis.cinegrade.engine.grade.WhiteBalancer.srgbToLinear;
+import static org.lwjgl.opengl.GL11C.*;
+import static org.lwjgl.opengl.GL30C.GL_RGBA32F;
 
 /**
  * Renders the open photo for the development viewport on the interactive GPU worker.
@@ -49,7 +56,7 @@ public class ViewportRenderer implements AutoCloseable {
     private final AtomicBoolean renderQueued = new AtomicBoolean();
 
     private ImageTexture imageTexture;
-    private FrameBuffer fbo;
+    private FrameBuffer fbo, sampleFbo;
     private BaseBlockUniform gradeBlock;
     private PixelReader pixelReader;
     private WritableImage[] writableImages = new WritableImage[2];
@@ -64,7 +71,8 @@ public class ViewportRenderer implements AutoCloseable {
 
         worker.submit(() -> {
             imageTexture = resources.push(new ImageTexture());
-            fbo = resources.push(new FrameBuffer(1, 1));
+            fbo = resources.push(new FrameBuffer(1, 1, GL_RGBA8));
+            sampleFbo = resources.push(new FrameBuffer(5, 5, GL_RGBA32F));
             pixelReader = resources.push(new PixelReader(1, 1));
             gradeBlock = resources.push(new BaseBlockUniform());
             return null;
@@ -118,6 +126,7 @@ public class ViewportRenderer implements AutoCloseable {
     }
 
     // [AI-GENERATED METHOD] DEV: shader hot reload, see Documentation/REMOVE_BEFORE_RELEASE.md
+
     /**
      * Draws the current photo again with the latest edit and view (after the shader was reloaded).
      */
@@ -138,6 +147,49 @@ public class ViewportRenderer implements AutoCloseable {
     public void clear() {
         hasImage = false;
         frame.set(null);
+    }
+
+    /**
+     * The average linear color of a few source pixels around this texture uv, as the photo was decoded: draws only
+     * that spot into the small float FBO, so no grade and no 8-bit rounding of the viewport frame is in it.
+     *
+     * @param defaults the photo's edit with every setting at its default
+     * @return r, g, b; null if no photo is shown
+     */
+    public CompletableFuture<float[]> sample(EditState defaults, ViewportNavigator.UV uv) {
+        return worker.submit(() -> {
+            if (!hasImage) return null;
+
+            // 5 source pixels along the long edge; the uv scale is the same on both axes
+            float zoom = 5f / Math.max(imageTexture.getWidth(), imageTexture.getHeight());
+            ViewportNavigator.ViewTransform view = new ViewportNavigator.ViewTransform(new ShaderProgram.Vector3(zoom,
+                    Math.clamp((float) uv.x() - zoom / 2, 0f, 1f - zoom),
+                    Math.clamp((float) uv.y() - zoom / 2, 0f, 1f - zoom)));
+
+            sampleFbo.bind();
+            try {
+                ShaderProgram shader = worker.getShader();
+                shader.use();
+                gradeBlock.upload(defaults);
+                gradeBlock.bindBase();
+                shader.bindVec3Uniform("uvZoom_OffsetX_OffsetY", view.vec3());
+                shader.bindIntUniform("linearInput", imageTexture.isLinear() ? 1 : 0);
+                imageTexture.bind();
+                worker.getFullscreenQuad().draw();
+
+                FloatBuffer floats = org.lwjgl.BufferUtils.createFloatBuffer(5 * 5 * 3);
+                glReadPixels(0,0,5,5, GL_RGB, GL_FLOAT, floats);
+
+                float[] avg = new float[3];
+                for (int i = 0; i < 5*5*3; i++) {
+                    avg[i % 3] += (float) (WhiteBalancer.srgbToLinear(floats.get(i)) / 25.f);
+                }
+
+                return avg;
+            } finally {
+                sampleFbo.unbind();
+            }
+        });
     }
 
     /**

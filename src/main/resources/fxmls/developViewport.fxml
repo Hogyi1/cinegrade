@@ -46,16 +46,53 @@
             </StackPane.margin>
             <children>
                 <Label fx:id="photoNameLabel" maxWidth="260.0" styleClass="hud-filename" text="No photo selected"/>
+                <!-- The original file is gone; the thumbnail is shown instead -->
+                <Label fx:id="missingBadge" minWidth="-Infinity" managed="false" visible="false" styleClass="hud-missing-badge" text="Missing"/>
                 <Label fx:id="photoMetaLabel" minWidth="-Infinity" styleClass="hud-meta"/>
 
                 <Region minWidth="8.0" HBox.hgrow="ALWAYS"/>
 
+                <!-- White balance picker: the next click on the photo sets it, Esc cancels -->
+                <ToggleButton fx:id="eyedropperToggle" minWidth="-Infinity" mnemonicParsing="false" styleClass="hud-btn">
+                    <graphic>
+                        <ImageView fitHeight="14.0" fitWidth="14.0" preserveRatio="true" smooth="true">
+                            <image>
+                                <javafx.scene.image.Image url="@../images/icons/Eyedropper.png"/>
+                            </image>
+                        </ImageView>
+                    </graphic>
+                    <tooltip>
+                        <javafx.scene.control.Tooltip text="White balance picker (Esc to cancel)"/>
+                    </tooltip>
+                </ToggleButton>
                 <!-- Before: the photo without any edit (Ctrl+Shift+B), turned off on every photo change -->
                 <ToggleButton fx:id="splitViewToggle" minWidth="-Infinity" mnemonicParsing="false" styleClass="hud-btn" text="Before"/>
                 <Button fx:id="zoomFitBtn" minWidth="-Infinity" mnemonicParsing="false" styleClass="hud-btn" text="Fit"/>
                 <Button fx:id="zoom150Btn" minWidth="-Infinity" mnemonicParsing="false" styleClass="hud-btn" text="150%"/>
                 <Button fx:id="zoom200Btn" minWidth="-Infinity" mnemonicParsing="false" styleClass="hud-btn" text="200%"/>
                 <Slider fx:id="zoomSlider" blockIncrement="0.25" max="4.0" min="1.0" minWidth="90.0" prefWidth="90.0" styleClass="grade-slider" value="1.0"/>            </children>
+        </HBox>
+
+        <!-- Shown while the white balance picker is on -->
+        <HBox fx:id="pickHintBar" alignment="CENTER" maxHeight="32.0" maxWidth="-Infinity" mouseTransparent="true" prefHeight="32.0"
+              styleClass="viewport-hud" visible="false" StackPane.alignment="BOTTOM_CENTER">
+            <StackPane.margin>
+                <Insets bottom="14.0"/>
+            </StackPane.margin>
+            <children>
+                <Label fx:id="pickHintLabel" styleClass="hud-meta"/>
+            </children>
+        </HBox>
+
+        <!-- What just happened (undo history), faded in and out by the controller -->
+        <HBox fx:id="historyNoticeBar" alignment="CENTER" maxHeight="32.0" maxWidth="-Infinity" mouseTransparent="true" prefHeight="32.0"
+              styleClass="viewport-hud" visible="false" StackPane.alignment="BOTTOM_CENTER">
+            <StackPane.margin>
+                <Insets bottom="14.0"/>
+            </StackPane.margin>
+            <children>
+                <Label fx:id="historyNoticeLabel" styleClass="hud-filename"/>
+            </children>
         </HBox>
     </children>
 </StackPane>
