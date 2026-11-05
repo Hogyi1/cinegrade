@@ -378,7 +378,7 @@ public class DevelopFilmstripController {
                 "Remove", true);
         if (confirmed) {
             logger.info("Removing {} photo(s) from the catalog", photos.size());
-            photos.forEach(photoManager::removePhoto);
+            photoManager.removePhotos(photos);
         }
     }
 
@@ -392,7 +392,7 @@ public class DevelopFilmstripController {
                 "Delete", true);
         if (confirmed) {
             logger.info("Deleting {} photo(s) from the disk", photos.size());
-            photos.forEach(photoManager::deletePhoto);
+            photoManager.deletePhotos(photos);
         }
     }
 

@@ -4,6 +4,7 @@ import hu.elte.ik.thesis.cinegrade.domain.error.ErrorHandler;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Service;
+import javafx.concurrent.Task;
 import javafx.concurrent.WorkerStateEvent;
 import lombok.Getter;
 import org.apache.logging.log4j.LogManager;
@@ -11,6 +12,7 @@ import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
@@ -78,6 +80,25 @@ public class TaskManager implements AutoCloseable {
                 default -> {}
             }
         });
+    }
+
+    public <T> void configure(Callable<T> callable) {
+        Service<T> service = wrapIntoService(callable);
+        configure(service);
+    }
+
+    private <T> Service<T> wrapIntoService(Callable<T> callable) {
+        return new Service<T>() {
+            @Override
+            protected Task<T> createTask() {
+                return new Task<T>() {
+                    @Override
+                    protected T call() throws Exception {
+                        return callable.call();
+                    }
+                };
+            }
+        };
     }
 
     public void cancelGroup(Object group) {

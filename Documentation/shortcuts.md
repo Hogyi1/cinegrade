@@ -9,9 +9,12 @@
 | `Ctrl+C` | Copy edit settings | `DevelopmentPanelController` |
 | `Ctrl+V` | Paste edit settings | `DevelopmentPanelController` |
 | `Ctrl+Shift+R` | Reset photo to defaults | `DevelopmentPanelController` |
+| `Ctrl+Z` | Undo | `DevelopmentPanelController` |
+| `Ctrl+Y` / `Ctrl+Shift+Z` | Redo | `DevelopmentPanelController` |
 | `Tab` | Cycle zoom: Fit → 150% → 200% | `DevelopViewportController` |
 | `+` / `Numpad +` | Zoom slider up one step (+0.25) | `DevelopViewportController` |
 | `−` / `Numpad −` | Zoom slider down one step | `DevelopViewportController` |
+| `Esc` | Cancel the white balance picker | `DevelopViewportController` |
 | `0–5` / `Numpad 0–5` | Set rating | `DevelopFilmstripController` |
 | `Q` | Red label | `DevelopFilmstripController` |
 | `W` | Yellow label | `DevelopFilmstripController` |
