@@ -1,8 +1,11 @@
 package hu.elte.ik.thesis.cinegrade.app.scope;
 
+import hu.elte.ik.thesis.cinegrade.app.managers.catalog.HistoryManager;
 import hu.elte.ik.thesis.cinegrade.app.managers.concurrency.ThreadPoolManager;
 import hu.elte.ik.thesis.cinegrade.app.managers.editing.EditingManager;
+import hu.elte.ik.thesis.cinegrade.app.managers.editing.ThumbnailRefresher;
 import hu.elte.ik.thesis.cinegrade.app.managers.export.ExportManager;
+import hu.elte.ik.thesis.cinegrade.app.managers.export.ExportStage;
 import hu.elte.ik.thesis.cinegrade.app.managers.imports.ImportManager;
 import hu.elte.ik.thesis.cinegrade.app.managers.imports.StagingArea;
 import hu.elte.ik.thesis.cinegrade.app.managers.photos.PhotoManager;
@@ -21,6 +24,7 @@ import hu.elte.ik.thesis.cinegrade.infra.database.dao.preview.PhotoBlobDao;
 import hu.elte.ik.thesis.cinegrade.infra.services.exiftool.ExifToolService;
 import hu.elte.ik.thesis.cinegrade.infra.services.libraw.LibrawService;
 import hu.elte.ik.thesis.cinegrade.infra.services.storage.StorageService;
+import hu.elte.ik.thesis.cinegrade.infra.services.storage.database.LastPathService;
 import hu.elte.ik.thesis.cinegrade.infra.utils.thumbnail.ThumbnailFactory;
 import hu.elte.ik.thesis.cinegrade.infra.database.CatalogDatabase;
 import hu.elte.ik.thesis.cinegrade.infra.database.PreviewDatabase;
@@ -66,10 +70,17 @@ public class CatalogScopeFactory {
             ThumbnailService thumbnailService = resources.push(new ThumbnailService(blobDao, thumbnailFactory, threadPoolManager.getCpuPool()));
             ExifToolService exifToolService = new ExifToolService();
             StorageService storageService = new StorageService(catalog.getProjectDirectory());
-            LibrawService librawService = resources.push(new LibrawService());
 
+            HistoryManager historyManager = new HistoryManager();
             PhotoLibrary photoLibrary = new PhotoLibrary();
-            PhotoManager photoManager = resources.push(new PhotoManager(transactionRunner, photoDao, photoLibrary, thumbnailService, threadPoolManager.getIoPool()));
+            PhotoManager photoManager = resources.push(new PhotoManager(
+                    taskManager,
+                    historyManager,
+                    transactionRunner,
+                    photoDao,
+                    photoLibrary,
+                    thumbnailService,
+                    threadPoolManager.getIoPool()));
 
             StagingArea stagingArea = new StagingArea();
             StagingPipeline stagingPipeline = new StagingPipeline(stagingArea,
@@ -94,17 +105,21 @@ public class CatalogScopeFactory {
                             exifToolService,
                             storageService));
 
-            EditingManager editingManager = resources.push(new EditingManager(transactionRunner,
+            ThumbnailRefresher thumbnailRefresher = new ThumbnailRefresher(thumbnailRenderer, thumbnailService, threadPoolManager.getCpuPool());
+            EditingManager editingManager = resources.push(new EditingManager(historyManager, transactionRunner,
                     editStateDao,
                     metadataDao,
                     photoManager,
                     viewportRenderer,
-                    thumbnailRenderer,
-                    threadPoolManager.getCpuPool(),
-                    thumbnailService,
-                    librawService));
+                    thumbnailRefresher));
 
-            ExportManager exportManager = resources.push(new ExportManager());
+            ExportStage exportStage = new ExportStage(photoLibrary);
+            ExportManager exportManager = resources.push(new ExportManager(exportRenderer,
+                    editingManager,
+                    taskManager,
+                    threadPoolManager.getIoPool(),
+                    threadPoolManager.getCpuPool(),
+                    exportStage));
 
             return new CatalogScope(resources, catalog, thumbnailService, catalogService, stagingArea, importManager, editingManager, exportManager, photoManager, photoLibrary);
         } catch (Exception e) {

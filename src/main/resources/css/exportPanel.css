@@ -1,176 +1,270 @@
 /* [AI-GENERATED] */
-/* ==========================================================================
-   CineGrade Export Panel Stylesheet (Images & LUT 2-Tab Design)
-   Uses Theme Tokens from theme.css (-clr-*) for seamless dark/light toggle
-   ========================================================================== */
+/* Export panel: Photos and 3D LUT tabs. Theme tokens only, floating plates like the import panel. */
 
 .export-panel-root {
     -fx-background-color: -clr-dark;
-    -fx-padding: 24px 36px;
-    -fx-alignment: center;
+    -fx-padding: 10px;
 }
 
-.export-card-plate {
+.export-plate {
     -fx-background-color: -clr-almostdarkgrey;
-    -fx-border-color: -clr-border;
-    -fx-border-radius: 16px;
-    -fx-background-radius: 16px;
-    -fx-border-width: 1px;
-    -fx-padding: 20px 24px;
-    -fx-spacing: 16px;
-    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.45), 24, 0, 0, 6);
-}
-
-.export-tabs-container {
-    -fx-background-color: -clr-surface-input;
+    -fx-background-radius: 20px;
     -fx-border-color: -clr-border-subtle;
-    -fx-border-radius: 8px;
-    -fx-background-radius: 8px;
-    -fx-border-width: 1px;
-    -fx-padding: 3px;
-    -fx-alignment: center-left;
+    -fx-border-radius: 20px;
+    -fx-padding: 20px 22px 22px 22px;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.25), 20, 0, 0, 4);
 }
 
-.export-tab-btn {
-    -fx-background-color: transparent;
-    -fx-text-fill: -clr-text-muted;
+.export-plate-title {
+    -fx-text-fill: -clr-text-primary;
+    -fx-font-size: 15px;
     -fx-font-weight: bold;
-    -fx-font-size: 12px;
-    -fx-padding: 6px 20px;
-    -fx-cursor: hand;
-    -fx-background-radius: 6px;
-}
-.export-tab-btn:hover {
-    -fx-text-fill: -clr-text-primary;
-}
-.export-tab-btn:selected {
-    -fx-background-color: -clr-blue;
-    -fx-text-fill: -clr-text-primary;
-    -fx-effect: dropshadow(gaussian, rgba(20, 107, 209, 0.35), 8, 0, 0, 2);
-}
-
-/* Sub-Plates for Scope & Settings */
-.export-subplate {
-    -fx-background-color: -clr-darkgrey;
-    -fx-border-color: -clr-border-subtle;
-    -fx-border-radius: 12px;
-    -fx-background-radius: 12px;
-    -fx-border-width: 1px;
-    -fx-padding: 16px 18px;
-    -fx-spacing: 12px;
-}
-
-.export-subplate-title {
-    -fx-text-fill: -clr-text-primary;
-    -fx-font-size: 13px;
-    -fx-font-weight: bold;
-    -fx-border-color: -clr-border-subtle;
-    -fx-border-width: 0 0 1px 0;
     -fx-padding: 0 0 8px 0;
 }
 
-.export-scope-row {
+/* Segmented switch: tabs, format, LUT size */
+.export-segment {
+    -fx-background-color: -clr-surface-input;
+    -fx-background-radius: 10px;
+    -fx-padding: 3px;
+    -fx-spacing: 2px;
     -fx-alignment: center-left;
-    -fx-spacing: 10px;
-    -fx-padding: 4px 0;
 }
 
-.export-scope-radio {
-    -fx-text-fill: -clr-text-primary;
-    -fx-font-size: 12px;
-}
-
-.export-scope-count {
-    -fx-text-fill: -clr-text-muted;
-    -fx-font-family: -font-family-secondary;
-    -fx-font-size: 11px;
-}
-
-.export-settings-row {
-    -fx-alignment: center-left;
-    -fx-spacing: 12px;
-    -fx-pref-height: 32px;
-}
-
-.export-settings-label {
+.export-segment-btn {
+    -fx-background-color: transparent;
+    -fx-background-radius: 8px;
     -fx-text-fill: -clr-text-secondary;
     -fx-font-size: 12px;
-    -fx-min-width: 90px;
-    -fx-pref-width: 90px;
+    -fx-font-weight: bold;
+    -fx-padding: 6px 16px;
+    -fx-cursor: hand;
 }
 
-.export-input-field {
-    -fx-background-color: -clr-surface-input;
-    -fx-border-color: -clr-border;
-    -fx-border-radius: 6px;
-    -fx-background-radius: 6px;
+.export-segment-btn:hover {
     -fx-text-fill: -clr-text-primary;
-    -fx-font-size: 12px;
-    -fx-padding: 5px 10px;
 }
-.export-input-field:focused {
+
+.export-segment-btn:selected {
+    -fx-background-color: -clr-blue;
+    -fx-text-fill: -clr-text-primary;
+}
+
+.export-segment-btn:focused {
+    -fx-border-color: -clr-purple;
+    -fx-border-radius: 8px;
+}
+
+/* Which photos: the whole row is the radio button */
+.export-scope-option {
+    -fx-background-color: transparent;
+    -fx-background-radius: 10px;
+    -fx-text-fill: -clr-text-secondary;
+    -fx-font-size: 13px;
+    -fx-padding: 9px 44px 9px 10px;
+    -fx-cursor: hand;
+}
+
+.export-scope-option:hover {
+    -fx-background-color: -clr-darkgrey;
+    -fx-text-fill: -clr-text-primary;
+}
+
+.export-scope-option:selected {
+    -fx-background-color: -clr-surface-card;
+    -fx-text-fill: -clr-text-primary;
+}
+
+.export-scope-option:focused {
+    -fx-border-color: -clr-purple;
+    -fx-border-radius: 10px;
+}
+
+.export-scope-option .radio {
+    -fx-background-color: -clr-surface-input;
+    -fx-background-radius: 8px;
+    -fx-border-color: -clr-border;
+    -fx-border-radius: 8px;
+    -fx-padding: 3px;
+}
+
+.export-scope-option:selected .radio {
+    -fx-background-color: -clr-blue;
     -fx-border-color: -clr-blue;
 }
 
-.export-naming-example {
-    -fx-text-fill: -clr-success;
-    -fx-font-family: -font-family-secondary;
-    -fx-font-size: 11px;
-    -fx-padding: 2px 0 0 102px;
+.export-scope-option .dot {
+    -fx-background-color: transparent;
+    -fx-background-radius: 3px;
+    -fx-padding: 3px;
 }
 
-.export-lut-notice {
-    -fx-background-color: -clr-darkgrey;
-    -fx-border-color: -clr-warning;
-    -fx-border-radius: 8px;
+.export-scope-option:selected .dot {
+    -fx-background-color: -clr-text-primary;
+}
+
+.export-scope-count {
+    -fx-text-fill: -clr-text-secondary;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-padding: 0 12px 0 0;
+}
+
+/* Settings rows */
+.export-row {
+    -fx-alignment: center-left;
+    -fx-spacing: 10px;
+    -fx-min-height: 34px;
+}
+
+.export-row-label {
+    -fx-text-fill: -clr-text-secondary;
+    -fx-font-size: 12px;
+    -fx-min-width: 72px;
+    -fx-pref-width: 72px;
+}
+
+.export-value {
+    -fx-text-fill: -clr-text-primary;
+    -fx-font-size: 13px;
+}
+
+.export-hint {
+    -fx-text-fill: -clr-text-muted;
+    -fx-font-size: 12px;
+    -fx-padding: 0 0 0 4px;
+}
+
+.export-name-example {
+    -fx-text-fill: -clr-text-muted;
+    -fx-font-size: 12px;
+    -fx-padding: 0 0 0 82px;
+}
+
+.export-input {
+    -fx-background-color: -clr-surface-input;
     -fx-background-radius: 8px;
-    -fx-border-width: 1px;
-    -fx-padding: 10px 14px;
-    -fx-text-fill: -clr-warning;
-    -fx-font-size: 11px;
+    -fx-border-color: -clr-border-subtle;
+    -fx-border-radius: 8px;
+    -fx-text-fill: -clr-text-primary;
+    -fx-prompt-text-fill: -clr-text-dim;
+    -fx-font-size: 12px;
+    -fx-padding: 7px 10px;
 }
 
-/* Action Footer */
-.export-footer-bar {
-    -fx-background-color: -clr-surface-card;
+.export-input:focused {
+    -fx-border-color: -clr-blue;
+}
+
+.export-check {
+    -fx-text-fill: -clr-text-primary;
+    -fx-font-size: 12px;
+}
+
+.export-check .box {
+    -fx-background-color: -clr-surface-input;
+    -fx-background-radius: 4px;
+    -fx-border-color: -clr-border;
+    -fx-border-radius: 4px;
+}
+
+.export-check:selected .box {
+    -fx-background-color: -clr-blue;
+    -fx-border-color: -clr-blue;
+}
+
+.export-check:selected .mark {
+    -fx-background-color: -clr-text-primary;
+}
+
+.export-slider .track {
+    -fx-background-color: -clr-border;
+    -fx-background-radius: 3px;
+    -fx-pref-height: 5px;
+}
+
+.export-slider .thumb {
+    -fx-background-color: -clr-text-primary;
+    -fx-background-radius: 7px;
+    -fx-padding: 6px;
+    -fx-cursor: hand;
+}
+
+.export-slider:focused .thumb {
+    -fx-background-color: -clr-blue-hover;
+}
+
+.export-slider-value {
+    -fx-text-fill: -clr-text-primary;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-alignment: center-right;
+}
+
+/* The action: one sentence saying what will happen, and the button that does it */
+.export-action-bar {
+    -fx-background-color: -clr-almostdarkgrey;
+    -fx-background-radius: 20px;
     -fx-border-color: -clr-border-subtle;
-    -fx-border-radius: 10px;
-    -fx-background-radius: 10px;
-    -fx-border-width: 1px;
-    -fx-padding: 12px 20px;
+    -fx-border-radius: 20px;
+    -fx-padding: 12px 12px 12px 24px;
     -fx-spacing: 16px;
     -fx-alignment: center-left;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.25), 20, 0, 0, 4);
+}
+
+.export-summary {
+    -fx-text-fill: -clr-text-primary;
+    -fx-font-size: 16px;
+    -fx-text-overrun: center-ellipsis;
 }
 
 .export-btn-primary {
     -fx-background-color: -clr-blue;
+    -fx-background-radius: 12px;
     -fx-text-fill: -clr-text-primary;
+    -fx-font-size: 14px;
     -fx-font-weight: bold;
-    -fx-font-size: 13px;
-    -fx-padding: 8px 24px;
-    -fx-background-radius: 8px;
+    -fx-padding: 11px 26px;
     -fx-cursor: hand;
-    -fx-effect: dropshadow(gaussian, rgba(20, 107, 209, 0.4), 10, 0, 0, 2);
+    -fx-effect: dropshadow(gaussian, rgba(20, 107, 209, 0.45), 12, 0, 0, 2);
 }
+
 .export-btn-primary:hover {
     -fx-background-color: -clr-blue-hover;
 }
+
 .export-btn-primary:pressed {
     -fx-background-color: -clr-blue-active;
 }
 
+.export-btn-primary:focused {
+    -fx-border-color: -clr-purple;
+    -fx-border-radius: 12px;
+}
+
+.export-btn-primary:disabled {
+    -fx-background-color: -clr-surface;
+    -fx-text-fill: -clr-text-dim;
+    -fx-opacity: 1;
+    -fx-effect: null;
+}
+
 .export-btn-secondary {
     -fx-background-color: -clr-surface;
-    -fx-text-fill: -clr-text-primary;
-    -fx-font-size: 12px;
-    -fx-padding: 8px 18px;
     -fx-background-radius: 8px;
-    -fx-cursor: hand;
     -fx-border-color: -clr-border;
     -fx-border-radius: 8px;
-    -fx-border-width: 1px;
-}
-.export-btn-secondary:hover {
-    -fx-background-color: -clr-almostgrey;
     -fx-text-fill: -clr-text-primary;
+    -fx-font-size: 12px;
+    -fx-padding: 7px 14px;
+    -fx-cursor: hand;
+}
+
+.export-btn-secondary:hover {
+    -fx-background-color: -clr-surface-card;
+}
+
+.export-btn-secondary:focused {
+    -fx-border-color: -clr-blue;
 }

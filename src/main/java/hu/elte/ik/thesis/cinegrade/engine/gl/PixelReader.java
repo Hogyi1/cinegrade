@@ -1,5 +1,8 @@
 package hu.elte.ik.thesis.cinegrade.engine.gl;
 
+import hu.elte.ik.thesis.cinegrade.engine.RenderEngine;
+import lombok.Setter;
+
 import java.nio.ByteBuffer;
 import java.util.function.Consumer;
 
@@ -24,6 +27,8 @@ public class PixelReader implements AutoCloseable {
     private int w, h, pboWriteIndex = 0;
     private long pboByteSize;
     private boolean previousUnread;
+    @Setter
+    private RenderEngine.Format format = RenderEngine.Format.BGRA8;
 
     public PixelReader(int w, int h) {
         glGenBuffers(pboID);
@@ -31,7 +36,7 @@ public class PixelReader implements AutoCloseable {
     }
 
     public void resize(int w, int h) {
-        pboByteSize = (long) w * h * 4;
+        pboByteSize = (long) w * h * format.getBytesPerPixel();
         for (int i = 0; i < 2; i++) {
             glBindBuffer(GL_PIXEL_PACK_BUFFER, pboID[i]);
             glBufferData(GL_PIXEL_PACK_BUFFER, pboByteSize, GL_STREAM_READ);
@@ -45,12 +50,13 @@ public class PixelReader implements AutoCloseable {
     /**
      * Reads the currently bound framebuffer.
      *
-     * @param consumer       gets the BGRA bytes ({@code w * h * 4}); only valid inside the call
+     * @param consumer       gets the bytes according to the format ({@code w * h * format.getBytesPerPixel()}); only valid inside the call
      * @param flushImmediate true: hand out this frame (waits for the GPU); false: hand out the previous frame
      */
     public void read(Consumer<ByteBuffer> consumer, boolean flushImmediate) {
         glBindBuffer(GL_PIXEL_PACK_BUFFER, pboID[pboWriteIndex]);
-        glReadPixels(0, 0, w, h, GL_BGRA, GL_UNSIGNED_BYTE, 0L);
+        glPixelStorei(GL_PACK_ALIGNMENT, format == RenderEngine.Format.RGB16 ? 2 : 4);
+        glReadPixels(0, 0, w, h, format.getGlFormat(), format.getGlType(), 0L);
 
         int previousIndex = 1 - pboWriteIndex;
         if (flushImmediate) {

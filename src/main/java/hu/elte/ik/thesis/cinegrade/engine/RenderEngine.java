@@ -14,6 +14,8 @@ import static org.lwjgl.glfw.GLFW.GLFW_OPENGL_CORE_PROFILE;
 import static org.lwjgl.glfw.GLFW.GLFW_OPENGL_PROFILE;
 import static org.lwjgl.glfw.GLFW.glfwCreateWindow;
 import static org.lwjgl.glfw.GLFW.glfwWindowHint;
+import static org.lwjgl.opengl.GL11C.*;
+import static org.lwjgl.opengl.GL12.GL_BGRA;
 
 @Getter
 public class RenderEngine implements AutoCloseable {
@@ -61,6 +63,22 @@ public class RenderEngine implements AutoCloseable {
         glfwDestroyWindow(interactiveWindowID);
         glfwDestroyWindow(backgroundWindowID);
         glfwTerminate();
+    }
 
+    @Getter
+    public enum Format {
+        BGRA8(GL_BGRA, GL_UNSIGNED_BYTE, 4),
+        RGB16(GL_RGB, GL_UNSIGNED_SHORT, 6),
+        RGB32F(GL_RGB, GL_FLOAT, 12);
+
+        Format(int glFormat, int glType, int bytesPerPixel) {
+            this.glFormat = glFormat;
+            this.glType = glType;
+            this.bytesPerPixel = bytesPerPixel;
+        }
+
+        private final int glFormat;
+        private final int glType;
+        private final int bytesPerPixel;
     }
 }

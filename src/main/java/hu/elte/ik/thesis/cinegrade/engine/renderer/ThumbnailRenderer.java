@@ -15,6 +15,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 import static hu.elte.ik.thesis.cinegrade.infra.utils.thumbnail.ThumbnailFactory.MAX_EDGE;
+import static org.lwjgl.opengl.GL11C.GL_RGBA8;
+import static org.lwjgl.opengl.GL30C.GL_RGBA32F;
 
 /**
  * Renders graded thumbnails of any photo, independent of the viewport.
@@ -39,7 +41,7 @@ public class ThumbnailRenderer implements AutoCloseable {
 
         worker.submit(() -> {
             imageTexture = resources.push(new ImageTexture());
-            fbo = resources.push(new FrameBuffer(1, 1));
+            fbo = resources.push(new FrameBuffer(1, 1, GL_RGBA8));
             pixelReader = resources.push(new PixelReader(1, 1));
             gradeBlock = resources.push(new BaseBlockUniform());
             return null;

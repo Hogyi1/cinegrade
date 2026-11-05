@@ -14,10 +14,11 @@ public class FrameBuffer implements AutoCloseable {
 
     // FrameBufferObject, the render reads into this fbo instead of the screen as there is no screen
     // We create its own texture it can read into
-    private final int fboId, textureId;
+    private final int fboId, textureId, internalFormat;
     private int w, h;
 
-    public FrameBuffer(int width, int height) {
+    public FrameBuffer(int width, int height, int internalFormat) {
+        this.internalFormat = internalFormat;
         w = width;
         h = height;
         fboId = glGenFramebuffers();
@@ -31,7 +32,7 @@ public class FrameBuffer implements AutoCloseable {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, (ByteBuffer) null);
+        glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, (ByteBuffer) null);
         glBindTexture(GL_TEXTURE_2D, 0);
 
         // Bind the texture to this framebuffer
@@ -47,7 +48,7 @@ public class FrameBuffer implements AutoCloseable {
 
     public void resize(int w, int h) {
         glBindTexture(GL_TEXTURE_2D, textureId);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, (ByteBuffer) null);
+        glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, (ByteBuffer) null);
         glBindTexture(GL_TEXTURE_2D, 0);
 
         glBindFramebuffer(GL_FRAMEBUFFER, fboId);
