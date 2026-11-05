@@ -5,6 +5,7 @@ import hu.elte.ik.thesis.cinegrade.domain.enums.ViewType;
 import hu.elte.ik.thesis.cinegrade.domain.error.ErrorHandler;
 import hu.elte.ik.thesis.cinegrade.domain.exceptions.CineGradeException;
 import hu.elte.ik.thesis.cinegrade.domain.navigation.SceneManager;
+import hu.elte.ik.thesis.cinegrade.infra.services.storage.database.LastPathService;
 import javafx.css.PseudoClass;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -25,6 +26,7 @@ public class NewProjectDialogController {
     private static Logger logger = LogManager.getLogger(NewProjectDialogController.class);
     private final BiConsumer<String, Path> createCatalogConsumer;
     private final SceneManager sceneManager;
+    private final LastPathService lastPaths = new LastPathService();
     private File selectedFolder;
     @FXML
     private TextField projectNameField;
@@ -92,21 +94,15 @@ public class NewProjectDialogController {
     }
 
     private void openFileFolder() {
-        DirectoryChooser directoryChooser = new DirectoryChooser();
-        directoryChooser.setTitle("Open CineGrade project");
         if (selectedFolder != null && !selectedFolder.exists()) {
             selectedFolder.mkdirs();
         }
-        if (selectedFolder != null && selectedFolder.isDirectory()) {
-            directoryChooser.setInitialDirectory(selectedFolder);
-        }
-        Window mainWindow = cancelButton.getScene().getWindow();
         logger.debug("Default directory: {}", selectedFolder);
-        File selectedFile = directoryChooser.showDialog(mainWindow);
-        if (selectedFile != null) {
+        SceneManager.chooseFolder("Open CineGrade project", selectedFolder, selectedFile -> {
             this.selectedFolder = selectedFile;
             locationField.setText(selectedFolder.getAbsolutePath());
-        }
+            lastPaths.setAppProjectPath(selectedFile.toPath());
+        });
     }
 
     private boolean validateInput() {

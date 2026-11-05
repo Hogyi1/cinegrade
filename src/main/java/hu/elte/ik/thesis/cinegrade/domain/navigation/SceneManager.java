@@ -15,17 +15,19 @@ import javafx.scene.Scene;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
-import javafx.stage.Modality;
-import javafx.stage.Stage;
-import javafx.stage.StageStyle;
-import javafx.stage.Window;
+import javafx.stage.*;
 import javafx.util.Callback;
 import lombok.Getter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 public class SceneManager {
 
@@ -101,6 +103,75 @@ public class SceneManager {
     }
 
     public Window getActiveWindow() {
+        return Window.getWindows().stream().filter(Window::isFocused).findFirst().orElse(null);
+    }
+
+    /**
+     * Native folder picker. The callback only runs if a folder was chosen.
+     *
+     * @param initialDirectory where it opens, ignored if null or not a folder
+     */
+    public static void chooseFolder(String title, File initialDirectory, Consumer<File> onSelected) {
+        DirectoryChooser chooser = new DirectoryChooser();
+        chooser.setTitle(title);
+        if (initialDirectory != null && initialDirectory.isDirectory()) {
+            chooser.setInitialDirectory(initialDirectory);
+        }
+        File folder = chooser.showDialog(focusedWindow());
+        if (folder != null) {
+            onSelected.accept(folder);
+        }
+    }
+
+    /**
+     * Native picker for one existing file. The callback only runs if a file was chosen.
+     *
+     * @param initialDirectory where it opens, ignored if null or not a folder
+     */
+    public static void chooseFile(String title, Path initialDirectory, FileChooser.ExtensionFilter filter,
+                                  Consumer<File> onSelected) {
+        FileChooser chooser = fileChooser(title, filter, initialDirectory);
+        File file = chooser.showOpenDialog(focusedWindow());
+        if (file != null) {
+            onSelected.accept(file);
+        }
+    }
+
+    /**
+     * Native picker for several existing files. The callback only runs if at least one file was chosen.
+     */
+    public static void chooseFiles(String title, FileChooser.ExtensionFilter filter,
+                                   Consumer<List<File>> onSelected, Path initialDirectory) {
+        List<File> files = fileChooser(title, filter, initialDirectory).showOpenMultipleDialog(focusedWindow());
+        if (files != null && !files.isEmpty()) {
+            onSelected.accept(files);
+        }
+    }
+
+    /**
+     * Native "save as" picker. The callback only runs if a target was chosen.
+     */
+    public static void chooseSaveFile(String title, String initialFileName, FileChooser.ExtensionFilter filter,
+                                      Consumer<File> onSelected, Path initialDirectory) {
+        FileChooser chooser = fileChooser(title, filter, initialDirectory);
+        chooser.setInitialFileName(initialFileName);
+        File file = chooser.showSaveDialog(focusedWindow());
+        if (file != null) {
+            onSelected.accept(file);
+        }
+    }
+
+    private static FileChooser fileChooser(String title, FileChooser.ExtensionFilter filter, Path initialDirectory) {
+        FileChooser chooser = new FileChooser();
+        chooser.setTitle(title);
+        chooser.getExtensionFilters().add(filter);
+        if (initialDirectory != null && Files.isDirectory(initialDirectory)) {
+            chooser.setInitialDirectory(initialDirectory.toFile());
+        }
+        return chooser;
+    }
+
+    private static Window focusedWindow() {
         return Window.getWindows().stream().filter(Window::isFocused).findFirst().orElse(null);
     }
 

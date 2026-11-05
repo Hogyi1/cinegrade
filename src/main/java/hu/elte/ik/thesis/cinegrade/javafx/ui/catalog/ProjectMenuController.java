@@ -9,6 +9,7 @@ import hu.elte.ik.thesis.cinegrade.domain.error.ErrorHandler;
 import hu.elte.ik.thesis.cinegrade.domain.exceptions.CineGradeException;
 import hu.elte.ik.thesis.cinegrade.domain.navigation.SceneManager;
 import hu.elte.ik.thesis.cinegrade.domain.theme.ThemeManager;
+import hu.elte.ik.thesis.cinegrade.infra.services.storage.database.LastPathService;
 import hu.elte.ik.thesis.cinegrade.javafx.ui.components.CatalogViewItem;
 import hu.elte.ik.thesis.cinegrade.javafx.ui.dialog.NewProjectDialogController;
 import hu.elte.ik.thesis.cinegrade.javafx.ui.editing.NavigationController;
@@ -50,6 +51,7 @@ public class ProjectMenuController {
     private final Consumer<Catalog> removeRecentConsumer;
     private final Consumer<Catalog> deleteConsumer;
     private final Stage modalStage;
+    private final LastPathService lastPaths = new LastPathService();
 
     @FXML
     private Button newProjectButton;
@@ -119,23 +121,19 @@ public class ProjectMenuController {
 
         openProjectButton.setOnMouseClicked(e -> {
             logger.info("Open Project button clicked, opening FileChooser");
-            FileChooser fileChooser = new FileChooser();
-            fileChooser.setInitialDirectory(catalogManager.getDefaultPath().toFile());
-            fileChooser.setTitle("Open CineGrade project");
-            fileChooser.getExtensionFilters().addAll(new ExtensionFilter("CG projects", "*.cgproj"));
-            Window mainWindow = sceneManager.getActiveWindow();
-            File selectedFile = fileChooser.showOpenDialog(mainWindow);
-            if (selectedFile != null) {
-                logger.info("Selected project file from chooser: {}", selectedFile.getAbsolutePath());
-                try {
-                    catalogManager.openCatalog(selectedFile);
-                    logger.info("Catalog opened successfully from file {} ", selectedFile);
-                    sceneManager.switchView(ViewType.EDIT_PAGE);
-                    e.consume();
-                } catch (Exception ex) {
-                    ErrorHandler.getInstance().handle(ex);
-                }
-            }
+            SceneManager.chooseFile("Open CineGrade project", catalogManager.getDefaultPath(),
+                    new ExtensionFilter("CG projects", "*.cgproj"), selectedFile -> {
+                        logger.info("Selected project file from chooser: {}", selectedFile.getAbsolutePath());
+                        try {
+                            catalogManager.openCatalog(selectedFile);
+                            logger.info("Catalog opened successfully from file {} ", selectedFile);
+                            sceneManager.switchView(ViewType.EDIT_PAGE);
+                            e.consume();
+                            lastPaths.setAppProjectPath(selectedFile.getParentFile().toPath());
+                        } catch (Exception ex) {
+                            ErrorHandler.getInstance().handle(ex);
+                        }
+                    });
         });
 
         homeNav.setOnMouseClicked(e -> {
@@ -162,7 +160,7 @@ public class ProjectMenuController {
         catalogListView.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
             if (newValue != selectedProperty.getValue() && newValue != null) {
                 selectedProperty.set(null);
-                logger.info("Catalog selected from recent list: {} (path: {})", newValue.getCatalogName(), newValue.getProjectFilePath());
+                logger.info("Catalog selected from recent list: {} (destination: {})", newValue.getCatalogName(), newValue.getProjectFilePath());
                 try {
                     catalogManager.openCatalog(newValue);
                     logger.info("Catalog opened successfully, switching view to {}", ViewType.EDIT_PAGE);

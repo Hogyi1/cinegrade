@@ -13,10 +13,12 @@ import hu.elte.ik.thesis.cinegrade.infra.database.dao.catalog.PhotoDao;
 import hu.elte.ik.thesis.cinegrade.infra.services.exiftool.ExifToolService;
 import hu.elte.ik.thesis.cinegrade.infra.services.storage.StorageService;
 import hu.elte.ik.thesis.cinegrade.infra.services.storage.ThumbnailService;
+import hu.elte.ik.thesis.cinegrade.infra.services.storage.database.LastPathService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.*;
 
 /**
@@ -65,8 +67,7 @@ public class ImportManager implements AutoCloseable {
                          TransactionRunner catalogTx,
                          ThumbnailService thumbnailService,
                          ExifToolService exifToolService,
-                         StorageService storageService
-                         ) {
+                         StorageService storageService) {
         this.exifToolService = exifToolService;
         this.storageService = storageService;
         this.catalog = catalog;
@@ -145,6 +146,7 @@ public class ImportManager implements AutoCloseable {
 
     @Override
     public void close() throws Exception {
+        taskManager.cancelGroup(IMPORT_GROUP);
         stagingPipeline.cancel();
         stagingArea.clear();
     }

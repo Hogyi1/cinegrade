@@ -4,9 +4,11 @@ import hu.elte.ik.thesis.cinegrade.app.managers.imports.ImportManager;
 import hu.elte.ik.thesis.cinegrade.app.managers.imports.StagingArea;
 import hu.elte.ik.thesis.cinegrade.domain.editing.imports.StageEntry;
 import hu.elte.ik.thesis.cinegrade.domain.enums.ImportMethod;
-import hu.elte.ik.thesis.cinegrade.domain.enums.PhotoExtensions;
+import hu.elte.ik.thesis.cinegrade.domain.enums.PhotoExtension;
 import hu.elte.ik.thesis.cinegrade.domain.enums.WorkspacePanel;
 import hu.elte.ik.thesis.cinegrade.domain.error.ErrorHandler;
+import hu.elte.ik.thesis.cinegrade.domain.navigation.SceneManager;
+import hu.elte.ik.thesis.cinegrade.infra.services.storage.database.LastPathService;
 import hu.elte.ik.thesis.cinegrade.infra.utils.format.FormatUtils;
 import hu.elte.ik.thesis.cinegrade.javafx.ui.components.ImportPhotoCard;
 import hu.elte.ik.thesis.cinegrade.javafx.ui.components.SearchBar;
@@ -29,6 +31,8 @@ import org.apache.logging.log4j.Logger;
 import org.controlsfx.control.GridView;
 
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -40,6 +44,7 @@ public class ImportPanelController implements PanelController {
     private static final Logger logger = LogManager.getLogger(ImportPanelController.class);
     private final ImportManager importManager;
     private final StagingArea stagingArea;
+    private final LastPathService lastPaths = new LastPathService();
     private NavigationController navigationController;
     private final Consumer<StageEntry> removeConsumer;
 
@@ -294,21 +299,16 @@ public class ImportPanelController implements PanelController {
     }
 
     private void openFileBrowser() {
-        FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle("Import Photos");
-        fileChooser.getExtensionFilters().addAll(
-                new FileChooser.ExtensionFilter("All Files", PhotoExtensions.getAllWildcardPatterns())
-        );
-        Window mainWindow = browseFilesButton.getScene().getWindow();
-        List<File> selectedFiles = fileChooser.showOpenMultipleDialog(mainWindow);
-        if (selectedFiles != null && !selectedFiles.isEmpty()) {
-            try {
-                importManager.stagePhotos(selectedFiles);
-            } catch (Exception ex) {
-                logger.error("Error staging photos from FileChooser", ex);
-                ErrorHandler.getInstance().handle(ex);
-            }
-        }
+        SceneManager.chooseFiles("Import Photos",
+                new FileChooser.ExtensionFilter("All Files", PhotoExtension.getAllWildcardPatterns()), selectedFiles -> {
+                    try {
+                        importManager.stagePhotos(selectedFiles);
+                        lastPaths.setImportLastFolder(selectedFiles.getFirst().getParentFile().toPath());
+                    } catch (Exception ex) {
+                        logger.error("Error staging photos from FileChooser", ex);
+                        ErrorHandler.getInstance().handle(ex);
+                    }
+                }, lastPaths.getImportLastFolder().orElse(null));
     }
 
     private void setupLabels() {

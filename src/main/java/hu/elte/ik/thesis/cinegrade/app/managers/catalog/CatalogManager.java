@@ -124,7 +124,7 @@ public class CatalogManager implements AutoCloseable {
     /**
      * Opens a project.
      *
-     * @param projectFilePath the path to the project file
+     * @param projectFilePath the destination to the project file
      */
     private void openProject(Path projectFilePath) {
         Path cgprojFile = projectFilePath.toAbsolutePath().normalize();
@@ -146,7 +146,7 @@ public class CatalogManager implements AutoCloseable {
     }
 
     /**
-     * Creates a new project with the specified name and path.
+     * Creates a new project with the specified name and destination.
      *
      * @param name the name of the project
      * @param path the parent directory, the project gets its own folder inside it
@@ -217,13 +217,13 @@ public class CatalogManager implements AutoCloseable {
     }
 
     /**
-     * Returns the default path for the catalog.
+     * Returns the default destination for the catalog.
      *
-     * @return The default path for the catalog.
+     * @return The default destination for the catalog.
      */
     public Path getDefaultPath() {
-        Optional<String> savedPath = recentCatalogService.getSavedPath();
-        return savedPath.map(Path::of).filter(Files::isDirectory).orElse(fallBackPath);
+        Optional<Path> savedPath = recentCatalogService.getSavedPath();
+        return savedPath.filter(Files::isDirectory).orElse(fallBackPath);
     }
 
     /**
@@ -272,7 +272,7 @@ public class CatalogManager implements AutoCloseable {
      */
     private void calculateCatalogSize(Catalog catalog) {
         if (catalog == null || catalog.getProjectDirectory() == null) {
-            logger.warn("Cannot calculate catalog size: catalog or catalog path is null");
+            logger.warn("Cannot calculate catalog size: catalog or catalog destination is null");
             return;
         }
 

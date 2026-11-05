@@ -16,14 +16,14 @@ import java.util.*;
 public class RecentCatalogService {
 
     private final RecentCatalogDao dao;
-    private final SettingsDao settingsDao;
+    private final LastPathService lastPath;
     private final Connection connection;
     private final String SETTING_KEY = "app.project_path";
 
     public RecentCatalogService() {
         connection = AppDatabase.getInstance().getConnection();
         dao = new RecentCatalogDao(connection);
-        settingsDao = new SettingsDao(connection);
+        lastPath = new LastPathService(connection);
     }
 
     public List<Catalog> getRecentCatalogs() {
@@ -52,20 +52,15 @@ public class RecentCatalogService {
         }
     }
 
-    public Optional<String> getSavedPath() {
-        try {
-            String value = settingsDao.get(SETTING_KEY);
-            return (value == null || value.isBlank()) ? Optional.empty() : Optional.of(value);
-        } catch (SQLException ex) {
-            throw new CineGradeException(ErrorCode.DB_RECORD_NOT_FOUND, "Project path");
-        }
+    public Optional<Path> getSavedPath() {
+        return lastPath.getAppProjectPath();
     }
 
     /**
      * Adds a project to the recent list.
      *
      * @param name            the catalog name
-     * @param projectFilePath the absolute path of the .cgproj file, its parent is stored as the project directory
+     * @param projectFilePath the absolute destination of the .cgproj file, its parent is stored as the project directory
      */
     public Catalog addCatalog(String name, Path projectFilePath) {
         Path file = projectFilePath.toAbsolutePath().normalize();
@@ -104,4 +99,5 @@ public class RecentCatalogService {
             throw new CineGradeException(ErrorCode.DB_EXECUTION_FAILED, ex, "updateLastOpenedAt");
         }
     }
+
 }
