@@ -21,11 +21,6 @@ public enum GradeParam {
     WHITES("Whites", Section.BASIC, -100.0f, 100.0f, 0.0f, "", 1.0f),
     BLACKS("Blacks", Section.BASIC, -100.0f, 100.0f, 0.0f, "", 1.0f),
 
-    // Presence
-    TEXTURE("Texture", Section.BASIC, -100.0f, 100.0f, 0.0f, "", 1.0f),
-    CLARITY("Clarity", Section.BASIC, -100.0f, 100.0f, 0.0f, "", 1.0f),
-    DEHAZE("Dehaze", Section.BASIC, -100.0f, 100.0f, 0.0f, "", 1.0f),
-
     // Color
     VIBRANCE("Vibrance", Section.BASIC, -100.0f, 100.0f, 0.0f, "", 1.0f),
     SATURATION("Saturation", Section.BASIC, -100.0f, 100.0f, 0.0f, "", 1.0f),
@@ -99,9 +94,6 @@ public enum GradeParam {
             case SHADOWS -> editState.getShadows();
             case WHITES -> editState.getWhites();
             case BLACKS -> editState.getBlacks();
-            case TEXTURE -> editState.getTexture();
-            case CLARITY -> editState.getClarity();
-            case DEHAZE -> editState.getDehaze();
             case VIBRANCE -> editState.getVibrance();
             case SATURATION -> editState.getSaturation();
             default -> isHsl() ? editState.getHsl()[hslIndex()] : defVal;
@@ -122,9 +114,6 @@ public enum GradeParam {
             case SHADOWS -> editState.setShadows(value);
             case WHITES -> editState.setWhites(value);
             case BLACKS -> editState.setBlacks(value);
-            case TEXTURE -> editState.setTexture(value);
-            case CLARITY -> editState.setClarity(value);
-            case DEHAZE -> editState.setDehaze(value);
             case VIBRANCE -> editState.setVibrance(value);
             case SATURATION -> editState.setSaturation(value);
             default -> {

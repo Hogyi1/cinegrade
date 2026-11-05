@@ -25,13 +25,12 @@ public class EditStateDao {
     private static final String COLUMNS =
             "photo_id, exposure, contrast, highlights, shadows, whites, blacks, " +
                     "temperature, tint, saturation, vibrance, hsl, lut_path, curves_json, updated_at, " +
-                    "temperature_offset, white_balance, as_shot_temperature, as_shot_tint, " +
-                    "texture, clarity, dehaze";
+                    "temperature_offset, white_balance, as_shot_temperature, as_shot_tint";
     /**
      * Insert-or-update statement keyed on {@code photo_id}; its parameters are bound by {@link #bind}.
      */
     private static final String UPSERT_SQL =
-            "INSERT INTO edit_states (" + COLUMNS + ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) " +
+            "INSERT INTO edit_states (" + COLUMNS + ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) " +
                     "ON CONFLICT(photo_id) DO UPDATE SET " +
                     "exposure = excluded.exposure, contrast = excluded.contrast, " +
                     "highlights = excluded.highlights, shadows = excluded.shadows, " +
@@ -41,8 +40,7 @@ public class EditStateDao {
                     "lut_path = excluded.lut_path, curves_json = excluded.curves_json, " +
                     "updated_at = excluded.updated_at, temperature_offset = excluded.temperature_offset, " +
                     "white_balance = excluded.white_balance, as_shot_temperature = excluded.as_shot_temperature, " +
-                    "as_shot_tint = excluded.as_shot_tint, texture = excluded.texture, " +
-                    "clarity = excluded.clarity, dehaze = excluded.dehaze";
+                    "as_shot_tint = excluded.as_shot_tint";
     /**
      * Number of rows added to a JDBC batch before it is flushed in {@link #upsertAll}.
      */
@@ -89,9 +87,6 @@ public class EditStateDao {
         pstmt.setString(17, e.getWhiteBalance().name());
         pstmt.setFloat(18, e.getAsShotTemperature());
         pstmt.setFloat(19, e.getAsShotTint());
-        pstmt.setFloat(20, e.getTexture());
-        pstmt.setFloat(21, e.getClarity());
-        pstmt.setFloat(22, e.getDehaze());
     }
 
     /**
@@ -263,9 +258,6 @@ public class EditStateDao {
         editState.setWhiteBalance(hu.elte.ik.thesis.cinegrade.domain.enums.WhiteBalanceType.fromName(rs.getString("white_balance")));
         editState.setAsShotTemperature(rs.getFloat("as_shot_temperature"));
         editState.setAsShotTint(rs.getFloat("as_shot_tint"));
-        editState.setTexture(rs.getFloat("texture"));
-        editState.setClarity(rs.getFloat("clarity"));
-        editState.setDehaze(rs.getFloat("dehaze"));
         return editState;
     }
 }

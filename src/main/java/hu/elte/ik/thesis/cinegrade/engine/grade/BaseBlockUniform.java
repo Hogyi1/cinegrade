@@ -23,8 +23,8 @@ public class BaseBlockUniform extends UniformBuffer<EditState> {
 
     public static final String BLOCK_NAME = "BasicBlock";
     public static final int BINDING = 0;
-    // [AI-GENERATED] 48 bytes of basic params + 8 vec4 for the color mixer + 16 bytes for texture, clarity, dehaze (and padding)
-    private static final int BYTE_BUFFER_SIZE = 48 + EditState.HSL_COLORS * 16 + 16;
+    // [AI-GENERATED] 48 bytes of basic params + 8 vec4 for the color mixer
+    private static final int BYTE_BUFFER_SIZE = 48 + EditState.HSL_COLORS * 16;
 
     public BaseBlockUniform() {
         super(BINDING, BLOCK_NAME, BYTE_BUFFER_SIZE);
@@ -65,11 +65,5 @@ public class BaseBlockUniform extends UniformBuffer<EditState> {
         for (float value : editState.getHsl()) {
             buffer.putFloat(value);
         }
-
-        // [AI-GENERATED] 16 bytes: textureAmount, clarity, dehaze, padding
-        buffer.putFloat(editState.getTexture());
-        buffer.putFloat(editState.getClarity());
-        buffer.putFloat(editState.getDehaze());
-        buffer.putFloat(0.0f);
     }
 }

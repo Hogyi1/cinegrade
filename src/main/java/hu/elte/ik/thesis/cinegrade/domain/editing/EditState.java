@@ -32,9 +32,6 @@ public class EditState {
     private float asShotTint = 0.0f;
     private float saturation = 0.0f;
     private float vibrance = 0.0f;
-    private float texture = 0.0f;
-    private float clarity = 0.0f;
-    private float dehaze = 0.0f;
     // Color mixer, per color: red_hue, red_sat, red_lum, pad, orange_hue, ... for
     // red, orange, yellow, green, aqua, blue, purple, magenta (same layout as hsl_* in fragment.frag)
     private float[] hsl = new float[HSL_SIZE];
@@ -85,9 +82,6 @@ public class EditState {
         this.asShotTint = editState.getAsShotTint();
         this.saturation = editState.getSaturation();
         this.vibrance = editState.getVibrance();
-        this.texture = editState.getTexture();
-        this.clarity = editState.getClarity();
-        this.dehaze = editState.getDehaze();
         // a copy, the snapshot must not change with the live edit
         this.hsl = editState.getHsl().clone();
         this.lutPath = editState.getLutPath();
@@ -169,9 +163,6 @@ public class EditState {
                 && Float.compare(that.asShotTint, asShotTint) == 0
                 && Float.compare(that.saturation, saturation) == 0
                 && Float.compare(that.vibrance, vibrance) == 0
-                && Float.compare(that.texture, texture) == 0
-                && Float.compare(that.clarity, clarity) == 0
-                && Float.compare(that.dehaze, dehaze) == 0
                 && java.util.Arrays.equals(hsl, that.hsl)
                 && Objects.equals(lutPath, that.lutPath)
                 && Objects.equals(curvesJson, that.curvesJson);
@@ -194,9 +185,6 @@ public class EditState {
                 asShotTint,
                 saturation,
                 vibrance,
-                texture,
-                clarity,
-                dehaze,
                 lutPath,
                 curvesJson
         );
