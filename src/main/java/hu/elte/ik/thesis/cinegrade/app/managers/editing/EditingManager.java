@@ -7,6 +7,7 @@ import hu.elte.ik.thesis.cinegrade.domain.objects.PhotoEntry;
 import hu.elte.ik.thesis.cinegrade.domain.objects.PhotoMetadata;
 import hu.elte.ik.thesis.cinegrade.domain.enums.WhiteBalanceType;
 import hu.elte.ik.thesis.cinegrade.domain.error.ErrorHandler;
+import hu.elte.ik.thesis.cinegrade.domain.objects.Preset;
 import hu.elte.ik.thesis.cinegrade.engine.GradeParam;
 import hu.elte.ik.thesis.cinegrade.engine.grade.WhiteBalancer;
 import hu.elte.ik.thesis.cinegrade.engine.renderer.ViewportRenderer;
@@ -399,6 +400,20 @@ public class EditingManager implements AutoCloseable {
             applySettings(photo);
             recordEdit("Reset settings", photo, before, lastCommitted);
         }
+    }
+
+    public void applyPreset(Preset preset) {
+        PhotoEntry photo = viewModel.getPhoto();
+        EditState current = viewModel.getEditState();
+        if (photo == null || current == null) {
+            return;
+        }
+        EditState before = lastCommitted;
+        EditState next = new EditState(photo.getId(), current);
+        preset.applyTo(next);
+        viewModel.setEditState(next);
+        applySettings(photo);
+        recordEdit("Preset: " + preset.getName(), photo, before, lastCommitted);
     }
 
     public void applySettings(PhotoEntry photoEntry) {
