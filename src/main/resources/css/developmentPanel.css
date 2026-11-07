@@ -729,19 +729,22 @@
     -fx-border-color: -clr-blue;
 }
 
-/* [AI-GENERATED] Preset card (a Label with .preset-item) and the notice under the list */
+/* [AI-GENERATED] Preset card (a Label with .preset-item), full width, name centered */
 .preset-item {
     -fx-text-fill: -clr-text-primary;
     -fx-font-size: 12px;
+    -fx-alignment: center;
 }
 
-.preset-notice {
-    -fx-text-fill: -clr-text-secondary;
-    -fx-font-size: 11px;
-    -fx-background-color: -clr-surface-card;
-    -fx-background-radius: 6px;
-    -fx-padding: 6px 10px;
+/* Category pane: tighter than the edit panel's; an open, empty one is only 10px tall.
+   Two classes, so it wins over .edit-pane > .content whatever order the stylesheets load in */
+.edit-pane.preset-group > .content {
+    -fx-padding: 8px 12px 8px 12px;
 }
+.edit-pane.preset-group.empty > .content {
+    -fx-padding: 5px 0 5px 0;
+}
+
 
 .history-item {
     -fx-text-fill: -clr-text-secondary;
