@@ -17,7 +17,7 @@ This document tracks all AI-generated files, UI views (FXML), stylesheets (CSS),
 | `src/main/resources/fxmls/errorModal.fxml` | Modal dialog for fatal and startup error reporting | `<!-- [AI-GENERATED] -->` |
 | `src/main/resources/fxmls/errorToast.fxml` | Non-blocking toast notification banner for warnings/errors | `<!-- [AI-GENERATED] -->` |
 | `src/main/resources/fxmls/splashScreen.fxml` | Startup splash screen with progress bar and status indicator | `<!-- [AI-GENERATED] -->` |
-| `src/main/resources/fxmls/Test.fxml` | Testing / placeholder navigation view | `<!-- [AI-GENERATED] -->` |
+| `src/main/resources/fxmls/socialsPage.fxml` | Socials scene: slim top bar (logo, Projects button, styles from `navigationPanel.css`) over a full-size `WebView` | `<!-- [AI-GENERATED] -->` |
 | `src/main/resources/fxmls/editPage.fxml` | Test edit page view for UI testing | `<!-- [AI-GENERATED] -->` |
 | `src/main/resources/fxmls/navigationPanel.fxml` | Top workspace navigation bar with animated selection bubble and clickable labels | `<!-- [AI-GENERATED] -->` |
 | `src/main/resources/fxmls/importPanel.fxml` | Media import panel view with drag-and-drop plate, empty state plate, batch controls, thumbnail zoom slider (0.45x-1.5x), import spinner overlay, and floating sidebar with File Handling selector (Add, Copy, Move), search bar, and dark token filter buttons | `<!-- [AI-GENERATED] -->` |
@@ -83,6 +83,7 @@ This document tracks all AI-generated files, UI views (FXML), stylesheets (CSS),
 | `src/main/java/hu/elte/ik/thesis/cinegrade/javafx/ui/components/ImportPhotoCard.java` | Controller for staged import photo cards with thumbnail loading and dynamic dimension binding | `importPhotoCard.fxml` | `// [AI-GENERATED]` |
 | `src/main/java/hu/elte/ik/thesis/cinegrade/infra/services/storage/ThumbnailService.java` | Read-through thumbnail cache: byte-limited LRU → preview DB → ThumbnailFactory; `load` (async via CompletableFuture), `createAll` (parallel on the CPU pool), `put`/`putAll`/`delete` (rewritten from the handwritten draft on request) | – | `// [AI-GENERATED]` |
 | `src/main/java/hu/elte/ik/thesis/cinegrade/javafx/ui/presenters/TaskToastPresenter.java` | Listens to `TaskManager.runningServices`: queues services, shows at most 3 task toasts, calls `finish(outcome)` when a service leaves the list (fixed from the handwritten draft) | `taskToast.fxml` | `// [AI-GENERATED]` |
+| `src/main/java/hu/elte/ik/thesis/cinegrade/javafx/ui/catalog/SocialsController.java` | Loads the platform URL into the WebView; Projects button unloads the page and goes back to the project menu | `socialsPage.fxml` | `// [AI-GENERATED]` |
 | `src/main/java/hu/elte/ik/thesis/cinegrade/javafx/ui/dialog/TaskToastController.java` | Left-side task toast: binds a task's message/progress, X cancels, `finish(Outcome)` shows the final state then dismisses (UI only, wiring is handwritten). Styles appended to `css/taskManager.css` | `taskToast.fxml` | `// [AI-GENERATED]` |
 
 ---
@@ -168,11 +169,6 @@ Whenever an AI assistant generates new artifacts:
    - CSS file: `/* [AI-GENERATED] */` (placed on line 1)
 2. Append the new entry to this `AI_GENERATED.md` file under the appropriate section.
 3. Preserve all existing `import` statements without modification.
-| `src/main/java/hu/elte/ik/thesis/cinegrade/engine/ShaderHotReload.java` | whole file (DEV, remove before release) | Watches `src/main/resources/shaders`, rebuilds the shader on both GPU workers on save | `// [AI-GENERATED]` |
-| `src/main/java/hu/elte/ik/thesis/cinegrade/engine/gl/ShaderProgram.java` | `reload`, `compileSource` (DEV) | Builds a program from new sources, keeps the old one on error | `// [AI-GENERATED METHOD]` |
-| `src/main/java/hu/elte/ik/thesis/cinegrade/engine/GpuWorker.java` | `reloadShader` (DEV) | Runs the shader reload on the worker's GL thread, rebinds the UBO block | `// [AI-GENERATED METHOD]` |
-| `src/main/java/hu/elte/ik/thesis/cinegrade/engine/renderer/ViewportRenderer.java` | `rerender` (DEV) | Redraws with the latest edit after a shader reload | `// [AI-GENERATED METHOD]` |
-| `Documentation/REMOVE_BEFORE_RELEASE.md` | whole file | Checklist of dev-only code to remove | `<!-- [AI-GENERATED] -->` |
 | `src/main/resources/fxmls/exportPanel.fxml`, `src/main/resources/css/exportPanel.css` | Whole files (redesign) | Photos and 3D LUT tabs on floating plates: photo choice with live counts, segmented format and LUT size, file settings, action bar with a live summary | `<!-- [AI-GENERATED] -->`, `/* [AI-GENERATED] */` |
 | `src/main/java/hu/elte/ik/thesis/cinegrade/javafx/ui/editing/ExportPanelController.java` | Whole class | Binds the export panel to `ExportStage`: live counts, summary and button state, file pickers, saved folders, `reset()` | `// [AI-GENERATED]` |
 | `src/main/resources/fxmls/developLeftPanel.fxml` | Whole file (redesign) | Presets only: title with + New, search, category names as plain labels with an empty hint under each; History and Tags tabs removed | `<!-- [AI-GENERATED] -->` |
@@ -194,3 +190,4 @@ Whenever an AI assistant generates new artifacts:
 | `src/main/java/hu/elte/ik/thesis/cinegrade/engine/GradeParam.java` | (update) | Lift / Gamma / Gain, Sharpen, Noise reduction, Grain, Vignette and the Color Wheels / Detail sections removed (not implemented yet) | file already `// [AI-GENERATED]` |
 | `src/main/resources/css/developmentPanel.css`, `components.css` | (update) | Preset tree styles removed, `.preset-item` text, read-only dialog field | `/* [AI-GENERATED] */` |
 | `developLeftPanel.fxml`, `DevelopPresetPanelController.java`, `PresetManager.deleteCategory`, `PresetDao.deleteEmptyCategory`, `developmentPanel.css` | (update) | Category panes edge to edge like the edit panel (spacing 1, no side padding), empty pane 10px; Update with current settings removed; Delete category on an empty category (not User presets) | `<!-- [AI-GENERATED] -->`, `/* [AI-GENERATED] */` |
+| `README.md` | whole file | Intro, requirements, how to run, key bindings (moved from `Documentation/shortcuts.md`) | `<!-- [AI-GENERATED] -->` |

@@ -1,322 +1,103 @@
-# CineGrade: last desktop week (export, LUT, curves, wheels, presets, history)
+# CineGrade: the last stretch
 
-## Context
+The desktop app is feature complete. What's left is connecting it to the backend (expected in about 2 days), then the nice-to-haves. After that, it's ready to release.
 
-`ExportRenderer.render` is done. One week is left on the desktop app (about 11-02 to 11-09), then the backend starts. Still missing: batch export, LUT export, curves and wheels, presets, and undo/history. `EditingManager` (571 lines) also needs its decoding moved out.
-
-**Who writes what:** `[YOU]` is core logic and wiring, with sketches below. `[AI]` is FXML, CSS, custom controls and DDL, tagged in `AI_GENERATED.md`. UI is listed by hand, with no loops over enums.
+**Who writes what:** `[YOU]` is core logic and wiring. `[AI]` is FXML, CSS and controls, tagged in `AI_GENERATED.md`.
 
 ---
 
-## Your questions, answered
+## TODO (needed for release)
 
-| Question | Answer |
-|---|---|
-| Do I need a new texture class and reader for the LUT? | **No.** You don't need an input texture at all: the shader works out each lattice colour from the pixel position. `FrameBuffer` gets an internal-format parameter, and the readback is one `glReadPixels` call. |
-| 16F or 32F? | `RGBA32F`. The FBO must be RGBA, because `RGB16F` isn't guaranteed to be renderable. 16F only gives about 11 bits near white, and 32F costs just 4 MB at 65³. |
-| Can a LUT be turned back into an EditState? | **No.** A LUT only stores results, and many different edits give the same table. Conversion is one-way, so the preset has to be the source. |
-| Share the LUT or the preset? | **The preset is the source, and the LUT is generated from it.** The DB saves only the preset. A LUT is generated when exporting or sharing, so it can't go stale. |
-| Does the backend need GPU rendering? | **Not for this.** The desktop uploads `recipe.json`, a 33³ `.cube` and before/after JPEGs (already S7.3 in `SPRINT_PLAN.md`). To apply a look to another photo, the backend does a trilinear LUT lookup on the CPU. It won't include Texture, Clarity or Dehaze. |
-| Should `.cgpreset` be a Java object? | **Use JSON (Gson, already in the pom).** Spring can read it. Running `ObjectInputStream` on a file downloaded from someone else can execute code, so don't use it for shared files. |
-| Is a for loop right for export? | Yes, and your reasoning holds. Each photo is a separate GPU job, so thumbnail jobs can get in between photos instead of waiting for the whole batch. |
+- [ ] **`UserManager` against the backend [YOU]:** login, logout, register, keep the session, and check it at startup (see *Session* below). `User` gets the tokens. `changeUser` and `logout` already exist, and they stay the single place the active user changes.
+- [ ] **Connectivity check [YOU]:** a `BooleanProperty online` that the UI binds to. Check it at startup and after any failed request, and recheck every ~30 s while offline.
+- [ ] **The bridge [YOU]:** `CineGradeBridge`, the Java object the WebView page can call (see *Bridge* below).
+- [ ] **Share on presets [YOU], menu item [AI]:** a *Share* item in the preset's right-click menu. It sends the preset with the user's token to the API. Disabled when offline or logged out.
+- [ ] **Login from the avatar circle [YOU wiring, AI layout]:**
+  - Offline: the circle is hidden or greyed out, with an "Offline" tooltip.
+  - Online and logged out: a `Login · Register` button where the circle is.
+  - Logged in: the circle with the avatar, and a menu with *Logout*.
+- [ ] **Socials URL from config:** `SocialsController.SOCIALS_URL` is hard-coded to `http://localhost:4200`. Move it to `AppConfig` next to the API base URL, so the cloud deploy only means a config change.
+- [x] `PresetManager` is app level (made in `App`, not in `CatalogScopeFactory`), so the bridge can add presets with no catalog open.
+- [x] Socials scene: WebView, logo and Projects button.
+- [x] Removed: shader hot reload, the test panel, the old plans.
 
-**Lumix Lab caveat:** as far as I remember, camera LUTs expect V-Log input, while ours are sRGB in and sRGB out (not checked). So our LUTs suit editors like Resolve or Photoshop, but a camera would need a V-Log version later. That's an extra input conversion in `latticeColor()`, and it's outside this week.
+## Nice to have
 
-**Video editor workflow:** V-Log → Rec.709 → our LUT. Rec.709 and sRGB share primaries and differ only in the transfer curve. With "Exclude Exposure & WB" on, the shift should be minimal, because the remaining steps work on encoded values. With them included, shadows can shift a bit. Optional later: a "Rec.709 (gamma 2.4)" LUT option that converts the curve going in and out. Check this on day 2 in Resolve on a Rec.709 timeline.
+- [ ] **Curves, several channels:** master plus R, G and B. They're stored in the existing `curvesJson`, and the shader gets a 256-entry LUT per channel in the UBO.
+- [ ] **Color wheels:** lift, gamma and gain, each with hue and saturation (ASC CDL).
+- [ ] **HSL sampler:** pick a colour in the viewport, and its HSL band lights up so dragging moves that band's sliders (targeted adjustment).
+- [ ] **`MigrationService` for old catalogs:** opening a catalog made by an older schema adds the missing columns and tables instead of failing. Store a `schema_version` in `catalog_info` and run the steps in order.
 
 ---
 
-## 1. Decoding: `PhotoDecoder` [YOU]
+## How the desktop and the backend connect
 
-New class, `infra/services/libraw/PhotoDecoder.java`. It takes `readImage` and `decodeForThumbnail` out of `EditingManager`.
+### Separate projects
 
-```java
-public class PhotoDecoder implements AutoCloseable {   // one per thread, owns one LibrawService
-    public DecodedImage decode(PhotoEntry photo, BooleanSupplier cancelled);
-    public DecodedImage decode(PhotoEntry photo) { return decode(photo, () -> false); }
-}
-```
+The Spring Boot app is **its own project** (its own repo or a sibling folder with its own `pom.xml`). It is never a dependency or module of the desktop app. The two only talk HTTP (REST + JSON). The desktop needs nothing from Spring, and the backend can be deployed and run without JavaFX.
 
-| User | Thread | Cancelled by |
+### Session (how long a user stays logged in)
+
+Use two tokens:
+
+| Token | Lifetime | Where it lives |
 |---|---|---|
-| Viewport | `decoderThread` | `stale` |
-| Thumbnails | cpuPool | never |
-| Export | the export task thread | `isCancelled` |
+| Access token (JWT) | ~15 min | Memory only, in `UserManager` |
+| Refresh token | ~30 days, replaced on every use | App DB, `users` table |
 
-- There's one class, not two. "Can be stopped" is just the `BooleanSupplier` you pass.
-- Move `asShotOf` and `withAsShot` to `WhiteBalanceSolver` (section 3b), because export needs them too.
-- **Existing bug this fixes:** `EditingManager:83` creates a LibRaw handle on `decoderThread`, ignores the one passed in, and never closes it. Create the decoder on that thread and close it there in `close()`, and remove the unused `LibrawService` from `CatalogScopeFactory:69`.
+- **At startup:** if a refresh token is stored and we're online, call `POST /auth/refresh`. Success gives a new access token and means logged in. A `401` means it expired or was revoked, so clear it and treat the user as logged out. Offline means keep the stored user, show "Offline", and disable sharing.
+- **On requests:** add `Authorization: Bearer <access>`. On a `401`, refresh once and retry once. If it fails again, log out.
+- That's why you don't check the token on every app action, only at startup and when the server rejects a request.
 
----
+### Login (loopback)
 
-## 2. Batch export [YOU], panel layout [AI]
+1. The circle's *Login* opens the backend's login page in the system browser, with a random `state` and `redirect_uri=http://127.0.0.1:<free port>/callback`.
+2. The desktop runs a tiny one-shot HTTP server on that port (`com.sun.net.httpserver.HttpServer`, which is part of the JDK, so no dependency).
+3. After login, the backend redirects to the callback with a one-time `code`. The desktop checks `state`, exchanges the code for the tokens (`POST /auth/token`), stores the refresh token, then closes the server.
+4. *Register* is the same flow, starting on the register page.
 
-**`ExportManager(photoManager, editingManager, catalogTx, editStateDao, exportRenderer, taskManager, exifToolService)`**
+The WebView doesn't need its own login. The page asks the bridge for the token (below), so the desktop is the only place that holds it.
 
-```java
-public ExportBatchService exportCurrent(ExportOptions o);
-public ExportBatchService exportSelected(ExportOptions o);
-public ExportBatchService exportAll(ExportOptions o);
-public void cancelExport();
-```
-
-`PhotoExportOptions` record: `destination, format, quality, resizeLongEdge, keepExif, namingTemplate, conflictMode`.
-
-**`domain/tasks/ExportBatchService`** follows `ThumbnailBatchService`, and `TaskManager.configure` registers it:
+### Bridge (`JSObject`)
 
 ```java
-try (PhotoDecoder decoder = new PhotoDecoder()) {       // created on this thread, so one LibRaw per thread
-    Map<String, EditState> edits = loadSnapshots();     // read once at the start, later edits don't affect the batch
-    for (PhotoEntry photo : photos) {
-        if (isCancelled()) break;
-        DecodedImage decoded = decoder.decode(photo, this::isCancelled);
-        Pixels pixels = renderer.render(editFor(photo, decoded), decoded)
-            .whenComplete((v, ex) -> memFree(decoded.data()))   // NOT in a finally
-            .get().orElseThrow();
-        write(pixels, photo);                           // one broken photo logs a warning, the batch continues
-        updateProgress(...);
+webView.getEngine().getLoadWorker().stateProperty().addListener((obs, old, state) -> {
+    if (state == Worker.State.SUCCEEDED && isOurOrigin(engine.getLocation())) {
+        JSObject window = (JSObject) engine.executeScript("window");
+        window.setMember("cinegrade", bridge);   // keep `bridge` in a field: the WebView only holds it weakly
     }
-}
+});
 ```
 
-**Things that will bite:**
-1. **Native memory:** `cancel()` interrupts `.get()` while the GPU may still be reading `decoded`. If you free it in a `finally`, the JVM can crash. Free it in `whenComplete`.
-2. **As-shot white balance:** photos that were pasted onto or never opened have `asShot = 0`. Apply `withAsShot(edit, asShotOf(decoded))` as `EditingManager:429` does, and use `new EditState(id)` when there's no DB row.
-3. **Eye toggles:** split `effective()` so export uses the bypass part but ignores before/after. Otherwise pressing `\` during an export writes originals.
-4. **Partial files:** write to `name.jpg.part`, then move it into place. An interrupt can otherwise leave half a JPEG.
-5. **Name clashes:** a RAW+JPEG pair both produce `IMG_1.jpg`, so always go through `conflictMode`.
-6. **VRAM:** the FBO, texture and both PBOs stay at full size after an export. Add `ExportRenderer.release()`, which resizes them to 1×1, and call it when the batch ends.
-7. **Encoding:** make the raster-wrapping part of `ThumbnailFactory.fromPixels` a public `toBufferedImage(bgra, w, h)` and reuse it. It doesn't copy and has the right row order.
+`CineGradeBridge` is a **small class with only the methods the page may call**. Never hand a manager to JavaScript, because the page can call every public method of whatever object it gets.
 
-**Small `ExportRenderer` cleanup:** the Javadoc still mentions thumbnails and `MAX_EDGE`, and the `close()` log says "Thumbnail renderer".
-
-**Panel:**
-- **Wire:** current, selected and all scopes, format, quality, resize, EXIF, destination, naming, conflict, progress, cancel.
-- **Hide for now [AI]:** By tag (no tags exist), Color Space (sRGB only), the export preset combo.
-- **Add later if time allows:** Visible and Last import. They need new getters on `PhotoManager`.
-
----
-
-## 3. LUT export [YOU], LUT tab wiring [YOU]
-
-**`fragment.frag`**, using a width of N and height of N²:
-
-```glsl
-uniform int lutSize;   // 0 = normal photo
-vec3 latticeColor() {
-    ivec2 p = ivec2(floor(gl_FragCoord.xy));
-    return vec3(p.x, p.y % lutSize, p.y / lutSize) / float(lutSize - 1);
-}
-// in main():
-vec3 source = lutSize > 0 ? latticeColor() : texture(texImage, uv).rgb;
-```
-
-With this layout, reading the pixels row by row **is already `.cube` order** (R fastest, B slowest), so nothing needs re-sorting.
-
-**`ExportRenderer.renderLut`:**
-
-```java
-public CompletableFuture<float[]> renderLut(EditState lutState, int size) {
-    // lutFbo: its own FrameBuffer(1, 1, GL_RGBA32F), resized to (size, size * size)
-    // bind, use shader, upload block, linearInput = 0, lutSize = size, draw
-    // glReadPixels(0, 0, size, size * size, GL_RGB, GL_FLOAT, floatBuffer)
-    // finally: lutSize = 0
-}
-```
-
-**Things that will bite:**
-1. **Reset `lutSize` to 0 in a `finally`.** `ThumbnailRenderer` and `ExportRenderer` share the background worker's one shader, so otherwise the next thumbnail comes out as a rainbow.
-2. **Spatial settings must be zero.** Texture, Clarity and Dehaze are already in the shader, and they'd blur between neighbouring lattice cells and produce garbage. Add `GradeParam.isSpatial()` and zero those params before rendering.
-3. **`Locale.ROOT` in `String.format`.** On a Hungarian Windows, the default locale writes `0,123456`, which breaks the `.cube` file.
-4. **"Exclude Exposure & WB":** set exposure to 0, temperature to neutral, tint to as-shot, offset to 0. Keep the source photo's as-shot values, so the LUT stores the shift from neutral and not a fixed Kelvin.
-
-**`infra/utils/lut/CubeWriter`:** writes `TITLE`, `LUT_3D_SIZE`, `DOMAIN_MIN`, `DOMAIN_MAX`, then one `%.6f %.6f %.6f` line per entry.
-
-**`ExportManager.exportLut(EditState source, LutOptions options)`:** the tab's checkboxes zero the excluded groups, then it renders and writes on ioPool.
-
-**[AI]** Change the LUT tab's notice so it also lists Texture, Clarity and Dehaze.
-
----
-
-## 3b. Eyedropper and Auto white balance [YOU]
-
-Rename `WhiteBalancer` to `engine/grade/WhiteBalanceSolver`, which both features then share. This fills the empty `EditingManager.autoWhiteBalance(UV)`.
-
-```java
-public static Optional<Result> fromCamera(float[] camMul, float[] preMul);    // today's estimate, neutral = 5500 K
-public static Optional<Result> fromSample(float[] linearRgb, float neutralKelvin, float asShotTint);
-    // m[i] = 1 / sample[i], then the same solve; returned tint = solved tint + asShotTint
-private static Optional<Result> solve(double[] m, double neutralKelvin);      // gains(kelvin, neutralKelvin)
-```
-
-`ViewportRenderer.sample(EditState defaults, ViewTransform view)`, on the interactive worker, because it already holds the texture:
-1. Render into a 5×5 `RGBA32F` FBO with `editState.defaults()`, so no current grade or white balance affects the sample.
-2. **Eyedropper:** zoom = `5 / imageWidth`, centred on `ViewportNavigator.toTextureUV`. **Auto:** `ViewTransform.FIT`, which gives a grey-world average.
-3. Average the pixels, convert sRGB to linear, then call `fromSample`.
+| Method | What it does |
+|---|---|
+| `isDesktop()` | Lets Angular show the desktop-only buttons |
+| `getAccessToken()` | Angular uses the desktop's login |
+| `downloadPreset(String presetId)` | Java downloads `/api/presets/{id}` itself with `HttpClient`, then validates and saves it through `PresetManager` |
+| `isOnline()` / `isLoggedIn()` | For the page's own UI |
 
 Rules:
-- Reject samples with a clipped or near-black channel, with a notice like "Pick another spot".
-- RAW: set `temperature` and `tint`.
-- JPEG/TIFF: set `temperatureOffset = 100 * toSliderPosition(kelvin)`, and keep temperature at 5500.
-- Save it through `applySettings`, so it's one undoable step.
-- The shader's uv zoom is the same on both axes, so on a landscape photo the sample covers about 5×3 source pixels. That's fine.
+- **Take only ids from JS, never preset content.** Java fetches the data itself. The page is just another untrusted source, so the preset goes through the same `validate` as a file import.
+- Bridge calls arrive on the FX thread, so HTTP runs on `ioPool`, and the result returns through `Platform.runLater`. To tell the page it's done, call `engine.executeScript("window.onCinegrade && window.onCinegrade('presetSaved', '<id>')")`.
+- Only attach the bridge when the page is on our origin, so a link to another site can't call it.
 
-UI: an eyedropper button and an Auto button in the white balance row [AI layout, YOU wiring].
+### Share
 
-**Test:** a grey patch reads neutral after the click, on both a 3200 K and a 5500 K photo.
+`ShareService.share(Preset, PhotoEntry current)` [YOU] wraps the preset JSON (it already has a UUID, so the server can spot duplicates), the user's token, and, when a photo is open, the before and after JPEGs and a 33³ `.cube` from the existing export and LUT renderers. It sends one multipart `POST /api/presets`. The menu item stays disabled unless `online && loggedIn`.
 
----
+### Where things are made
 
-## 4. Curves [YOU math], curve control [AI]
-
-- **Data:** master, R, G and B point lists, stored in the existing `curvesJson` field and `curves_json` column, so no schema change. The value is null when there's no curve.
-- **Spline:** Fritsch-Carlson monotone cubic, sampled to 256 entries per channel. It's monotone, so the curve can't overshoot and invert tones.
-- **To the GPU:** add `vec4 curve[256]` to the **existing UBO** (4 KB, under the guaranteed 16 KB minimum). `BaseBlockUniform.convertTo` fills it. No new texture class, and all three renderers get it automatically.
-- **Shader:** `applyCurves(c)` looks up the two nearest entries and mixes them. It runs after `applyTones`, in display space.
-- **Bypass:** add `Section.CURVES`. `effective()` needs an explicit curves reset, because curves aren't a `GradeParam`.
-- **Pane:** re-add the Curves pane removed on 11-01, with a canvas control and a channel selector.
-
-## 5. Color wheels [YOU math], wheel control [AI]
-
-- **Params:** `LIFT`, `GAMMA` and `GAIN` already exist. Add `LIFT_HUE`, `LIFT_SAT`, `GAMMA_HUE`, `GAMMA_SAT`, `GAIN_HUE` and `GAIN_SAT` as `GradeParam`s, so they work with presets, history and bypass without extra code. Storage is `float[9]` in `EditState`.
-- **To the GPU:** Java converts hue, saturation and luminance to RGB, then sends 3 `vec4`s in the UBO.
-- **Shader:** ASC CDL (slope, offset, power), as `SPRINT_PLAN.md` S3.1 decided. It runs after `applyCurves`, before vibrance.
-- **Side effect:** this needs a new `wheels` column, so existing catalogs won't have it and need recreating.
-
----
-
-## 6. Presets [YOU], dialog and list UI [AI]
-
-**The checkboxes decide what gets stored, so unchecked values simply aren't in the preset:**
-
-```java
-public class Preset {
-    int formatVersion = 1;
-    long id;                          // local DB id, not in the file
-    String name, author, description, category;
-    Instant createdAt, updatedAt;
-    Map<String, Float> values;        // GradeParam name -> value, ONLY the checked ones
-    WhiteBalanceType whiteBalance;    // null if white balance is unchecked
-    Curves curves;                    // null if unchecked
-    void applyTo(EditState target);   // goes through GradeParam.write
-}
-```
-
-"What else" beyond author, name and createdAt: `formatVersion` (for loading old files), `updatedAt` (presets can be modified), `description` and `category` (the column exists, and search needs them). A preview image can come with the share flow.
-
-It never stores `photoId`, `asShot*`, `lutPath` or EditState's `updatedAt`, because those belong to one photo.
-
-**Storage:**
-- **Table:** use the existing **`global_presets`** in the app DB, so presets work in every catalog, not one catalog each.
-- **No schema change:** the whole preset goes into `edit_parameters_json`, and `name`, `category` and `created_at` already exist.
-- **DAO:** move `PresetDao` from `dao/catalog` to `dao/app`, accessing the DB the way `UserDao` does.
-- **Leftover:** the catalog's `presets` table stays unused.
-
-**`PresetManager`** sits at app level, next to `CatalogManager`: `list`, `save`, `update`, `delete`, `importFile(File)`, `exportFile(Preset, File)`.
-
-**Opening a file works like `CatalogManager.openProject`:** check the file, show a confirm dialog with name, author and what's included, then save.
-- Files from other people are untrusted, so clamp values to `GradeParam` min and max, and ignore unknown names.
-- Use the existing `LUT_FILE_INVALID` style for a new `ErrorCode`.
-
-**`EditingManager.applyPreset(Preset)`:**
-- Works on the current photo and the multi-selection.
-- **Unlike `pasteSettings`, it must read each photo's edit from the DB first.** A preset is partial, so a blind write would wipe the unchecked settings.
-- If the preset has `whiteBalance = AS_SHOT`, call `applyWhiteBalance`, and keep the target's own as-shot values.
-
-**Save dialog [AI layout, YOU wiring]:** `createPresetBtn` opens it, with name, author (prefilled from `UserManager.getUsername()`, editable), description, and checkboxes listed by hand:
-- White Balance and Exposure, **unchecked by default**, because they depend on the scene
-- Contrast, Highlights, Shadows, Whites, Blacks
-- Texture, Clarity, Dehaze
-- Vibrance, Saturation
-- HSL: a parent checkbox plus Hue, Sat and Lum children
-- Curves
-- Wheels
-
-**Left panel [AI]:** replace the fake "Kodak Portra" rows with real rows and a right-click menu: Update with current, Rename, Delete, Export `.cgpreset`, Export `.cube`.
-
----
-
-## 7. History [YOU], notice label and list [AI]
-
-```java
-public record HistoryEntry(String description, Set<String> photoIds, Runnable undo, Runnable redo) {}
-
-public class HistoryManager {   // one per CatalogScope, not persisted
-    private final LinkedList<HistoryEntry> undoStack, redoStack;   // max 100, removeFirst() drops the oldest
-    private boolean replaying;
-    public void record(HistoryEntry e);       // ignored while replaying; clears redoStack
-    public void undo(); public void redo();   // set replaying = true around the Runnable
-    public void forgetPhoto(String photoId);  // drops entries touching a removed photo
-    public ReadOnlyStringProperty noticeProperty();
-}
-```
-
-`PhotoManager` and `EditingManager` take it in their constructors and call `record`. Everything runs on the FX thread.
-
-**You need `redo` as well as `undo`, and the `replaying` flag is essential.** Without the flag, undo calls `updateRating`, which records a new entry, and Ctrl+Z just flips back and forth forever.
-
-**Things that will bite:**
-1. **Slider "before" value:** by the time `commit` runs, `preview` has already changed the edit. Keep a `lastCommitted` snapshot in `EditingManager`, and update it on photo load, on commit and in `applyAsShot`.
-2. **Use whole-state snapshots for edits.** One `restoreEdit(photo, EditState)` covers sliders, white balance, paste, reset and presets, and new curves or wheels work automatically. If the photo isn't open, it saves to the DB and updates the thumbnail.
-3. **Paste and presets on non-open photos:** read their "before" state from the DB first, because `pasteSettings` doesn't today.
-4. **Multi-photo rating, label and like:** capture a `Map<PhotoEntry, oldValue>`, because the photos may differ. Record the entry in `thenRun`, after the DB write succeeded.
-
-| Undoable | Not undoable |
-|---|---|
-| Slider commit, WB preset, paste, reset, apply preset, rating, label, like, comment | Delete from disk, remove from catalog, import |
-
-**One exception to "every action has an opposite":** a deleted file is gone, and removing from the catalog cascades away the edit and metadata. Both of those call `forgetPhoto` instead, and keep their confirm dialog.
-
-**UI:**
-- Ctrl+Z and Ctrl+Y in `InputListener` (neither is bound yet) [YOU]
-- A label on the viewport bound to `noticeProperty`, fading after 2 seconds, e.g. "Exposure +0.50" or "Undo: Rating" [AI]
-- A real list in `historyStepsContainer` [AI]
-- Hide the `takeSnapshotBtn` button [AI]
-
-The `edit_history` table stays unused.
-
----
-
-## Week order
-
-Curves and wheels come before presets, so `Preset` is only designed once. History comes after presets, so it covers all of them.
-
-| Day | Work | Done when |
+| Object | Scope | Why |
 |---|---|---|
-| 1 | Commit the current work. `PhotoDecoder`, batch export, Images tab | 20 mixed photos export while dragging a slider, and cancel works |
-| 2 | `renderLut`, `CubeWriter`, LUT tab, then eyedropper and Auto WB (same float FBO) | Identity test passes, the `.cube` matches the viewport in Resolve or Photoshop, and a grey patch goes neutral |
-| 3 | Curves | S-curve matches in viewport, export and LUT |
-| 4 | Wheels | Same check |
-| 5 | Presets, dialog, `.cgpreset` | Partial preset keeps the unchecked values, and a file round-trip works |
-| 6 | History and notice | Undo and redo work for each undoable action, the 101st entry drops the oldest |
-| 7 | Bug bash and tests | Full flow works |
-
-**If time runs short, cut in this order:** history list panel → Visible and Last import scopes → EXIF copy → wheels. Keep the LUT export and curves.
-
-**After this week:** the backend, using the upload described in the first table.
-
-## Todo
-
-- [ ] **`RelinkManager` [YOU], relink action [AI]:** right-click a missing photo, then Relink. A `FileChooser` opens with the initial file name set to the missing file's exact name. When a file is picked, every other missing photo whose file name is in that folder is relinked too. Update the path in the DB, clear `missingPhoto` and bump the thumbnail version.
-- [ ] **`PresetManager` [YOU]:** section 6 (create, apply, partial presets, `.cgpreset` import and export).
-- [ ] **Social media bridge [YOU]:** the upload from the desktop to the backend (`recipe.json`, the 33³ `.cube`, before and after JPEGs), S7.3 and DAY 7 in `SPRINT_PLAN.md`.
-- [ ] **Skip decoding missing photos [YOU]:** `EditingManager.showOnGpu` still tries to decode a missing original, so selecting one logs an error and shows a toast every time. Return early when `photo.isMissingPhoto()` (the viewport already shows the thumbnail and a Missing badge).
+| `UserManager`, connectivity, `PresetManager`, `CineGradeBridge`, `ApiClient` (one `HttpClient`, base URL, auth header) | App, in `App` | They must work with no catalog open (Socials scene) |
+| `ShareService` | App | It only needs `ApiClient` and the renderers. The photo is a parameter |
+| `EditingManager` and the rest | Catalog scope | Unchanged |
 
 ---
 
-## Verification
+## Before release
 
-**Tests:**
-- Default `EditState` gives an identity LUT. Run at 17, 33 and 65 and assert a tiny error, then tighten the limit once you see the real sRGB round-trip error.
-- `Preset` JSON round-trip, clamping and unknown names
-- Spline is monotone and identity at default
-- `HistoryManager` cap and replay
-- `CubeWriter` under a Hungarian locale
-
-**By hand:**
-- Exported JPEG matches the viewport
-- LUT applied in Resolve or Photoshop matches a render with no spatial settings
-- Thumbnails stay normal after a LUT export
-- Closing the app mid-export shuts down cleanly with no JVM crash
-
-**Note:** `src/test` is empty, and `mvn` isn't on PATH on this machine, so the build goes through IntelliJ or needs Maven added.
+- Run the whole flow once on a clean machine: install, login, download a preset from Socials, apply it, share one back.
+- `src/test` is still empty. At least test `Preset` JSON round-trips and validation, and `CubeWriter` under a Hungarian locale.
