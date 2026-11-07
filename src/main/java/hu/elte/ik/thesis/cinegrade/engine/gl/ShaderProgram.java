@@ -76,61 +76,6 @@ public class ShaderProgram implements AutoCloseable {
         }
     }
 
-    // [AI-GENERATED METHOD] DEV: shader hot reload, see Documentation/REMOVE_BEFORE_RELEASE.md
-    /**
-     * Dev hot reload: builds a new program from these sources and swaps it in. If anything fails to compile or
-     * link, the error is logged and the current program stays. GL thread only; bind the uniform blocks again after.
-     *
-     * @return true if the new program is in use
-     */
-    public boolean reload(String vertexSource, String fragmentSource) {
-        int vertexID = compileSource(GL_VERTEX_SHADER, vertexSource, vertexFile);
-        int fragmentID = vertexID == 0 ? 0 : compileSource(GL_FRAGMENT_SHADER, fragmentSource, fragmentFile);
-        if (fragmentID == 0) {
-            if (vertexID != 0) {
-                glDeleteShader(vertexID);
-            }
-            return false;
-        }
-
-        int newProgram = glCreateProgram();
-        glAttachShader(newProgram, vertexID);
-        glAttachShader(newProgram, fragmentID);
-        glLinkProgram(newProgram);
-        glDetachShader(newProgram, vertexID);
-        glDetachShader(newProgram, fragmentID);
-        glDeleteShader(vertexID);
-        glDeleteShader(fragmentID);
-
-        if (glGetProgrami(newProgram, GL_LINK_STATUS) == GL_FALSE) {
-            logger.error("Shader reload: link failed, keeping the previous program:\n{}", glGetProgramInfoLog(newProgram));
-            glDeleteProgram(newProgram);
-            return false;
-        }
-
-        glDeleteProgram(programID);
-        programID = newProgram;
-        // locations belong to the old program
-        uniformLocations.clear();
-        return true;
-    }
-
-    // [AI-GENERATED METHOD] DEV: shader hot reload, see Documentation/REMOVE_BEFORE_RELEASE.md
-    /**
-     * Compiles one stage for {@link #reload}; 0 (and the log) instead of an exception on a compile error.
-     */
-    private int compileSource(int type, String source, String name) {
-        int shaderID = glCreateShader(type);
-        glShaderSource(shaderID, source);
-        glCompileShader(shaderID);
-        if (glGetShaderi(shaderID, GL_COMPILE_STATUS) == GL_FALSE) {
-            logger.error("Shader reload: {} failed to compile, keeping the previous program:\n{}", name, glGetShaderInfoLog(shaderID));
-            glDeleteShader(shaderID);
-            return 0;
-        }
-        return shaderID;
-    }
-
     /**
      * Ties a uniform block of this program to a binding point. Call once after {@link #create()}.
      * The UBO attached to the same binding point (glBindBufferBase) is what the block reads.

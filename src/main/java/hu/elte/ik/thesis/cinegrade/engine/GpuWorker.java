@@ -50,22 +50,6 @@ public class GpuWorker implements AutoCloseable {
         return future;
     }
 
-    // [AI-GENERATED METHOD] DEV: shader hot reload, see Documentation/REMOVE_BEFORE_RELEASE.md
-    /**
-     * Dev hot reload: swaps this worker's shader for one built from these sources (on its own thread).
-     *
-     * @return completes with false if the sources did not compile; the old shader is still in use then
-     */
-    public CompletableFuture<Boolean> reloadShader(String vertexSource, String fragmentSource) {
-        return submit(() -> {
-            boolean reloaded = shader.reload(vertexSource, fragmentSource);
-            if (reloaded) {
-                shader.bindUniformBlock(BaseBlockUniform.BLOCK_NAME, BaseBlockUniform.BINDING);
-            }
-            return reloaded;
-        });
-    }
-
     public void init() {
         running = true;
         thread.start();

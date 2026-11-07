@@ -188,9 +188,6 @@ public class App extends Application {
     private void createDatabaseManagers() {
         logger.info("Creating database-dependent managers");
         viewportRenderer = resources.push(new ViewportRenderer(renderEngine.getInteractive()));
-        // DEV: shader hot reload, remove before release (Documentation/REMOVE_BEFORE_RELEASE.md)
-        resources.push(new hu.elte.ik.thesis.cinegrade.engine.ShaderHotReload(
-                java.util.List.of(renderEngine.getInteractive(), renderEngine.getBackground()), viewportRenderer::rerender));
         thumbnailRenderer = resources.push(new ThumbnailRenderer(renderEngine.getBackground()));
         exportRenderer = resources.push(new ExportRenderer(renderEngine.getBackground()));
         appTx = resources.push(new TransactionRunner(AppDatabase.getInstance().getConnection(), "appTx"));

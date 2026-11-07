@@ -121,15 +121,6 @@ public class ViewportRenderer implements AutoCloseable {
         scheduleRender();
     }
 
-    // [AI-GENERATED METHOD] DEV: shader hot reload, see Documentation/REMOVE_BEFORE_RELEASE.md
-
-    /**
-     * Draws the current photo again with the latest edit and view (after the shader was reloaded).
-     */
-    public void rerender() {
-        scheduleRender();
-    }
-
     private void scheduleRender() {
         // Only the first request since the last render queues a job; later ones just replaced the values
         if (renderQueued.compareAndSet(false, true)) {
