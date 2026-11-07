@@ -1,0 +1,882 @@
+/* ==========================================================================
+   Reusable components, added to every scene by ThemeManager.
+   SearchBar, thumbnail slider, context menu, FilmstripCell, ConfirmDialog, CommentEditor.
+   Panel stylesheets sit closer to their nodes, so they can still override anything here.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   SearchBar: pill field, the icon swaps for a clear button while typing
+   -------------------------------------------------------------------------- */
+.search-bar {
+    -fx-background-color: -clr-surface-input;
+    -fx-background-radius: 18px;
+    -fx-border-radius: 18px;
+    -fx-border-color: -clr-border-subtle;
+    -fx-border-width: 1px;
+    -fx-padding: 0 7px 0 14px;
+    -fx-min-height: 34px;
+    -fx-pref-height: 34px;
+    -fx-cursor: text;
+}
+.search-bar:hover {
+    -fx-border-color: -clr-border;
+}
+.search-bar:focused-field {
+    -fx-border-color: -clr-blue;
+    -fx-effect: dropshadow(gaussian, rgba(20, 107, 209, 0.35), 10, 0, 0, 0);
+}
+
+.search-bar-field {
+    -fx-background-color: transparent;
+    -fx-text-fill: -clr-text-primary;
+    -fx-prompt-text-fill: -clr-text-muted;
+    -fx-highlight-fill: -clr-blue;
+    -fx-font-size: 13px;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+    -fx-padding: 0;
+}
+
+/* Magnifier drawn as a shape, so it follows the theme colors */
+.search-bar-icon {
+    -fx-shape: "M10 2 A8 8 0 1 0 10 18 A8 8 0 1 0 10 2 Z M10 4.5 A5.5 5.5 0 1 1 10 15.5 A5.5 5.5 0 1 1 10 4.5 Z M16.4 15 L21.7 20.3 L20.3 21.7 L15 16.4 Z";
+    -fx-background-color: -clr-text-muted;
+    -fx-min-width: 14px;
+    -fx-min-height: 14px;
+    -fx-max-width: 14px;
+    -fx-max-height: 14px;
+}
+.search-bar:focused-field .search-bar-icon {
+    -fx-background-color: -clr-blue-hover;
+}
+
+.search-bar-clear {
+    -fx-background-color: -clr-border;
+    -fx-background-radius: 10px;
+    -fx-min-width: 20px;
+    -fx-min-height: 20px;
+    -fx-max-width: 20px;
+    -fx-max-height: 20px;
+    -fx-padding: 0;
+    -fx-cursor: hand;
+}
+.search-bar-clear:hover {
+    -fx-background-color: -clr-almostgrey;
+}
+
+.search-bar-clear-mark {
+    -fx-shape: "M2 0 L5 3 L8 0 L10 2 L7 5 L10 8 L8 10 L5 7 L2 10 L0 8 L3 5 L0 2 Z";
+    -fx-background-color: -clr-text-secondary;
+    -fx-min-width: 8px;
+    -fx-min-height: 8px;
+    -fx-max-width: 8px;
+    -fx-max-height: 8px;
+}
+.search-bar-clear:hover .search-bar-clear-mark {
+    -fx-background-color: -clr-text-primary;
+}
+
+/* --------------------------------------------------------------------------
+   Thumbnail size slider (import toolbar, filmstrip)
+   -------------------------------------------------------------------------- */
+.thumb-zoom-box {
+    -fx-alignment: CENTER;
+    -fx-spacing: 7px;
+}
+
+.thumb-zoom-label {
+    -fx-text-fill: -clr-text-secondary;
+    -fx-font-size: 12px;
+    -fx-font-weight: 500;
+}
+
+.thumb-zoom-icon {
+    -fx-text-fill: -clr-text-dim;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+}
+
+.thumbnail-slider {
+    -fx-padding: 0 4px;
+}
+
+.thumbnail-slider .track {
+    -fx-background-color: -clr-surface-input;
+    -fx-border-color: -clr-border-subtle;
+    -fx-border-width: 1px;
+    -fx-border-radius: 3px;
+    -fx-pref-height: 5px;
+    -fx-background-radius: 3px;
+}
+
+.thumbnail-slider .thumb {
+    -fx-background-color: -clr-text-secondary;
+    -fx-background-radius: 8px;
+    -fx-border-color: -clr-border;
+    -fx-border-width: 1px;
+    -fx-border-radius: 8px;
+    -fx-pref-width: 14px;
+    -fx-pref-height: 14px;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.4), 4, 0, 0, 1);
+}
+
+.thumbnail-slider .thumb:hover {
+    -fx-background-color: -clr-blue;
+    -fx-border-color: -clr-blue-hover;
+    -fx-effect: dropshadow(gaussian, rgba(20, 107, 209, 0.5), 6, 0, 0, 1);
+}
+
+.thumbnail-slider .thumb:pressed {
+    -fx-background-color: -clr-blue-active;
+    -fx-border-color: -clr-blue;
+}
+
+/* --------------------------------------------------------------------------
+   Context menu (catalog list, import cards, filmstrip)
+   -------------------------------------------------------------------------- */
+.context-menu {
+    -fx-background-color: -clr-almostdarkgrey;
+    -fx-background-radius: 8px;
+    -fx-border-color: -clr-border;
+    -fx-border-radius: 8px;
+    -fx-border-width: 1px;
+    -fx-padding: 5px;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.55), 14, 0, 0, 4);
+}
+.menu-item {
+    -fx-background-color: transparent;
+    -fx-padding: 8px 14px;
+    -fx-background-radius: 6px;
+    -fx-cursor: hand;
+}
+.menu-item:hover, .menu-item:focused {
+    -fx-background-color: -clr-surface-card;
+}
+.menu-item .label {
+    -fx-text-fill: -clr-text-primary;
+    -fx-font-size: 13px;
+}
+.menu-item-danger:hover, .menu-item-danger:focused {
+    -fx-background-color: -clr-danger-glow;
+}
+.menu-item-danger .label {
+    -fx-text-fill: -clr-danger-hover;
+}
+.context-menu .separator .line {
+    -fx-border-color: -clr-border transparent transparent transparent;
+}
+
+/* --------------------------------------------------------------------------
+   FilmstripCell: rounded card, the card's rim is the color label
+   -------------------------------------------------------------------------- */
+.filmstrip-cell,
+.filmstrip-cell:filled,
+.filmstrip-cell:selected,
+.filmstrip-cell:focused {
+    -fx-background-color: transparent;
+    -fx-padding: 0 4px 0 4px;
+    -fx-text-fill: transparent;
+    -fx-alignment: CENTER;
+}
+
+.filmstrip-cell-frame {
+    -fx-background-color: -clr-surface;
+    -fx-background-radius: 12px;
+    -fx-border-color: transparent;
+    -fx-border-width: 2px;
+    -fx-border-radius: 12px;
+    -fx-padding: 4px;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.45), 8, 0, 0, 2);
+}
+.filmstrip-cell-frame:hover {
+    -fx-background-color: -clr-border;
+}
+.filmstrip-cell-frame.label-red { -fx-background-color: -clr-danger; }
+.filmstrip-cell-frame.label-yellow { -fx-background-color: -clr-warning; }
+.filmstrip-cell-frame.label-green { -fx-background-color: -clr-success; }
+.filmstrip-cell-frame.label-blue { -fx-background-color: -clr-blue; }
+
+/* Selected: light rim; the photo open in the viewport: blue rim with a glow */
+.filmstrip-cell:selected .filmstrip-cell-frame {
+    -fx-border-color: -clr-text-muted;
+}
+.filmstrip-cell-frame:active,
+.filmstrip-cell:selected .filmstrip-cell-frame:active {
+    -fx-border-color: -clr-blue-hover;
+    -fx-effect: dropshadow(gaussian, rgba(29, 124, 240, 0.6), 12, 0.2, 0, 0);
+}
+
+.filmstrip-cell-thumb-box {
+    -fx-background-color: -clr-dark;
+}
+
+/* Stars: filled up to the rating in the warning yellow, the empty ones only show on hover */
+.filmstrip-cell-stars {
+    -fx-padding: 3px 6px;
+    -fx-background-radius: 10px;
+    -fx-background-color: transparent;
+    -fx-translate-y: -5px;
+}
+.filmstrip-cell-frame:rated .filmstrip-cell-stars,
+.filmstrip-cell-frame:hover .filmstrip-cell-stars {
+    -fx-background-color: rgba(18, 19, 22, 0.7);
+}
+.filmstrip-cell-star {
+    -fx-shape: "M12 2 L14.9 8.6 L22 9.3 L16.6 14 L18.2 21 L12 17.3 L5.8 21 L7.4 14 L2 9.3 L9.1 8.6 Z";
+    -fx-background-color: -clr-text-primary;
+    -fx-min-width: 10px;
+    -fx-min-height: 10px;
+    -fx-max-width: 10px;
+    -fx-max-height: 10px;
+    -fx-opacity: 0;
+    -fx-cursor: hand;
+}
+.filmstrip-cell-frame:hover .filmstrip-cell-star {
+    -fx-opacity: 0.4;
+}
+.filmstrip-cell-star.filled,
+.filmstrip-cell-frame:hover .filmstrip-cell-star.filled {
+    -fx-background-color: -clr-warning;
+    -fx-opacity: 1;
+}
+.filmstrip-cell-star:hover {
+    -fx-background-color: -clr-warning;
+    -fx-opacity: 1;
+}
+
+/* Badges: the heart is clickable, it shows when liked or on hover */
+.filmstrip-cell-badges {
+    -fx-translate-x: -5px;
+    -fx-translate-y: 5px;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.9), 4, 0.5, 0, 0);
+}
+.filmstrip-cell-like {
+    -fx-opacity: 0;
+    -fx-cursor: hand;
+}
+.filmstrip-cell-frame:hover .filmstrip-cell-like {
+    -fx-opacity: 0.55;
+}
+.filmstrip-cell-like.liked,
+.filmstrip-cell-frame:hover .filmstrip-cell-like.liked {
+    -fx-opacity: 1;
+}
+
+.filmstrip-cell-missing {
+    -fx-background-color: -clr-danger;
+    -fx-background-radius: 8px;
+    -fx-text-fill: #FFFFFF;
+    -fx-font-weight: bold;
+    -fx-font-size: 10px;
+    -fx-padding: 0 6px;
+    -fx-translate-x: 5px;
+    -fx-translate-y: 5px;
+}
+
+/* --------------------------------------------------------------------------
+   Dialog windows (DialogWindow host, ConfirmDialog, CommentEditor)
+   -------------------------------------------------------------------------- */
+/* Transparent room around the dialog for its shadow; it is the scene root, so it also gets .root */
+.dialog-host {
+    -fx-background-color: transparent;
+}
+
+.confirm-dialog {
+    -fx-background-color: -clr-surface-card;
+    -fx-background-radius: 16px;
+    -fx-border-color: -clr-border;
+    -fx-border-width: 1px;
+    -fx-border-radius: 16px;
+    -fx-padding: 22px 22px 18px 22px;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.55), 24, 0, 0, 8);
+}
+
+.confirm-dialog-icon {
+    -fx-background-color: -clr-danger-glow;
+    -fx-background-radius: 19px;
+    -fx-min-width: 38px;
+    -fx-min-height: 38px;
+    -fx-max-width: 38px;
+    -fx-max-height: 38px;
+}
+.confirm-dialog-icon-mark {
+    -fx-shape: "M10 2 H14 L13 15 H11 Z M10 18 H14 V22 H10 Z";
+    -fx-background-color: -clr-danger-hover;
+    -fx-min-width: 4px;
+    -fx-min-height: 16px;
+    -fx-max-width: 4px;
+    -fx-max-height: 16px;
+}
+
+.confirm-dialog-title {
+    -fx-text-fill: -clr-text-primary;
+    -fx-font-size: 15px;
+    -fx-font-weight: bold;
+}
+
+.confirm-dialog-message {
+    -fx-text-fill: -clr-text-secondary;
+    -fx-font-size: 12.5px;
+    -fx-line-spacing: 2px;
+}
+
+.confirm-dialog-cancel,
+.comment-editor-cancel {
+    -fx-background-color: -clr-surface;
+    -fx-background-radius: 10px;
+    -fx-border-color: -clr-border;
+    -fx-border-width: 1px;
+    -fx-border-radius: 10px;
+    -fx-text-fill: -clr-text-primary;
+    -fx-font-size: 13px;
+    -fx-font-weight: 600;
+    -fx-padding: 8px 18px;
+    -fx-cursor: hand;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+}
+.confirm-dialog-cancel:hover,
+.comment-editor-cancel:hover {
+    -fx-background-color: -clr-almostgrey;
+    -fx-border-color: -clr-purple-dark;
+}
+.confirm-dialog-cancel:focused,
+.comment-editor-cancel:focused {
+    -fx-border-color: -clr-blue;
+}
+
+.confirm-dialog-confirm,
+.comment-editor-save {
+    -fx-background-color: -clr-blue;
+    -fx-background-radius: 10px;
+    -fx-text-fill: #FFFFFF;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-padding: 8px 20px;
+    -fx-cursor: hand;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+    -fx-effect: dropshadow(gaussian, rgba(20, 107, 209, 0.4), 10, 0, 0, 2);
+}
+.confirm-dialog-confirm:hover,
+.comment-editor-save:hover {
+    -fx-background-color: -clr-blue-hover;
+}
+.confirm-dialog-confirm:pressed,
+.comment-editor-save:pressed {
+    -fx-background-color: -clr-blue-active;
+}
+
+.confirm-dialog.danger .confirm-dialog-confirm {
+    -fx-background-color: -clr-danger;
+    -fx-effect: dropshadow(gaussian, rgba(224, 36, 36, 0.4), 10, 0, 0, 2);
+}
+.confirm-dialog.danger .confirm-dialog-confirm:hover {
+    -fx-background-color: -clr-danger-hover;
+}
+.confirm-dialog.danger .confirm-dialog-confirm:pressed {
+    -fx-background-color: -clr-danger-active;
+}
+
+.comment-editor {
+    -fx-background-color: -clr-surface-card;
+    -fx-background-radius: 14px;
+    -fx-border-color: -clr-border;
+    -fx-border-width: 1px;
+    -fx-border-radius: 14px;
+    -fx-padding: 14px;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.55), 20, 0, 0, 6);
+}
+
+.comment-editor-title {
+    -fx-text-fill: -clr-text-primary;
+    -fx-font-size: 12.5px;
+    -fx-font-weight: bold;
+}
+
+.comment-editor-area {
+    -fx-control-inner-background: -clr-surface-input;
+    -fx-background-color: -clr-surface-input;
+    -fx-background-radius: 10px;
+    -fx-border-color: -clr-border-subtle;
+    -fx-border-width: 1px;
+    -fx-border-radius: 10px;
+    -fx-text-fill: -clr-text-primary;
+    -fx-prompt-text-fill: -clr-text-muted;
+    -fx-highlight-fill: -clr-blue;
+    -fx-font-size: 12.5px;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+}
+.comment-editor-area:focused {
+    -fx-border-color: -clr-blue;
+}
+.comment-editor-area .content {
+    -fx-background-color: -clr-surface-input;
+    -fx-background-radius: 10px;
+    -fx-padding: 6px 8px;
+}
+.comment-editor-area .scroll-pane,
+.comment-editor-area .scroll-pane .viewport {
+    -fx-background-color: transparent;
+}
+.comment-editor-area .scroll-bar:vertical {
+    -fx-background-color: transparent;
+    -fx-pref-width: 6px;
+}
+.comment-editor-area .scroll-bar:vertical .thumb {
+    -fx-background-color: -clr-border;
+    -fx-background-radius: 3px;
+}
+.comment-editor-area .scroll-bar .increment-button,
+.comment-editor-area .scroll-bar .decrement-button {
+    -fx-padding: 0;
+    -fx-pref-height: 0;
+}
+
+.comment-editor-hint {
+    -fx-text-fill: -clr-text-dim;
+    -fx-font-size: 11px;
+}
+
+.comment-editor-cancel,
+.comment-editor-save {
+    -fx-font-size: 12px;
+    -fx-padding: 6px 14px;
+}
+
+/* --------------------------------------------------------------------------
+   [AI-GENERATED] EditPane: collapsible section of the develop edit panel.
+   The eye toggle (.edit-pane-eye) is crossed out while off; the content is
+   dimmed via :bypassed. Groups get a small .edit-pane-group header.
+   -------------------------------------------------------------------------- */
+.edit-pane {
+    -fx-text-fill: -clr-text-primary;
+    -fx-font-weight: bold;
+    -fx-font-size: 12px;
+}
+
+.edit-pane > .title {
+    -fx-background-color: -clr-darkgrey;
+    -fx-border-color: -clr-border-subtle;
+    -fx-border-width: 1px 0 1px 0;
+    -fx-padding: 8px 12px;
+    -fx-cursor: hand;
+}
+
+.edit-pane > .title:hover {
+    -fx-background-color: -clr-surface;
+}
+
+.edit-pane > .title > .arrow-button > .arrow {
+    -fx-background-color: -clr-text-muted;
+}
+
+.edit-pane > .content {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-padding: 12px 14px;
+}
+
+
+.edit-pane-body {
+    -fx-spacing: 6px;
+}
+
+.edit-pane-group {
+    -fx-text-fill: -clr-text-dim;
+    -fx-font-size: 10.5px;
+    -fx-font-weight: bold;
+    -fx-padding: 8px 0 2px 0;
+}
+
+.edit-pane-eye {
+    -fx-background-color: transparent;
+    -fx-background-radius: 4px;
+    -fx-padding: 3px 5px;
+    -fx-cursor: hand;
+}
+
+.edit-pane-eye:hover {
+    -fx-background-color: -clr-surface-card;
+}
+
+/* off: eye with a slash */
+.edit-pane-eye .eye-icon {
+    -fx-shape: "M12 7c2.76 0 5 2.24 5 5 0 .65-.13 1.26-.36 1.83l2.92 2.92c1.51-1.26 2.7-2.89 3.43-4.75-1.73-4.39-6-7.5-11-7.5-1.4 0-2.74.25-3.98.7l2.16 2.16C10.74 7.13 11.35 7 12 7zM2 4.27l2.28 2.28.46.46C3.08 8.3 1.78 10.02 1 12c1.73 4.39 6 7.5 11 7.5 1.55 0 3.03-.3 4.38-.84l.42.42L19.73 22 21 20.73 3.27 3 2 4.27zM7.53 9.8l1.55 1.55c-.05.21-.08.43-.08.65 0 1.66 1.34 3 3 3 .22 0 .44-.03.65-.08l1.55 1.55c-.67.33-1.41.53-2.2.53-2.76 0-5-2.24-5-5 0-.79.2-1.53.53-2.2zm4.31-.78l3.15 3.15.02-.16c0-1.66-1.34-3-3-3l-.17.01z";
+    -fx-scale-shape: true;
+    -fx-background-color: -clr-text-dim;
+    -fx-min-width: 15px;
+    -fx-pref-width: 15px;
+    -fx-max-width: 15px;
+    -fx-min-height: 13px;
+    -fx-pref-height: 13px;
+    -fx-max-height: 13px;
+}
+
+.edit-pane-eye:hover .eye-icon {
+    -fx-background-color: -clr-text-secondary;
+}
+
+/* on: open eye */
+.edit-pane-eye:selected .eye-icon {
+    -fx-shape: "M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z";
+    -fx-background-color: -clr-blue;
+    -fx-min-height: 10px;
+    -fx-pref-height: 10px;
+    -fx-max-height: 10px;
+}
+
+.edit-pane-eye:selected:hover .eye-icon {
+    -fx-background-color: -clr-blue-hover;
+}
+
+/* --------------------------------------------------------------------------
+   [AI-GENERATED] EditSlider: name | slider | typed value | unit
+   -------------------------------------------------------------------------- */
+.edit-slider {
+    -fx-alignment: center-left;
+    -fx-spacing: 8px;
+    -fx-pref-height: 26px;
+}
+
+.edit-slider-name {
+    -fx-text-fill: -clr-text-secondary;
+    -fx-font-size: 11.5px;
+    -fx-min-width: 76px;
+    -fx-pref-width: 76px;
+    -fx-max-width: 76px;
+}
+
+.edit-slider .slider {
+    -fx-pref-height: 18px;
+}
+
+.edit-slider .slider .track {
+    -fx-background-color: -clr-border-subtle;
+    -fx-pref-height: 3px;
+    -fx-background-radius: 2px;
+}
+
+.edit-slider .slider .thumb {
+    -fx-background-color: -clr-text-secondary;
+    -fx-pref-width: 11px;
+    -fx-pref-height: 11px;
+    -fx-background-radius: 6px;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.35), 4, 0, 0, 1);
+}
+
+.edit-slider .slider:hover .thumb,
+.edit-slider .slider .thumb:pressed {
+    -fx-background-color: -clr-blue-hover;
+}
+
+.edit-slider-field {
+    -fx-background-color: transparent;
+    -fx-background-radius: 4px;
+    -fx-text-fill: -clr-text-primary;
+    -fx-font-family: -font-family-secondary;
+    -fx-font-size: 11px;
+    -fx-alignment: center-right;
+    -fx-padding: 2px 4px;
+    -fx-min-width: 50px;
+    -fx-pref-width: 50px;
+    -fx-max-width: 50px;
+}
+
+.edit-slider-field:hover {
+    -fx-background-color: -clr-surface-input;
+}
+
+.edit-slider-field:focused {
+    -fx-background-color: -clr-blue, -clr-surface-input;
+    -fx-background-insets: 0, 1px;
+}
+
+.edit-slider-unit {
+    -fx-text-fill: -clr-text-muted;
+    -fx-font-size: 10.5px;
+    /* fixed, also when empty: the same slider width in every row */
+    -fx-min-width: 18px;
+    -fx-pref-width: 18px;
+    -fx-max-width: 18px;
+}
+
+/* --------------------------------------------------------------------------
+   White balance preset box (first row of the White Balance group)
+   -------------------------------------------------------------------------- */
+.white-balance-box {
+    -fx-background-color: -clr-surface-input;
+    -fx-background-radius: 4px;
+    -fx-border-color: -clr-border-subtle;
+    -fx-border-radius: 4px;
+    -fx-border-width: 1px;
+    -fx-padding: 0 6px;
+    -fx-pref-height: 22px;
+    -fx-cursor: hand;
+}
+
+.white-balance-box:hover, .white-balance-box:focused {
+    -fx-border-color: -clr-blue;
+}
+
+.white-balance-box .list-cell {
+    -fx-background-color: transparent;
+    -fx-text-fill: -clr-text-primary;
+    -fx-font-size: 11.5px;
+    -fx-padding: 0;
+}
+
+.white-balance-box .arrow-button {
+    -fx-background-color: transparent;
+    -fx-padding: 0 0 0 6px;
+}
+
+.white-balance-box .arrow {
+    -fx-background-color: -clr-text-secondary;
+}
+
+.white-balance-box .combo-box-popup .list-view {
+    -fx-background-color: -clr-surface-input;
+    -fx-background-radius: 6px;
+    -fx-border-color: -clr-border;
+    -fx-border-radius: 6px;
+    -fx-padding: 4px;
+}
+
+.white-balance-box .combo-box-popup .list-cell {
+    -fx-padding: 5px 10px;
+    -fx-background-radius: 4px;
+}
+
+.white-balance-box .combo-box-popup .list-cell:hover {
+    -fx-background-color: -clr-darkgrey;
+}
+
+.white-balance-box .combo-box-popup .list-cell:selected {
+    -fx-background-color: -clr-blue;
+}
+
+/* --------------------------------------------------------------------------
+   Colored edit slider tracks: the track shows what moving the slider does
+   (EditSlider adds param-<name> to its row)
+   -------------------------------------------------------------------------- */
+.edit-slider.param-temperature .slider .track {
+    -fx-background-color: linear-gradient(to right, -clr-wb-cool, -clr-wb-neutral, -clr-wb-warm);
+    -fx-pref-height: 4px;
+}
+.edit-slider.param-temperature-offset .slider .track {
+    -fx-background-color: linear-gradient(to right, -clr-wb-cool, -clr-wb-neutral, -clr-wb-warm);
+    -fx-pref-height: 4px;
+}
+.edit-slider.param-tint .slider .track {
+    -fx-background-color: linear-gradient(to right, -clr-tint-green, -clr-wb-neutral, -clr-tint-magenta);
+    -fx-pref-height: 4px;
+}
+/* red */
+.edit-slider.param-hue-red .slider .track {
+    -fx-background-color: linear-gradient(to right, -clr-hue-magenta, -clr-hue-red, -clr-hue-orange);
+    -fx-pref-height: 4px;
+}
+.edit-slider.param-sat-red .slider .track {
+    -fx-background-color: linear-gradient(to right, -clr-hue-grey, -clr-hue-red);
+    -fx-pref-height: 4px;
+}
+.edit-slider.param-lum-red .slider .track {
+    -fx-background-color: linear-gradient(to right, derive(-clr-hue-red, -60%), -clr-hue-red, derive(-clr-hue-red, 60%));
+    -fx-pref-height: 4px;
+}
+/* orange */
+.edit-slider.param-hue-orange .slider .track {
+    -fx-background-color: linear-gradient(to right, -clr-hue-red, -clr-hue-orange, -clr-hue-yellow);
+    -fx-pref-height: 4px;
+}
+.edit-slider.param-sat-orange .slider .track {
+    -fx-background-color: linear-gradient(to right, -clr-hue-grey, -clr-hue-orange);
+    -fx-pref-height: 4px;
+}
+.edit-slider.param-lum-orange .slider .track {
+    -fx-background-color: linear-gradient(to right, derive(-clr-hue-orange, -60%), -clr-hue-orange, derive(-clr-hue-orange, 60%));
+    -fx-pref-height: 4px;
+}
+/* yellow */
+.edit-slider.param-hue-yellow .slider .track {
+    -fx-background-color: linear-gradient(to right, -clr-hue-orange, -clr-hue-yellow, -clr-hue-green);
+    -fx-pref-height: 4px;
+}
+.edit-slider.param-sat-yellow .slider .track {
+    -fx-background-color: linear-gradient(to right, -clr-hue-grey, -clr-hue-yellow);
+    -fx-pref-height: 4px;
+}
+.edit-slider.param-lum-yellow .slider .track {
+    -fx-background-color: linear-gradient(to right, derive(-clr-hue-yellow, -60%), -clr-hue-yellow, derive(-clr-hue-yellow, 60%));
+    -fx-pref-height: 4px;
+}
+/* green */
+.edit-slider.param-hue-green .slider .track {
+    -fx-background-color: linear-gradient(to right, -clr-hue-yellow, -clr-hue-green, -clr-hue-aqua);
+    -fx-pref-height: 4px;
+}
+.edit-slider.param-sat-green .slider .track {
+    -fx-background-color: linear-gradient(to right, -clr-hue-grey, -clr-hue-green);
+    -fx-pref-height: 4px;
+}
+.edit-slider.param-lum-green .slider .track {
+    -fx-background-color: linear-gradient(to right, derive(-clr-hue-green, -60%), -clr-hue-green, derive(-clr-hue-green, 60%));
+    -fx-pref-height: 4px;
+}
+/* aqua */
+.edit-slider.param-hue-aqua .slider .track {
+    -fx-background-color: linear-gradient(to right, -clr-hue-green, -clr-hue-aqua, -clr-hue-blue);
+    -fx-pref-height: 4px;
+}
+.edit-slider.param-sat-aqua .slider .track {
+    -fx-background-color: linear-gradient(to right, -clr-hue-grey, -clr-hue-aqua);
+    -fx-pref-height: 4px;
+}
+.edit-slider.param-lum-aqua .slider .track {
+    -fx-background-color: linear-gradient(to right, derive(-clr-hue-aqua, -60%), -clr-hue-aqua, derive(-clr-hue-aqua, 60%));
+    -fx-pref-height: 4px;
+}
+/* blue */
+.edit-slider.param-hue-blue .slider .track {
+    -fx-background-color: linear-gradient(to right, -clr-hue-aqua, -clr-hue-blue, -clr-hue-purple);
+    -fx-pref-height: 4px;
+}
+.edit-slider.param-sat-blue .slider .track {
+    -fx-background-color: linear-gradient(to right, -clr-hue-grey, -clr-hue-blue);
+    -fx-pref-height: 4px;
+}
+.edit-slider.param-lum-blue .slider .track {
+    -fx-background-color: linear-gradient(to right, derive(-clr-hue-blue, -60%), -clr-hue-blue, derive(-clr-hue-blue, 60%));
+    -fx-pref-height: 4px;
+}
+/* purple */
+.edit-slider.param-hue-purple .slider .track {
+    -fx-background-color: linear-gradient(to right, -clr-hue-blue, -clr-hue-purple, -clr-hue-magenta);
+    -fx-pref-height: 4px;
+}
+.edit-slider.param-sat-purple .slider .track {
+    -fx-background-color: linear-gradient(to right, -clr-hue-grey, -clr-hue-purple);
+    -fx-pref-height: 4px;
+}
+.edit-slider.param-lum-purple .slider .track {
+    -fx-background-color: linear-gradient(to right, derive(-clr-hue-purple, -60%), -clr-hue-purple, derive(-clr-hue-purple, 60%));
+    -fx-pref-height: 4px;
+}
+/* magenta */
+.edit-slider.param-hue-magenta .slider .track {
+    -fx-background-color: linear-gradient(to right, -clr-hue-purple, -clr-hue-magenta, -clr-hue-red);
+    -fx-pref-height: 4px;
+}
+.edit-slider.param-sat-magenta .slider .track {
+    -fx-background-color: linear-gradient(to right, -clr-hue-grey, -clr-hue-magenta);
+    -fx-pref-height: 4px;
+}
+.edit-slider.param-lum-magenta .slider .track {
+    -fx-background-color: linear-gradient(to right, derive(-clr-hue-magenta, -60%), -clr-hue-magenta, derive(-clr-hue-magenta, 60%));
+    -fx-pref-height: 4px;
+}
+
+/* --------------------------------------------------------------------------
+   [AI-GENERATED] PresetDialog: save-as-preset form on the confirm dialog plate
+   -------------------------------------------------------------------------- */
+.preset-dialog-label {
+    -fx-text-fill: -clr-text-secondary;
+    -fx-font-size: 11.5px;
+    -fx-font-weight: 600;
+}
+
+.preset-dialog-field,
+.preset-dialog-field.combo-box {
+    -fx-control-inner-background: -clr-surface-input;
+    -fx-background-color: -clr-surface-input;
+    -fx-background-radius: 8px;
+    -fx-border-color: -clr-border-subtle;
+    -fx-border-width: 1px;
+    -fx-border-radius: 8px;
+    -fx-text-fill: -clr-text-primary;
+    -fx-prompt-text-fill: -clr-text-muted;
+    -fx-highlight-fill: -clr-blue;
+    -fx-font-size: 12.5px;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+}
+.preset-dialog-field:focused,
+.preset-dialog-field.combo-box:focused {
+    -fx-border-color: -clr-blue;
+}
+/* Author: read-only, shown muted */
+.preset-dialog-field:readonly {
+    -fx-text-fill: -clr-text-muted;
+    -fx-background-color: -clr-surface;
+}
+.preset-dialog-field.combo-box .text-field {
+    -fx-background-color: transparent;
+    -fx-text-fill: -clr-text-primary;
+    -fx-prompt-text-fill: -clr-text-muted;
+}
+.preset-dialog-field.combo-box .arrow-button {
+    -fx-background-color: transparent;
+}
+.preset-dialog-field.combo-box .arrow {
+    -fx-background-color: -clr-text-secondary;
+}
+.preset-dialog-field .content {
+    -fx-background-color: -clr-surface-input;
+    -fx-background-radius: 8px;
+}
+.preset-dialog-field.combo-box .combo-box-popup .list-view {
+    -fx-background-color: -clr-surface-input;
+    -fx-border-color: -clr-border;
+    -fx-background-radius: 6px;
+    -fx-border-radius: 6px;
+}
+.preset-dialog-field.combo-box .combo-box-popup .list-cell {
+    -fx-background-color: transparent;
+    -fx-text-fill: -clr-text-primary;
+    -fx-padding: 5px 10px;
+}
+.preset-dialog-field.combo-box .combo-box-popup .list-cell:hover {
+    -fx-background-color: -clr-darkgrey;
+}
+
+.preset-dialog-settings {
+    -fx-background-color: -clr-surface;
+    -fx-background-radius: 10px;
+    -fx-border-color: -clr-border-subtle;
+    -fx-border-radius: 10px;
+    -fx-padding: 12px 14px;
+}
+
+.preset-dialog-section {
+    -fx-text-fill: -clr-text-muted;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-padding: 0 0 2px 0;
+}
+
+.preset-dialog-check {
+    -fx-text-fill: -clr-text-primary;
+    -fx-font-size: 12px;
+}
+.preset-dialog-check .box {
+    -fx-background-color: -clr-surface-input;
+    -fx-background-radius: 4px;
+    -fx-border-color: -clr-border;
+    -fx-border-radius: 4px;
+}
+.preset-dialog-check:selected .box,
+.preset-dialog-check:indeterminate .box {
+    -fx-background-color: -clr-blue;
+    -fx-border-color: -clr-blue;
+}
+.preset-dialog-check:selected .mark,
+.preset-dialog-check:indeterminate .mark {
+    -fx-background-color: -clr-text-primary;
+}
+.preset-dialog-child {
+    -fx-padding: 0 0 0 18px;
+}

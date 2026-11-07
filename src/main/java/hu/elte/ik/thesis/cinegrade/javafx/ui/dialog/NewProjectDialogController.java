@@ -1,0 +1,114 @@
+package hu.elte.ik.thesis.cinegrade.javafx.ui.dialog;
+
+import hu.elte.ik.thesis.cinegrade.domain.enums.ErrorCode;
+import hu.elte.ik.thesis.cinegrade.domain.enums.ViewType;
+import hu.elte.ik.thesis.cinegrade.domain.error.ErrorHandler;
+import hu.elte.ik.thesis.cinegrade.domain.exceptions.CineGradeException;
+import hu.elte.ik.thesis.cinegrade.domain.navigation.SceneManager;
+import hu.elte.ik.thesis.cinegrade.infra.services.storage.database.LastPathService;
+import javafx.css.PseudoClass;
+import javafx.fxml.FXML;
+import javafx.scene.control.Button;
+import javafx.scene.control.TextField;
+import javafx.stage.DirectoryChooser;
+import javafx.stage.Stage;
+import javafx.stage.Window;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import java.io.File;
+import java.nio.file.Path;
+import java.util.function.BiConsumer;
+
+public class NewProjectDialogController {
+
+    private static final PseudoClass ERROR_PSEUDO = PseudoClass.getPseudoClass("error");
+    private static Logger logger = LogManager.getLogger(NewProjectDialogController.class);
+    private final BiConsumer<String, Path> createCatalogConsumer;
+    private final SceneManager sceneManager;
+    private final LastPathService lastPaths = new LastPathService();
+    private File selectedFolder;
+    @FXML
+    private TextField projectNameField;
+    @FXML
+    private TextField locationField;
+    @FXML
+    private Button browseButton;
+    @FXML
+    private Button cancelButton;
+    @FXML
+    private Button createButton;
+
+    public NewProjectDialogController(BiConsumer<String, Path> createCatalogConsumer, Path basePath, SceneManager sceneManager) {
+        this.createCatalogConsumer = createCatalogConsumer;
+        this.selectedFolder = basePath.toFile();
+        this.sceneManager = sceneManager;
+    }
+
+    @FXML
+    public void initialize() {
+        setup();
+    }
+
+    private void setup() {
+        projectNameField.textProperty().addListener((obs, oldValue, newValue) -> {
+            if (!newValue.trim().isEmpty()) {
+                projectNameField.pseudoClassStateChanged(ERROR_PSEUDO, false);
+                createButton.setDisable(false);
+            } else {
+                projectNameField.pseudoClassStateChanged(ERROR_PSEUDO, true);
+                createButton.setDisable(true);
+            }
+        });
+
+        createButton.setOnMouseClicked(e -> {
+            boolean isValid = validateInput();
+            if (isValid) {
+                try {
+                    createCatalogConsumer.accept(projectNameField.getText(), Path.of(selectedFolder.toURI()));
+                    Stage stage = (Stage) cancelButton.getScene().getWindow();
+                    stage.close();
+                    sceneManager.switchView(ViewType.EDIT_PAGE);
+                } catch (CineGradeException ex) {
+                    ErrorHandler.getInstance().handle(ex);
+                }
+            } else {
+                locationField.pseudoClassStateChanged(ERROR_PSEUDO, true);
+                e.consume();
+            }
+        });
+
+        cancelButton.setOnMouseClicked(e -> {
+            Stage stage = (Stage) cancelButton.getScene().getWindow();
+            stage.close();
+        });
+
+        locationField.setOnMouseClicked(e -> {
+            openFileFolder();
+        });
+        locationField.editableProperty().set(false);
+        locationField.setText(selectedFolder.toString());
+        browseButton.setOnMouseClicked(e -> {
+            openFileFolder();
+        });
+    }
+
+    private void openFileFolder() {
+        if (selectedFolder != null && !selectedFolder.exists()) {
+            selectedFolder.mkdirs();
+        }
+        logger.debug("Default directory: {}", selectedFolder);
+        SceneManager.chooseFolder("Open CineGrade project", selectedFolder, selectedFile -> {
+            this.selectedFolder = selectedFile;
+            locationField.setText(selectedFolder.getAbsolutePath());
+            lastPaths.setAppProjectPath(selectedFile.toPath());
+        });
+    }
+
+    private boolean validateInput() {
+        if (selectedFolder != null && !selectedFolder.exists()) {
+            selectedFolder.mkdirs();
+        }
+        return selectedFolder != null && selectedFolder.isDirectory() && !projectNameField.getText().trim().isBlank();
+    }
+}

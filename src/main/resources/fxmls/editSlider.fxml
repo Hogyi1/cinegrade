@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- [AI-GENERATED] -->
+
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Slider?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.HBox?>
+
+<fx:root type="javafx.scene.layout.HBox" styleClass="edit-slider"
+         xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1">
+    <children>
+        <Label fx:id="nameLabel" styleClass="edit-slider-name"/>
+        <Slider fx:id="slider" HBox.hgrow="ALWAYS"/>
+        <TextField fx:id="valueField" styleClass="edit-slider-field"/>
+        <Label fx:id="unitLabel" styleClass="edit-slider-unit"/>
+    </children>
+</fx:root>

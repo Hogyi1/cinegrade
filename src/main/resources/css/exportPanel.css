@@ -1,0 +1,270 @@
+/* [AI-GENERATED] */
+/* Export panel: Photos and 3D LUT tabs. Theme tokens only, floating plates like the import panel. */
+
+.export-panel-root {
+    -fx-background-color: -clr-dark;
+    -fx-padding: 10px;
+}
+
+.export-plate {
+    -fx-background-color: -clr-almostdarkgrey;
+    -fx-background-radius: 20px;
+    -fx-border-color: -clr-border-subtle;
+    -fx-border-radius: 20px;
+    -fx-padding: 20px 22px 22px 22px;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.25), 20, 0, 0, 4);
+}
+
+.export-plate-title {
+    -fx-text-fill: -clr-text-primary;
+    -fx-font-size: 15px;
+    -fx-font-weight: bold;
+    -fx-padding: 0 0 8px 0;
+}
+
+/* Segmented switch: tabs, format, LUT size */
+.export-segment {
+    -fx-background-color: -clr-surface-input;
+    -fx-background-radius: 10px;
+    -fx-padding: 3px;
+    -fx-spacing: 2px;
+    -fx-alignment: center-left;
+}
+
+.export-segment-btn {
+    -fx-background-color: transparent;
+    -fx-background-radius: 8px;
+    -fx-text-fill: -clr-text-secondary;
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-padding: 6px 16px;
+    -fx-cursor: hand;
+}
+
+.export-segment-btn:hover {
+    -fx-text-fill: -clr-text-primary;
+}
+
+.export-segment-btn:selected {
+    -fx-background-color: -clr-blue;
+    -fx-text-fill: -clr-text-primary;
+}
+
+.export-segment-btn:focused {
+    -fx-border-color: -clr-purple;
+    -fx-border-radius: 8px;
+}
+
+/* Which photos: the whole row is the radio button */
+.export-scope-option {
+    -fx-background-color: transparent;
+    -fx-background-radius: 10px;
+    -fx-text-fill: -clr-text-secondary;
+    -fx-font-size: 13px;
+    -fx-padding: 9px 44px 9px 10px;
+    -fx-cursor: hand;
+}
+
+.export-scope-option:hover {
+    -fx-background-color: -clr-darkgrey;
+    -fx-text-fill: -clr-text-primary;
+}
+
+.export-scope-option:selected {
+    -fx-background-color: -clr-surface-card;
+    -fx-text-fill: -clr-text-primary;
+}
+
+.export-scope-option:focused {
+    -fx-border-color: -clr-purple;
+    -fx-border-radius: 10px;
+}
+
+.export-scope-option .radio {
+    -fx-background-color: -clr-surface-input;
+    -fx-background-radius: 8px;
+    -fx-border-color: -clr-border;
+    -fx-border-radius: 8px;
+    -fx-padding: 3px;
+}
+
+.export-scope-option:selected .radio {
+    -fx-background-color: -clr-blue;
+    -fx-border-color: -clr-blue;
+}
+
+.export-scope-option .dot {
+    -fx-background-color: transparent;
+    -fx-background-radius: 3px;
+    -fx-padding: 3px;
+}
+
+.export-scope-option:selected .dot {
+    -fx-background-color: -clr-text-primary;
+}
+
+.export-scope-count {
+    -fx-text-fill: -clr-text-secondary;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-padding: 0 12px 0 0;
+}
+
+/* Settings rows */
+.export-row {
+    -fx-alignment: center-left;
+    -fx-spacing: 10px;
+    -fx-min-height: 34px;
+}
+
+.export-row-label {
+    -fx-text-fill: -clr-text-secondary;
+    -fx-font-size: 12px;
+    -fx-min-width: 72px;
+    -fx-pref-width: 72px;
+}
+
+.export-value {
+    -fx-text-fill: -clr-text-primary;
+    -fx-font-size: 13px;
+}
+
+.export-hint {
+    -fx-text-fill: -clr-text-muted;
+    -fx-font-size: 12px;
+    -fx-padding: 0 0 0 4px;
+}
+
+.export-name-example {
+    -fx-text-fill: -clr-text-muted;
+    -fx-font-size: 12px;
+    -fx-padding: 0 0 0 82px;
+}
+
+.export-input {
+    -fx-background-color: -clr-surface-input;
+    -fx-background-radius: 8px;
+    -fx-border-color: -clr-border-subtle;
+    -fx-border-radius: 8px;
+    -fx-text-fill: -clr-text-primary;
+    -fx-prompt-text-fill: -clr-text-dim;
+    -fx-font-size: 12px;
+    -fx-padding: 7px 10px;
+}
+
+.export-input:focused {
+    -fx-border-color: -clr-blue;
+}
+
+.export-check {
+    -fx-text-fill: -clr-text-primary;
+    -fx-font-size: 12px;
+}
+
+.export-check .box {
+    -fx-background-color: -clr-surface-input;
+    -fx-background-radius: 4px;
+    -fx-border-color: -clr-border;
+    -fx-border-radius: 4px;
+}
+
+.export-check:selected .box {
+    -fx-background-color: -clr-blue;
+    -fx-border-color: -clr-blue;
+}
+
+.export-check:selected .mark {
+    -fx-background-color: -clr-text-primary;
+}
+
+.export-slider .track {
+    -fx-background-color: -clr-border;
+    -fx-background-radius: 3px;
+    -fx-pref-height: 5px;
+}
+
+.export-slider .thumb {
+    -fx-background-color: -clr-text-primary;
+    -fx-background-radius: 7px;
+    -fx-padding: 6px;
+    -fx-cursor: hand;
+}
+
+.export-slider:focused .thumb {
+    -fx-background-color: -clr-blue-hover;
+}
+
+.export-slider-value {
+    -fx-text-fill: -clr-text-primary;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-alignment: center-right;
+}
+
+/* The action: one sentence saying what will happen, and the button that does it */
+.export-action-bar {
+    -fx-background-color: -clr-almostdarkgrey;
+    -fx-background-radius: 20px;
+    -fx-border-color: -clr-border-subtle;
+    -fx-border-radius: 20px;
+    -fx-padding: 12px 12px 12px 24px;
+    -fx-spacing: 16px;
+    -fx-alignment: center-left;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.25), 20, 0, 0, 4);
+}
+
+.export-summary {
+    -fx-text-fill: -clr-text-primary;
+    -fx-font-size: 16px;
+    -fx-text-overrun: center-ellipsis;
+}
+
+.export-btn-primary {
+    -fx-background-color: -clr-blue;
+    -fx-background-radius: 12px;
+    -fx-text-fill: -clr-text-primary;
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-padding: 11px 26px;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, rgba(20, 107, 209, 0.45), 12, 0, 0, 2);
+}
+
+.export-btn-primary:hover {
+    -fx-background-color: -clr-blue-hover;
+}
+
+.export-btn-primary:pressed {
+    -fx-background-color: -clr-blue-active;
+}
+
+.export-btn-primary:focused {
+    -fx-border-color: -clr-purple;
+    -fx-border-radius: 12px;
+}
+
+.export-btn-primary:disabled {
+    -fx-background-color: -clr-surface;
+    -fx-text-fill: -clr-text-dim;
+    -fx-opacity: 1;
+    -fx-effect: null;
+}
+
+.export-btn-secondary {
+    -fx-background-color: -clr-surface;
+    -fx-background-radius: 8px;
+    -fx-border-color: -clr-border;
+    -fx-border-radius: 8px;
+    -fx-text-fill: -clr-text-primary;
+    -fx-font-size: 12px;
+    -fx-padding: 7px 14px;
+    -fx-cursor: hand;
+}
+
+.export-btn-secondary:hover {
+    -fx-background-color: -clr-surface-card;
+}
+
+.export-btn-secondary:focused {
+    -fx-border-color: -clr-blue;
+}

@@ -1,228 +1,103 @@
-"# Software Requirements Specification (SRS) & System Architecture Plan
-**Project Name:** CineGrade (Desktop & Web Color Grading Social Platform)  
-**Author:** Hogyor Péter  
-**Version:** 1.0.0  
-**Date:** August 5, 2026  
+# CineGrade: the last stretch
+
+The desktop app is feature complete. What's left is connecting it to the backend (expected in about 2 days), then the nice-to-haves. After that, it's ready to release.
+
+**Who writes what:** `[YOU]` is core logic and wiring. `[AI]` is FXML, CSS and controls, tagged in `AI_GENERATED.md`.
 
 ---
 
-## 1. Executive Summary & Architecture Overview
+## TODO (needed for release)
 
-**CineGrade** is a hybrid desktop and web application designed for non-destructive photo color grading, LUT (Look-Up Table) generation, and visual preset sharing. The system integrates a high-performance native desktop workstation built with **JavaFX** and **LWJGL (OpenGL)** for real-time GPU-accelerated image manipulation with a community-driven web platform powered by **Angular**, **Spring Boot**, and **PostgreSQL**.
+- [ ] **`UserManager` against the backend [YOU]:** login, logout, register, keep the session, and check it at startup (see *Session* below). `User` gets the tokens. `changeUser` and `logout` already exist, and they stay the single place the active user changes.
+- [ ] **Connectivity check [YOU]:** a `BooleanProperty online` that the UI binds to. Check it at startup and after any failed request, and recheck every ~30 s while offline.
+- [ ] **The bridge [YOU]:** `CineGradeBridge`, the Java object the WebView page can call (see *Bridge* below).
+- [ ] **Share on presets [YOU], menu item [AI]:** a *Share* item in the preset's right-click menu. It sends the preset with the user's token to the API. Disabled when offline or logged out.
+- [ ] **Login from the avatar circle [YOU wiring, AI layout]:**
+  - Offline: the circle is hidden or greyed out, with an "Offline" tooltip.
+  - Online and logged out: a `Login · Register` button where the circle is.
+  - Logged in: the circle with the avatar, and a menu with *Logout*.
+- [ ] **Socials URL from config:** `SocialsController.SOCIALS_URL` is hard-coded to `http://localhost:4200`. Move it to `AppConfig` next to the API base URL, so the cloud deploy only means a config change.
+- [x] `PresetManager` is app level (made in `App`, not in `CatalogScopeFactory`), so the bridge can add presets with no catalog open.
+- [x] Socials scene: WebView, logo and Projects button.
+- [x] Removed: shader hot reload, the test panel, the old plans.
 
-### 1.1 Key Architectural Highlights
-- **Hybrid Desktop Workspace:** Real-time hardware-accelerated rendering engine running via LWJGL/OpenGL inside a JavaFX shell.
-- **Embedded Web View & Bridge:** Embedded Chromium/WebEngine hosting the Angular UI, coupled via a bi-directional JS-Java bridge for seamless local asset passing and instant preset application.
-- **Native Interoperability:** C/C++ bindings via JNI/FFM for **LibRaw** (RAW image decoding), integration with **ExifTool** (metadata handling), and **FFmpeg** (video/image encoding pipeline).
-- **Preset & LUT Engine:** Complete color math pipeline supporting 3D LUT generation (.cube/.3dl) and non-destructive JSON adjustment manifests.
+## Nice to have
 
----
-
-## 2. System Roles & Permission Matrix
-
-| Feature / Capability | Non-Registered User | Registered User | Administrator |
-| :--- | :---: | :---: | :---: |
-| **Local Editing & LUT Export** | Full Access | Full Access | Full Access |
-| **RAW Photo Import & Metadata Extraction** | Full Access | Full Access | Full Access |
-| **Browse Social Platform & View Presets** | Read-Only | Read-Only | Read-Only |
-| **Download LUTs / Presets to Local Catalog** | Disabled | Full Access | Full Access |
-| **Publish Edits & Preset Recipes** | Disabled | Full Access | Full Access |
-| **Like, Comment, & Follow Creators** | Disabled | Full Access | Full Access |
-| **User Profile Management** | Disabled | Full Access | Full Access |
-| **Content Moderation & User Management** | Disabled | Disabled | Full Access |
+- [ ] **Curves, several channels:** master plus R, G and B. They're stored in the existing `curvesJson`, and the shader gets a 256-entry LUT per channel in the UBO.
+- [ ] **Color wheels:** lift, gamma and gain, each with hue and saturation (ASC CDL).
+- [ ] **HSL sampler:** pick a colour in the viewport, and its HSL band lights up so dragging moves that band's sliders (targeted adjustment).
+- [ ] **`MigrationService` for old catalogs:** opening a catalog made by an older schema adds the missing columns and tables instead of failing. Store a `schema_version` in `catalog_info` and run the steps in order.
 
 ---
 
-## 3. Comprehensive Feature Breakdown
+## How the desktop and the backend connect
 
-### 3.1 Editing Platform (Native JavaFX / LWJGL)
-1. **RAW & Raster Image Ingestion:**
-   - Multi-format ingestion using **LibRaw** wrapper for major RAW formats (CR2, CR3, NEF, ARW, DNG) and standard images (JPEG, PNG, TIFF).
-   - Metadata parsing and writing via **ExifTool** (EXIF, IPTC, XMP).
-2. **GPU-Accelerated Color Grading (LWJGL/OpenGL):**
-   - Real-time histogram, waveform vectorscope, and RGB parade displays.
-   - Adjustments: Exposure, Contrast, Highlights, Shadows, Whites, Blacks, Temperature, Tint, Vibrance, Saturation.
-   - Advanced Color Tools: 3-Way Color Wheels (Lift, Gamma, Gain), HSL/Color Mixer, Curves (RGB + Luma).
-3. **Preset & LUT Pipeline:**
-   - Export grade state as non-destructive JSON recipe files.
-   - Render and export 3D Look-Up Tables (`.cube` format, $32 	imes 32 	imes 32$ or $64 	imes 64 	imes 64$ resolution).
-   - Apply downloaded community LUTs directly onto the GPU rendering queue.
-4. **Export & Compression Engine:**
-   - High-quality export engine supporting JPEG, PNG, TIFF, and WebP using **FFmpeg** / Java ImageIO.
+### Separate projects
 
-### 3.2 Social Platform (Angular Embedded Web App)
-1. **User Profiles & Personal Portfolios:**
-   - Biography, profile picture, banner, social links, and organized highlight showcases.
-2. **Community Feed & Preset Sharing ("Instagram for LUTs"):**
-   - Publish graded photo posts with before/after sliders alongside attached preset metadata / LUT downloads.
-   - Interactive feeds: Trending, Following, Recent, and Tagged.
-3. **Social Engagement & Discovery:**
-   - Like, comment, save to collections, follow creators.
-   - Full-text search by camera model, lens, color style (e.g., "Moody", "Cinematic", "Vintage"), and user handles.
+The Spring Boot app is **its own project** (its own repo or a sibling folder with its own `pom.xml`). It is never a dependency or module of the desktop app. The two only talk HTTP (REST + JSON). The desktop needs nothing from Spring, and the backend can be deployed and run without JavaFX.
 
-### 3.3 Inter-Process & Bridge Architecture
-- **Desktop $\leftrightarrow$ Web Bridge:** JavaFX `WebView` executing an exposed Javascript interface `window.LuminaGradBridge`.
-- **Action Flow:** Clicking "Apply Preset to Local Editor" in the embedded Angular app triggers a native call that downloads the LUT payload into the Java application's active editing cache without leaving the view.
+### Session (how long a user stays logged in)
 
----
+Use two tokens:
 
-## 4. Operational User Stories
+| Token | Lifetime | Where it lives |
+|---|---|---|
+| Access token (JWT) | ~15 min | Memory only, in `UserManager` |
+| Refresh token | ~30 days, replaced on every use | App DB, `users` table |
 
-### US-01: Non-Destructive Color Adjustment
-- **As a** Photographer  
-- **I want to** adjust color sliders (Exposure, White Balance, HSL, 3-Way Wheels) in real-time  
-- **So that** I can grade my photo with instant visual feedback via the GPU viewport.  
-- **Acceptance Criteria:**
-  - Sliders update the LWJGL texture renderer within $< 16	ext{ ms}$ (60 FPS target).
-  - Reset button restores original image state without loss of source image quality.
+- **At startup:** if a refresh token is stored and we're online, call `POST /auth/refresh`. Success gives a new access token and means logged in. A `401` means it expired or was revoked, so clear it and treat the user as logged out. Offline means keep the stored user, show "Offline", and disable sharing.
+- **On requests:** add `Authorization: Bearer <access>`. On a `401`, refresh once and retry once. If it fails again, log out.
+- That's why you don't check the token on every app action, only at startup and when the server rejects a request.
 
-### US-02: 3D LUT Generation & Export
-- **As a** Colorist  
-- **I want to** export my current color grade configuration as a `.cube` file  
-- **So that** I can use the visual style in external software like DaVinci Resolve or Premiere Pro.  
-- **Acceptance Criteria:**
-  - Export modal allows selecting grid size ($17^3$, $33^3$, $65^3$).
-  - Output file strictly conforms to the Adobe 3D LUT Specification.
+### Login (loopback)
 
-### US-03: Published Preset Synchronization
-- **As a** Registered User  
-- **I want to** click "Import to Editor" on a community post in the social tab  
-- **So that** the exact grading parameters are injected directly into my active workspace slider stack.  
-- **Acceptance Criteria:**
-  - JS Bridge transfers the JSON recipe payload from Angular to JavaFX memory.
-  - Workspace instantly re-renders the current photo using the newly imported values.
+1. The circle's *Login* opens the backend's login page in the system browser, with a random `state` and `redirect_uri=http://127.0.0.1:<free port>/callback`.
+2. The desktop runs a tiny one-shot HTTP server on that port (`com.sun.net.httpserver.HttpServer`, which is part of the JDK, so no dependency).
+3. After login, the backend redirects to the callback with a one-time `code`. The desktop checks `state`, exchanges the code for the tokens (`POST /auth/token`), stores the refresh token, then closes the server.
+4. *Register* is the same flow, starting on the register page.
 
-### US-04: Community Content Search
-- **As a** User  
-- **I want to** filter community posts by camera model, tags, or LUT parameters  
-- **So that** I can find color presets tailored to my specific camera sensor.  
-- **Acceptance Criteria:**
-  - Dynamic API queries spring backend using indexed PostgreSQL fields.
-  - Results display interactive before/after preview thumbnails.
+The WebView doesn't need its own login. The page asks the bridge for the token (below), so the desktop is the only place that holds it.
 
----
+### Bridge (`JSObject`)
 
-## 5. System UML Diagrams (PlantUML Specification)
-
-### 5.1 Use Case Diagram
-```plantuml
-@startuml
-left to right direction
-skinparam packageStyle rectangle
-
-actor "Non-Registered User" as NRU
-actor "Registered User" as RU
-actor "Administrator" as ADMIN
-
-RU --|> NRU
-ADMIN --|> RU
-
-rectangle "LuminaGrad Workstation & Social Ecosystem" {
-    package "Editing Platform (JavaFX / LWJGL)" {
-        usecase "Import RAW / Raster Photo" as UC_Import
-        usecase "Color Grade Image (OpenGL)" as UC_Grade
-        usecase "Export Rendered Photo" as UC_ExportPhoto
-        usecase "Generate & Save 3D LUT (.cube)" as UC_ExportLUT
-        usecase "Apply Local / Remote Preset" as UC_ApplyPreset
+```java
+webView.getEngine().getLoadWorker().stateProperty().addListener((obs, old, state) -> {
+    if (state == Worker.State.SUCCEEDED && isOurOrigin(engine.getLocation())) {
+        JSObject window = (JSObject) engine.executeScript("window");
+        window.setMember("cinegrade", bridge);   // keep `bridge` in a field: the WebView only holds it weakly
     }
-    
-    package "Social Platform (Angular / Spring Boot)" {
-        usecase "Browse Community Feed" as UC_Browse
-        usecase "Search Users & LUT Tags" as UC_Search
-        usecase "Publish Preset Post" as UC_Publish
-        usecase "Download Preset / LUT" as UC_Download
-        usecase "Like & Comment on Post" as UC_Interact
-        usecase "Manage User Profile" as UC_Profile
-        usecase "Moderate Content & Users" as UC_Moderate
-    }
-}
-
-NRU --> UC_Import
-NRU --> UC_Grade
-NRU --> UC_ExportPhoto
-NRU --> UC_ExportLUT
-NRU --> UC_Browse
-NRU --> UC_Search
-
-RU --> UC_Publish
-RU --> UC_Download
-RU --> UC_Interact
-RU --> UC_Profile
-RU --> UC_ApplyPreset
-
-ADMIN --> UC_Moderate
-@enduml
+});
 ```
 
-### 5.2 High-Level Architecture Component Diagram
-```plantuml
-@startuml
-package "LuminaGrad Desktop App (JavaFX Host)" {
-    [JavaFX UI Shell] --> [JS-Java Native Bridge]
-    [JS-Java Native Bridge] --> [Embedded Chromium / WebEngine]
-    
-    package "Core Editing Engine" {
-        [LWJGL / OpenGL Canvas] --> [Color Pipeline Shader Core]
-        [LibRaw Native Wrapper] --> [LWJGL / OpenGL Canvas] : Decoded Pixels
-        [ExifTool Service] --> [JavaFX UI Shell] : Metadata Extraction
-        [FFmpeg Native Binding] --> [Export Pipeline] : Final Render Output
-    }
-}
+`CineGradeBridge` is a **small class with only the methods the page may call**. Never hand a manager to JavaScript, because the page can call every public method of whatever object it gets.
 
-package "Web & Cloud Infrastructure" {
-    [Embedded Chromium / WebEngine] ..> [Angular Single Page App] : Renders UI
-    [Angular Single Page App] <--> [Spring Boot REST API] : HTTPS / JSON
-    [Spring Boot REST API] <--> [PostgreSQL Database] : JPA / Hibernate
-    [Spring Boot REST API] <--> [S3 / Cloud Object Storage] : Image & LUT Files
-}
-@enduml
-```
+| Method | What it does |
+|---|---|
+| `isDesktop()` | Lets Angular show the desktop-only buttons |
+| `getAccessToken()` | Angular uses the desktop's login |
+| `downloadPreset(String presetId)` | Java downloads `/api/presets/{id}` itself with `HttpClient`, then validates and saves it through `PresetManager` |
+| `isOnline()` / `isLoggedIn()` | For the page's own UI |
 
-### 5.3 Sequence Diagram: Import Remote Community LUT to Local Workspace
-```plantuml
-@startuml
-autonumber
-actor User
-participant "Angular SPA (WebView)" as Angular
-participant "JS-Java Bridge" as Bridge
-participant "JavaFX Editor Controller" as FX
-participant "LWJGL Pipeline Core" as Engine
+Rules:
+- **Take only ids from JS, never preset content.** Java fetches the data itself. The page is just another untrusted source, so the preset goes through the same `validate` as a file import.
+- Bridge calls arrive on the FX thread, so HTTP runs on `ioPool`, and the result returns through `Platform.runLater`. To tell the page it's done, call `engine.executeScript("window.onCinegrade && window.onCinegrade('presetSaved', '<id>')")`.
+- Only attach the bridge when the page is on our origin, so a link to another site can't call it.
 
-User -> Angular : Click "Apply Preset to Workspace"
-Angular -> Bridge : invokeNative("applyPreset", presetJsonData)
-Bridge -> FX : handlePresetApply(presetJson)
-activate FX
-FX -> FX : Parse parameters (Exposure, Wheels, Curves)
-FX -> Engine : Update Shader Uniform Constants
-activate Engine
-Engine -> Engine : Re-render FBO with new uniforms
-Engine --> FX : Frame Rendered Signal
-deactivate Engine
-FX --> Bridge : Return Success Status
-deactivate FX
-Bridge --> Angular : Callback Resolution
-Angular -> User : Display "Preset Applied" Toast Banner
-@enduml
-```
+### Share
+
+`ShareService.share(Preset, PhotoEntry current)` [YOU] wraps the preset JSON (it already has a UUID, so the server can spot duplicates), the user's token, and, when a photo is open, the before and after JPEGs and a 33³ `.cube` from the existing export and LUT renderers. It sends one multipart `POST /api/presets`. The menu item stays disabled unless `online && loggedIn`.
+
+### Where things are made
+
+| Object | Scope | Why |
+|---|---|---|
+| `UserManager`, connectivity, `PresetManager`, `CineGradeBridge`, `ApiClient` (one `HttpClient`, base URL, auth header) | App, in `App` | They must work with no catalog open (Socials scene) |
+| `ShareService` | App | It only needs `ApiClient` and the renderers. The photo is a parameter |
+| `EditingManager` and the rest | Catalog scope | Unchanged |
 
 ---
 
-## 6. Implementation Roadmap & Development Milestones
+## Before release
 
-```
-2026 Q3               2026 Q4               2027 Q1               2027 Q2
-[ Milestone 1 ] ----> [ Milestone 2 ] ----> [ Milestone 3 ] ----> [ Milestone 4 ]
-  Core Engine           Social Web Backend    Bridge & Integration   Thesis & Polish
-```
-
-* **Milestone 1: Native Core Engine (Months 1-2)**
-  - Integrate LibRaw wrapper for RAW file loading.
-  - Implement LWJGL viewport with custom GLSL shaders for basic exposure, white balance, and 3D LUT mapping.
-* **Milestone 2: Web Platform & API (Months 3-4)**
-  - Build Spring Boot REST backend with PostgreSQL schemas.
-  - Develop Angular SPA for profile management, post creation, preset downloading, and feeds.
-* **Milestone 3: WebView Bridge & Desktop Integration (Month 5)**
-  - Integrate Angular web app inside JavaFX `WebView`.
-  - Implement bi-directional JS-Java bridge for seamless local file passing and preset injection.
-* **Milestone 4: Polish, Testing & Thesis Documentation (Month 6)**
-  - End-to-end integration testing, GPU performance optimization, and thesis writing."
+- Run the whole flow once on a clean machine: install, login, download a preset from Socials, apply it, share one back.
+- `src/test` is still empty. At least test `Preset` JSON round-trips and validation, and `CubeWriter` under a Hungarian locale.

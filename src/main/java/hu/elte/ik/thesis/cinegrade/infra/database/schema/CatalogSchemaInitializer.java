@@ -1,0 +1,151 @@
+// [CONTAINS AI-GENERATED CODE: Table SQL strings]
+package hu.elte.ik.thesis.cinegrade.infra.database.schema;
+
+import hu.elte.ik.thesis.cinegrade.domain.enums.ErrorCode;
+import hu.elte.ik.thesis.cinegrade.domain.exceptions.CineGradeException;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import java.sql.*;
+
+public class CatalogSchemaInitializer {
+
+    private static final Logger logger = LogManager.getLogger(CatalogSchemaInitializer.class);
+    private static final String META_DATA_SQL = "INSERT OR IGNORE INTO catalog_info (key, value) VALUES ('app', 'CineGrade'), ('schema_version', '1.0.4');";
+
+    private CatalogSchemaInitializer() {
+    }
+
+    private record SchemaEntity(String name, String sql) {}
+
+    // [AI-GENERATED TABLE STRINGS]
+    private static final String CREATE_TABLE_CATALOG_INFO = """
+            CREATE TABLE IF NOT EXISTS catalog_info (
+                key TEXT PRIMARY KEY,
+                value TEXT
+            );
+            """;
+
+    private static final String CREATE_TABLE_PHOTOENTRY = """
+            CREATE TABLE IF NOT EXISTS photos (
+                id TEXT PRIMARY KEY,
+                original_path TEXT NOT NULL,
+                import_method TEXT NOT NULL,
+                file_path TEXT NOT NULL,
+                file_name TEXT NOT NULL,
+                file_size INTEGER,
+                import_id TEXT NOT NULL,
+                mime_type TEXT,
+                is_raw INTEGER NOT NULL DEFAULT 0,
+                rotation INTEGER NOT NULL DEFAULT 0,
+                rating INTEGER DEFAULT 0,
+                color_label TEXT,
+                date_imported DATETIME DEFAULT CURRENT_TIMESTAMP,
+                is_liked INTEGER NOT NULL DEFAULT 0,
+                is_edited INTEGER NOT NULL DEFAULT 0,
+                comment TEXT
+            );
+            """;
+
+    private static final String CREATE_TABLE_PHOTO_METADATA = """
+            CREATE TABLE IF NOT EXISTS photo_metadata (
+                photo_id TEXT PRIMARY KEY,
+                make TEXT,
+                model TEXT,
+                lens TEXT,
+                iso INTEGER,
+                aperture REAL,
+                shutter_speed TEXT,
+                focal_length TEXT,
+                capture_date TEXT,
+                color_style TEXT,
+                raw_metadata_json TEXT,
+                FOREIGN KEY (photo_id) REFERENCES photos(id) ON DELETE CASCADE
+            );
+            """;
+
+    private static final String CREATE_TABLE_EDITSTATE = """
+            CREATE TABLE IF NOT EXISTS edit_states (
+                photo_id TEXT PRIMARY KEY,
+                exposure REAL DEFAULT 0.0,
+                contrast REAL DEFAULT 0.0,
+                highlights REAL DEFAULT 0.0,
+                shadows REAL DEFAULT 0.0,
+                whites REAL DEFAULT 0.0,
+                blacks REAL DEFAULT 0.0,
+                temperature REAL DEFAULT 5500.0,
+                tint REAL DEFAULT 0.0,
+                temperature_offset REAL DEFAULT 0.0,
+                white_balance TEXT DEFAULT 'AS_SHOT',
+                as_shot_temperature REAL DEFAULT 0.0,
+                as_shot_tint REAL DEFAULT 0.0,
+                saturation REAL DEFAULT 0.0,
+                vibrance REAL DEFAULT 0.0,
+                hsl TEXT,
+                lut_path TEXT,
+                curves_json TEXT,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (photo_id) REFERENCES photos(id) ON DELETE CASCADE
+            );
+            """;
+
+    private static final String CREATE_INDEX_PHOTOPATH = "CREATE INDEX IF NOT EXISTS idx_photos_path ON photos(file_path);";
+    private static final String CREATE_INDEX_RATING = "CREATE INDEX IF NOT EXISTS idx_photos_rating ON photos(rating);";
+    private static final String CREATE_INDEX_IMPORT = "CREATE INDEX IF NOT EXISTS idx_photos_import ON photos(import_id);";
+    private static final String CREATE_INDEX_METADATA_DATE = "CREATE INDEX IF NOT EXISTS idx_metadata_date ON photo_metadata(capture_date);";
+
+    private static final SchemaEntity[] TABLES = {
+            new SchemaEntity("catalog_info", CREATE_TABLE_CATALOG_INFO),
+            new SchemaEntity("photos", CREATE_TABLE_PHOTOENTRY),
+            new SchemaEntity("photo_metadata", CREATE_TABLE_PHOTO_METADATA),
+            new SchemaEntity("edit_states", CREATE_TABLE_EDITSTATE)
+    };
+
+    private static final SchemaEntity[] INDEXES = {
+            new SchemaEntity("idx_photos_path", CREATE_INDEX_PHOTOPATH),
+            new SchemaEntity("idx_photos_rating", CREATE_INDEX_RATING),
+            new SchemaEntity("idx_photos_import", CREATE_INDEX_IMPORT),
+            new SchemaEntity("idx_metadata_date", CREATE_INDEX_METADATA_DATE),
+    };
+
+    public static void initialize(Connection connection) {
+        logger.info("Started schema initialization");
+
+        logger.info("Initializing tables..");
+        for (SchemaEntity table : TABLES) {
+            logger.info("Creating table: {}", table.name());
+            try {
+                executeStatement(connection, table.sql());
+            } catch (SQLException ex) {
+                throw new CineGradeException(ErrorCode.FAILED_TO_CREATE_TABLE, ex, table.name());
+            }
+            logger.info("Table has successfully been created: {}", table.name());
+        }
+
+        logger.info("Initializing indexes..");
+        for (SchemaEntity index : INDEXES) {
+            logger.info("Creating index: {}", index.name());
+            try {
+                executeStatement(connection, index.sql());
+            } catch (SQLException ex) {
+                throw new CineGradeException(ErrorCode.FAILED_TO_CREATE_INDEX, ex, index.name());
+            }
+            logger.info("Index has successfully been created: {}", index.name());
+        }
+
+        logger.info("Schema initialization has successfully finished");
+
+        try {
+            PreparedStatement pstmt = connection.prepareStatement(META_DATA_SQL);
+            pstmt.execute();
+        } catch (SQLException ex) {
+            throw new CineGradeException(ErrorCode.DB_TRANSACTION_FAILED, ex, "Metadata insertion");
+        }
+    }
+
+    private static void executeStatement(Connection connection, String sql) throws SQLException {
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.execute();
+        }
+    }
+}

@@ -1,0 +1,315 @@
+/* [AI-GENERATED] */
+/* ==========================================================================
+   CineGrade - Project Menu & Catalog Dashboard Stylesheet
+   Fully tokenized using centralized theme variables (-clr-*)
+   Layout: Lighter main background (-clr-surface-card) with darker middle panel (-clr-almostdarkgrey)
+   ========================================================================== */
+
+/* Main Root & Window Frame */
+.main-menu-root {
+    -fx-background-color: -clr-almostdarkgrey;
+}
+
+/* Middle Workspace Panel */
+.main-body-container {
+    -fx-background-color: -clr-almostdarkgrey;
+    -fx-background-radius: 0;
+    -fx-border-radius: 0;
+    -fx-border-color: transparent;
+    -fx-border-width: 0;
+}
+
+/* Top Navigation Bar (Matches lighter main background) */
+.top-bar {
+    -fx-background-color: -clr-surface-card;
+    -fx-border-width: 0;
+}
+
+.profile-button {
+    -fx-background-color: transparent;
+    -fx-cursor: hand;
+    -fx-padding: 0;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+}
+.profile-button:hover {
+    -fx-opacity: 0.85;
+}
+
+/* Left Sidebar (Darker, matches middle container) */
+.sidebar {
+    -fx-background-color: -clr-almostdarkgrey;
+    -fx-border-color: transparent -clr-border transparent transparent;
+    -fx-border-width: 0 1px 0 0;
+}
+
+.btn-new-project {
+    -fx-background-color: -clr-blue;
+    -fx-text-fill: -clr-text-primary;
+    -fx-font-size: 16px;
+    -fx-font-weight: 500;
+    -fx-background-radius: 10px;
+    -fx-border-radius: 10px;
+    -fx-cursor: hand;
+    -fx-alignment: CENTER;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+    -fx-effect: dropshadow(gaussian, rgba(20, 107, 209, 0.35), 8, 0, 0, 2);
+}
+.btn-new-project:hover {
+    -fx-background-color: -clr-blue-hover;
+}
+.btn-new-project:pressed {
+    -fx-background-color: -clr-blue-active;
+}
+
+.btn-open-project {
+    -fx-background-color: transparent;
+    -fx-text-fill: -clr-text-primary;
+    -fx-font-size: 16px;
+    -fx-font-weight: 500;
+    -fx-cursor: hand;
+    -fx-alignment: CENTER;
+    -fx-background-radius: 10px;
+    -fx-border-radius: 10px;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+}
+.btn-open-project:hover {
+    -fx-background-color: -clr-surface;
+    -fx-text-fill: -clr-text-primary;
+}
+.btn-open-project:pressed {
+    -fx-background-color: -clr-darkgrey;
+}
+
+.sidebar-divider {
+    -fx-background-color: -clr-border;
+}
+
+/* Navigation Links */
+.nav-item {
+    -fx-cursor: hand;
+    -fx-padding: 8px 12px;
+    -fx-background-radius: 6px;
+}
+.nav-item:hover {
+    -fx-background-color: rgba(255, 255, 255, 0.08);
+}
+
+.nav-item-active .nav-indicator {
+    -fx-background-color: -clr-text-primary;
+    -fx-background-radius: 2px;
+}
+
+.nav-label {
+    -fx-text-fill: -clr-text-primary;
+    -fx-font-size: 16px;
+    -fx-font-weight: 500;
+}
+
+/* Main Content Area (Darker middle panel) */
+.main-content {
+    -fx-background-color: -clr-almostdarkgrey;
+}
+
+.welcome-heading {
+    -fx-font-family: "Segoe UI Light", "Segoe UI", sans-serif;
+    -fx-font-size: 44px;
+    -fx-font-weight: 200;
+    -fx-text-fill: -clr-text-primary;
+}
+
+/* Search Bar (Lighter container on top of darker main content) */
+.search-container {
+    -fx-background-color: -clr-surface-card;
+    -fx-background-radius: 10px;
+    -fx-border-radius: 10px;
+    -fx-border-color: transparent;
+    -fx-border-width: 1px;
+    -fx-padding: 4px 14px;
+}
+.search-container:hover, .search-container:focused {
+    -fx-border-color: -clr-border-subtle;
+}
+
+.search-field {
+    -fx-background-color: transparent;
+    -fx-text-fill: -clr-text-primary;
+    -fx-prompt-text-fill: -clr-text-muted;
+    -fx-font-size: 16px;
+    -fx-font-style: normal;
+    -fx-font-weight: 300;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+    -fx-padding: 2px 0;
+}
+.search-field *.text {
+    -fx-font-style: normal;
+}
+.search-field:empty {
+    -fx-font-style: normal;
+}
+
+.project-search-bar {
+    -fx-background-color: -clr-surface-card;
+    -fx-background-radius: 22px;
+    -fx-border-radius: 22px;
+    -fx-border-color: transparent;
+    -fx-padding: 4px 10px 4px 18px;
+}
+.project-search-bar:hover {
+    -fx-border-color: -clr-border;
+}
+.project-search-bar:focused-field {
+    -fx-border-color: -clr-blue;
+    -fx-effect: dropshadow(gaussian, rgba(20, 107, 209, 0.35), 10, 0, 0, 0);
+}
+.project-search-bar .search-bar-field {
+    -fx-font-size: 16px;
+    -fx-font-weight: 300;
+}
+
+.search-icon {
+    -fx-opacity: 0.75;
+    -fx-cursor: default;
+}
+.search-icon:hover {
+    -fx-opacity: 0.75;
+}
+
+/* Table Header & Filter Labels */
+.table-header-row {
+    -fx-background-color: transparent;
+}
+
+.filter-label {
+    -fx-font-size: 16px;
+    -fx-font-weight: 200;
+    -fx-text-fill: -clr-text-secondary;
+    -fx-cursor: hand;
+}
+.filter-label:hover {
+    -fx-text-fill: -clr-blue-hover;
+}
+
+.sort-icon {
+    -fx-opacity: 0.8;
+    -fx-cursor: hand;
+    -fx-padding: 0 0 2px 0;
+    -fx-animated: true;
+}
+.sort-icon:hover {
+    -fx-opacity: 1.0;
+}
+
+.table-divider {
+    -fx-background-color: -clr-surface-card;
+}
+
+/* ListView */
+.catalog-list-view {
+    -fx-background-color: transparent;
+    -fx-background-insets: 0;
+    -fx-padding: 0;
+    -fx-border-color: transparent;
+}
+
+.catalog-list-view .virtual-flow .clipped-container {
+    -fx-background-color: transparent;
+}
+
+.bottom-list {
+    -fx-padding: 0 5em 0 0;
+}
+
+.catalog-list-cell {
+    -fx-background-color: transparent;
+    -fx-padding: 3px 0;
+}
+.catalog-list-cell:empty {
+    -fx-background-color: transparent;
+}
+
+/* Catalog Row Item (Darker row inside darker middle panel with subtle divider) */
+.catalog-row {
+    -fx-background-color: -clr-almostdarkgrey;
+    -fx-border-color: transparent transparent -clr-surface-card transparent;
+    -fx-border-width: 0 0 1px 0;
+    -fx-background-radius: 6px;
+    -fx-border-radius: 6px;
+    -fx-cursor: hand;
+}
+
+/* Hover: highlight surface */
+.catalog-list-cell:hover .catalog-row {
+    -fx-background-color: -clr-surface;
+    -fx-border-color: transparent transparent -clr-border transparent;
+    -fx-opacity: 0.98;
+}
+
+.catalog-list-cell:selected .catalog-row {
+    -fx-background-color: -clr-darkgrey;
+    -fx-border-color: transparent transparent -clr-blue-hover transparent;
+    -fx-border-width: 0 0 2px 0;
+}
+
+.catalog-cell-text {
+    -fx-font-size: 16px;
+    -fx-font-weight: 200;
+}
+
+.catalog-cell-name {
+    -fx-text-fill: -clr-text-primary;
+}
+
+.catalog-cell-dim {
+    -fx-text-fill: -clr-text-secondary;
+}
+
+/* Options Button (3 dots) */
+.catalog-options-button {
+    -fx-background-color: transparent;
+    -fx-cursor: hand;
+    -fx-padding: 6px 8px;
+    -fx-background-radius: 6px;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+}
+.catalog-options-button:hover {
+    -fx-background-color: rgba(255, 255, 255, 0.12);
+}
+.catalog-options-button:pressed {
+    -fx-background-color: rgba(255, 255, 255, 0.20);
+}
+.catalog-options-button SVGPath,
+.catalog-options-button .svg-path {
+    -fx-fill: white;
+}
+.catalog-options-button:hover SVGPath,
+.catalog-options-button:hover .svg-path {
+    -fx-fill: white;
+}
+
+/* Clean Custom ScrollBar */
+.catalog-list-view .scroll-bar:vertical {
+    -fx-background-color: transparent;
+    -fx-pref-width: 8px;
+}
+.catalog-list-view .scroll-bar:vertical .track {
+    -fx-background-color: -clr-almostdarkgrey;
+    -fx-border-color: transparent;
+}
+.catalog-list-view .scroll-bar:vertical .thumb {
+    -fx-background-color: -clr-surface-card;
+    -fx-background-radius: 4px;
+}
+.catalog-list-view .scroll-bar:vertical .thumb:hover {
+    -fx-background-color: -clr-border-subtle;
+}
+.catalog-list-view .scroll-bar:vertical .increment-button,
+.catalog-list-view .scroll-bar:vertical .decrement-button {
+    -fx-pref-height: 0;
+    -fx-padding: 0;
+    -fx-background-color: transparent;
+}

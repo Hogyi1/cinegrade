@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- [AI-GENERATED] -->
+
+<?import java.net.URL?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<!-- Every panel floats on its own rounded plate, 10px from the window and from each other (Figma "Development") -->
+<BorderPane fx:id="developmentRoot" prefHeight="850.0" prefWidth="1380.0"
+            styleClass="development-panel-root"
+            xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="hu.elte.ik.thesis.cinegrade.javafx.ui.editing.DevelopmentPanelController">
+    <stylesheets>
+        <URL value="@../css/theme.css"/>
+        <URL value="@../css/developmentPanel.css"/>
+    </stylesheets>
+
+    <!-- Presets | viewport | edit controls -->
+    <center>
+        <HBox spacing="10.0">
+            <children>
+                <fx:include source="developLeftPanel.fxml" fx:id="developLeftPanel"/>
+                <fx:include source="developViewport.fxml" fx:id="developViewport" HBox.hgrow="ALWAYS"/>
+                <fx:include source="developEditPanel.fxml" fx:id="developEditPanel"/>
+            </children>
+        </HBox>
+    </center>
+
+    <!-- Filmstrip with its filter bar -->
+    <bottom>
+        <VBox styleClass="development-bottom">
+            <children>
+                <fx:include source="developFilmstrip.fxml" fx:id="developFilmstrip"/>
+            </children>
+        </VBox>
+    </bottom>
+</BorderPane>

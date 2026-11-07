@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- [AI-GENERATED] -->
+
+<?import java.net.URL?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.web.WebView?>
+
+<BorderPane minHeight="600.0" minWidth="900.0" prefHeight="800.0" prefWidth="1280.0" styleClass="main-menu-root"
+            xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="hu.elte.ik.thesis.cinegrade.javafx.ui.catalog.SocialsController">
+    <stylesheets>
+        <URL value="@../css/theme.css"/>
+        <URL value="@../css/projectMenu.css"/>
+        <URL value="@../css/navigationPanel.css"/>
+    </stylesheets>
+
+    <!-- Same bar as navigationPanel.fxml, only the logo and the Projects button -->
+    <top>
+        <BorderPane maxHeight="58.0" minHeight="56.0" prefHeight="58.0" styleClass="navigation-bar">
+            <left>
+                <HBox alignment="CENTER_LEFT" styleClass="brand-box" BorderPane.alignment="CENTER">
+                    <children>
+                        <ImageView fitHeight="28.0" pickOnBounds="true" preserveRatio="true">
+                            <image>
+                                <Image url="@../images/icons/cine-logo.png"/>
+                            </image>
+                        </ImageView>
+                    </children>
+                </HBox>
+            </left>
+            <right>
+                <HBox alignment="CENTER_RIGHT" BorderPane.alignment="CENTER">
+                    <children>
+                        <Button fx:id="backToProjectsBtn" mnemonicParsing="false" styleClass="nav-action-btn" text="Projects"/>
+                    </children>
+                </HBox>
+            </right>
+        </BorderPane>
+    </top>
+
+    <center>
+        <WebView fx:id="webView" BorderPane.alignment="CENTER"/>
+    </center>
+</BorderPane>

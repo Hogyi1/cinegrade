@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- [AI-GENERATED] -->
+
+<?import hu.elte.ik.thesis.cinegrade.javafx.ui.components.SearchBar?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ListView?>
+<?import javafx.scene.control.Slider?>
+<?import javafx.scene.control.ToggleButton?>
+<?import javafx.scene.control.ToggleGroup?>
+<?import javafx.scene.control.Tooltip?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox fx:id="filmstripRoot" fx:controller="hu.elte.ik.thesis.cinegrade.javafx.ui.editing.DevelopFilmstripController"
+      styleClass="filmstrip-root"
+      xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1">
+    <children>
+        <!-- Filter bar: scope + count + zoom | edited | rating | color label | liked/comment | search -->
+        <HBox alignment="CENTER_LEFT" styleClass="filmstrip-filter-bar">
+            <children>
+                <!-- Which photos the strip shows: the whole catalog or the last import -->
+                <HBox alignment="CENTER" styleClass="filmstrip-segmented">
+                    <children>
+                        <ToggleButton fx:id="allPhotosBtn" mnemonicParsing="false" selected="true" styleClass="filmstrip-segment" text="All photos"/>
+                        <ToggleButton fx:id="lastImportBtn" mnemonicParsing="false" styleClass="filmstrip-segment" text="Last import">
+                            <tooltip>
+                                <Tooltip text="Only the photos of the last import"/>
+                            </tooltip>
+                        </ToggleButton>
+                    </children>
+                </HBox>
+
+                <Label fx:id="filmstripCountLabel" styleClass="filmstrip-count" text="0 photos"/>
+                <Label fx:id="selectedBadge" styleClass="filmstrip-selected-badge" text="0 selected"/>
+
+                <HBox alignment="CENTER" spacing="6.0" styleClass="thumb-zoom-box">
+                    <children>
+                        <Label styleClass="thumb-zoom-icon" text="−"/>
+                        <Slider fx:id="filmstripZoomSlider" max="1.5" min="0.75" prefWidth="90.0" styleClass="thumbnail-slider" value="1.0"/>
+                        <Label styleClass="thumb-zoom-icon" text="+"/>
+                    </children>
+                </HBox>
+
+                <Region HBox.hgrow="ALWAYS"/>
+
+                <Label styleClass="filmstrip-filter-title" text="Filters"/>
+                <ToggleButton fx:id="editedFilterBtn" mnemonicParsing="false" styleClass="filmstrip-icon-toggle">
+                    <toggleGroup>
+                        <ToggleGroup fx:id="editedGroup"/>
+                    </toggleGroup>
+                    <graphic>
+                        <ImageView fitHeight="16.0" fitWidth="16.0" preserveRatio="true">
+                            <image>
+                                <Image url="@../images/icons/Edited.png"/>
+                            </image>
+                        </ImageView>
+                    </graphic>
+                    <tooltip>
+                        <Tooltip text="Edited photos only"/>
+                    </tooltip>
+                </ToggleButton>
+                <ToggleButton fx:id="notEditedFilterBtn" mnemonicParsing="false" styleClass="filmstrip-icon-toggle" toggleGroup="$editedGroup">
+                    <graphic>
+                        <ImageView fitHeight="16.0" fitWidth="16.0" preserveRatio="true">
+                            <image>
+                                <Image url="@../images/icons/NotEdited.png"/>
+                            </image>
+                        </ImageView>
+                    </graphic>
+                    <tooltip>
+                        <Tooltip text="Unedited photos only"/>
+                    </tooltip>
+                </ToggleButton>
+
+                <Region styleClass="filmstrip-separator"/>
+
+                <!-- Rating filter: the operator cycles ≥ ≤ =, the stars set the rating (click again to clear) -->
+                <Button fx:id="ratingOperationBtn" mnemonicParsing="false" styleClass="filmstrip-operation-btn" text="≥">
+                    <tooltip>
+                        <Tooltip text="Rating comparison (click to change)"/>
+                    </tooltip>
+                </Button>
+                <HBox fx:id="ratingStarsBox" alignment="CENTER" spacing="2.0">
+                    <children>
+                        <Button fx:id="star1Btn" mnemonicParsing="false" styleClass="filmstrip-star-btn"/>
+                        <Button fx:id="star2Btn" mnemonicParsing="false" styleClass="filmstrip-star-btn"/>
+                        <Button fx:id="star3Btn" mnemonicParsing="false" styleClass="filmstrip-star-btn"/>
+                        <Button fx:id="star4Btn" mnemonicParsing="false" styleClass="filmstrip-star-btn"/>
+                        <Button fx:id="star5Btn" mnemonicParsing="false" styleClass="filmstrip-star-btn"/>
+                    </children>
+                </HBox>
+
+                <Region styleClass="filmstrip-separator"/>
+
+                <!-- Color label of the selected photos (not a filter) -->
+                <HBox alignment="CENTER" spacing="6.0">
+                    <children>
+                        <Button fx:id="colorNoneBtn" mnemonicParsing="false" styleClass="filmstrip-color-btn, color-none">
+                            <tooltip>
+                                <Tooltip text="Remove color label"/>
+                            </tooltip>
+                        </Button>
+                        <Button fx:id="colorRedBtn" mnemonicParsing="false" styleClass="filmstrip-color-btn, color-red">
+                            <tooltip>
+                                <Tooltip text="Red label"/>
+                            </tooltip>
+                        </Button>
+                        <Button fx:id="colorYellowBtn" mnemonicParsing="false" styleClass="filmstrip-color-btn, color-yellow">
+                            <tooltip>
+                                <Tooltip text="Yellow label"/>
+                            </tooltip>
+                        </Button>
+                        <Button fx:id="colorGreenBtn" mnemonicParsing="false" styleClass="filmstrip-color-btn, color-green">
+                            <tooltip>
+                                <Tooltip text="Green label"/>
+                            </tooltip>
+                        </Button>
+                        <Button fx:id="colorBlueBtn" mnemonicParsing="false" styleClass="filmstrip-color-btn, color-blue">
+                            <tooltip>
+                                <Tooltip text="Blue label"/>
+                            </tooltip>
+                        </Button>
+                    </children>
+                </HBox>
+
+                <Region styleClass="filmstrip-separator"/>
+
+                <ToggleButton fx:id="likedFilterBtn" mnemonicParsing="false" styleClass="filmstrip-icon-toggle">
+                    <graphic>
+                        <ImageView fitHeight="15.0" fitWidth="15.0" preserveRatio="true">
+                            <image>
+                                <Image url="@../images/icons/Love.png"/>
+                            </image>
+                        </ImageView>
+                    </graphic>
+                    <tooltip>
+                        <Tooltip text="Liked photos only"/>
+                    </tooltip>
+                </ToggleButton>
+                <ToggleButton fx:id="commentedFilterBtn" mnemonicParsing="false" styleClass="filmstrip-icon-toggle">
+                    <graphic>
+                        <ImageView fitHeight="14.0" fitWidth="14.0" preserveRatio="true">
+                            <image>
+                                <Image url="@../images/icons/Comments.png"/>
+                            </image>
+                        </ImageView>
+                    </graphic>
+                    <tooltip>
+                        <Tooltip text="Photos with a comment only"/>
+                    </tooltip>
+                </ToggleButton>
+
+                <SearchBar fx:id="filmstripSearchField" prefWidth="260.0" promptText="Search by file name"/>
+            </children>
+        </HBox>
+
+        <!-- Horizontal photo strip on a darker inner plate -->
+        <StackPane styleClass="filmstrip-strip">
+            <children>
+                <ListView fx:id="filmstripList" orientation="HORIZONTAL" styleClass="filmstrip-list"/>
+            </children>
+        </StackPane>
+    </children>
+</VBox>

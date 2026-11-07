@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- [AI-GENERATED] -->
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ProgressIndicator?>
+<?import javafx.scene.control.Slider?>
+<?import javafx.scene.control.ToggleButton?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+<StackPane fx:id="viewportRoot" fx:controller="hu.elte.ik.thesis.cinegrade.javafx.ui.editing.DevelopViewportController" prefHeight="650.0" prefWidth="750.0"
+           styleClass="viewport-root"
+           xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1">
+    <children>
+        <!-- Center Image View Holder -->
+        <StackPane fx:id="viewportImageContainer" styleClass="viewport-stack" StackPane.alignment="CENTER">
+            <children>
+                <ImageView fx:id="viewportImageView" pickOnBounds="true" preserveRatio="true" styleClass="viewport-image-view"/>
+
+                <!-- Loading placeholder: the filmstrip thumbnail scaled to the frame's size, above the previous frame -->
+                <ImageView fx:id="thumbnailImageView" mouseTransparent="true" preserveRatio="true" smooth="true"
+                           fitWidth="${viewportImageView.fitWidth}" fitHeight="${viewportImageView.fitHeight}"
+                           visible="false" styleClass="viewport-placeholder"/>
+
+                <!-- Loading spinner, same layout as the import stage's overlay -->
+                <VBox fx:id="loadProgressOverlay" alignment="CENTER" mouseTransparent="true" visible="false" managed="false"
+                      styleClass="viewport-loading-overlay">
+                    <children>
+                        <ProgressIndicator prefHeight="48.0" prefWidth="48.0" styleClass="viewport-spinner"/>
+                    </children>
+                </VBox>
+            </children>
+        </StackPane>
+
+        <!-- Top Floating HUD Bar -->
+        <!-- Hugs its content (max = pref), so nothing is truncated; only the file name may shrink in a narrow view -->
+        <HBox alignment="CENTER_LEFT" maxHeight="38.0" maxWidth="-Infinity" prefHeight="38.0" styleClass="viewport-hud"
+              StackPane.alignment="TOP_CENTER">
+            <StackPane.margin>
+                <Insets top="14.0" left="16.0" right="16.0"/>
+            </StackPane.margin>
+            <children>
+                <Label fx:id="photoNameLabel" maxWidth="260.0" styleClass="hud-filename" text="No photo selected"/>
+                <!-- The original file is gone; the thumbnail is shown instead -->
+                <Label fx:id="missingBadge" minWidth="-Infinity" managed="false" visible="false" styleClass="hud-missing-badge" text="Missing"/>
+                <Label fx:id="photoMetaLabel" minWidth="-Infinity" styleClass="hud-meta"/>
+
+                <Region minWidth="8.0" HBox.hgrow="ALWAYS"/>
+
+                <!-- White balance picker: the next click on the photo sets it, Esc cancels -->
+                <ToggleButton fx:id="eyedropperToggle" minWidth="-Infinity" mnemonicParsing="false" styleClass="hud-btn">
+                    <graphic>
+                        <ImageView fitHeight="14.0" fitWidth="14.0" preserveRatio="true" smooth="true">
+                            <image>
+                                <javafx.scene.image.Image url="@../images/icons/Eyedropper.png"/>
+                            </image>
+                        </ImageView>
+                    </graphic>
+                    <tooltip>
+                        <javafx.scene.control.Tooltip text="White balance picker (Esc to cancel)"/>
+                    </tooltip>
+                </ToggleButton>
+                <!-- Before: the photo without any edit (Ctrl+Shift+B), turned off on every photo change -->
+                <ToggleButton fx:id="splitViewToggle" minWidth="-Infinity" mnemonicParsing="false" styleClass="hud-btn" text="Before"/>
+                <Button fx:id="zoomFitBtn" minWidth="-Infinity" mnemonicParsing="false" styleClass="hud-btn" text="Fit"/>
+                <Button fx:id="zoom150Btn" minWidth="-Infinity" mnemonicParsing="false" styleClass="hud-btn" text="150%"/>
+                <Button fx:id="zoom200Btn" minWidth="-Infinity" mnemonicParsing="false" styleClass="hud-btn" text="200%"/>
+                <Slider fx:id="zoomSlider" blockIncrement="0.25" max="4.0" min="1.0" minWidth="90.0" prefWidth="90.0" styleClass="grade-slider" value="1.0"/>            </children>
+        </HBox>
+
+        <!-- Shown while the white balance picker is on -->
+        <HBox fx:id="pickHintBar" alignment="CENTER" maxHeight="32.0" maxWidth="-Infinity" mouseTransparent="true" prefHeight="32.0"
+              styleClass="viewport-hud" visible="false" StackPane.alignment="BOTTOM_CENTER">
+            <StackPane.margin>
+                <Insets bottom="14.0"/>
+            </StackPane.margin>
+            <children>
+                <Label fx:id="pickHintLabel" styleClass="hud-meta"/>
+            </children>
+        </HBox>
+
+        <!-- What just happened (undo history), faded in and out by the controller -->
+        <HBox fx:id="historyNoticeBar" alignment="CENTER" maxHeight="32.0" maxWidth="-Infinity" mouseTransparent="true" prefHeight="32.0"
+              styleClass="viewport-hud" visible="false" StackPane.alignment="BOTTOM_CENTER">
+            <StackPane.margin>
+                <Insets bottom="14.0"/>
+            </StackPane.margin>
+            <children>
+                <Label fx:id="historyNoticeLabel" styleClass="hud-filename"/>
+            </children>
+        </HBox>
+    </children>
+</StackPane>
