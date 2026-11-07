@@ -23,7 +23,7 @@ public class EditingStage {
     private final BooleanProperty showOriginal = new SimpleBooleanProperty(false);
     private final ReadOnlyObjectProperty<Image> viewportImage;
 
-    EditingStage(ReadOnlyObjectProperty<Image> viewportImage, ObjectProperty<PhotoEntry> selectedPhoto) {
+    public EditingStage(ReadOnlyObjectProperty<Image> viewportImage, ObjectProperty<PhotoEntry> selectedPhoto) {
         this.viewportImage = viewportImage;
         currentPhoto.bind(selectedPhoto);
     }

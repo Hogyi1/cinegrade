@@ -3,6 +3,7 @@ package hu.elte.ik.thesis.cinegrade.app.scope;
 import hu.elte.ik.thesis.cinegrade.app.managers.catalog.HistoryManager;
 import hu.elte.ik.thesis.cinegrade.app.managers.concurrency.ThreadPoolManager;
 import hu.elte.ik.thesis.cinegrade.app.managers.editing.EditingManager;
+import hu.elte.ik.thesis.cinegrade.app.managers.editing.EditingStage;
 import hu.elte.ik.thesis.cinegrade.app.managers.editing.ThumbnailRefresher;
 import hu.elte.ik.thesis.cinegrade.app.managers.export.ExportManager;
 import hu.elte.ik.thesis.cinegrade.app.managers.export.ExportStage;
@@ -22,9 +23,7 @@ import hu.elte.ik.thesis.cinegrade.infra.database.dao.catalog.MetadataDao;
 import hu.elte.ik.thesis.cinegrade.infra.database.dao.catalog.PhotoDao;
 import hu.elte.ik.thesis.cinegrade.infra.database.dao.preview.PhotoBlobDao;
 import hu.elte.ik.thesis.cinegrade.infra.services.exiftool.ExifToolService;
-import hu.elte.ik.thesis.cinegrade.infra.services.libraw.LibrawService;
 import hu.elte.ik.thesis.cinegrade.infra.services.storage.StorageService;
-import hu.elte.ik.thesis.cinegrade.infra.services.storage.database.LastPathService;
 import hu.elte.ik.thesis.cinegrade.infra.utils.thumbnail.ThumbnailFactory;
 import hu.elte.ik.thesis.cinegrade.infra.database.CatalogDatabase;
 import hu.elte.ik.thesis.cinegrade.infra.database.PreviewDatabase;
@@ -106,12 +105,14 @@ public class CatalogScopeFactory {
                             storageService));
 
             ThumbnailRefresher thumbnailRefresher = new ThumbnailRefresher(thumbnailRenderer, thumbnailService, threadPoolManager.getCpuPool());
+            EditingStage editingStage = new EditingStage(viewportRenderer.frameProperty(), photoManager.selectedPhoto());
             EditingManager editingManager = resources.push(new EditingManager(historyManager, transactionRunner,
                     editStateDao,
                     metadataDao,
                     photoManager,
                     viewportRenderer,
-                    thumbnailRefresher));
+                    thumbnailRefresher,
+                    editingStage));
 
             ExportStage exportStage = new ExportStage(photoLibrary);
             ExportManager exportManager = resources.push(new ExportManager(exportRenderer,

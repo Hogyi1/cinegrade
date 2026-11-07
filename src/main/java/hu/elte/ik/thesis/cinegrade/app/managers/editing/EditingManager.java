@@ -40,18 +40,17 @@ public class EditingManager implements AutoCloseable {
     private final ExecutorService decoderThread = Executors.newSingleThreadExecutor();
     // Sections whose eye toggle is off: rendered with defaults, still saved with their values. FX thread only
     private final Set<GradeParam.Section> bypassed = EnumSet.noneOf(GradeParam.Section.class);
-    private EditState copiedEditState;
-    private HistogramService histogramService;
     @Getter
     private final HistoryManager historyManager;
-
+    private EditState copiedEditState;
+    private HistogramService histogramService;
     // The photo the user wants now; a decode for any other photo is stale and gets skipped / cancelled
     private volatile String requestedPhotoId;
     // The edit as last saved: preview changes the live one while a slider moves, so this is the "before" of a step.
     // Never changed, never made live. FX thread only
     private EditState lastCommitted;
 
-    public EditingManager(HistoryManager historyManager, TransactionRunner catalogTx, EditStateDao editStateDao, MetadataDao metadataDao, PhotoManager photoManager, ViewportRenderer viewportRenderer, ThumbnailRefresher thumbnailRefresher) throws ExecutionException, InterruptedException {
+    public EditingManager(HistoryManager historyManager, TransactionRunner catalogTx, EditStateDao editStateDao, MetadataDao metadataDao, PhotoManager photoManager, ViewportRenderer viewportRenderer, ThumbnailRefresher thumbnailRefresher, EditingStage editingStage) throws ExecutionException, InterruptedException {
         this.historyManager = historyManager;
         this.catalogTx = catalogTx;
         this.editStateDao = editStateDao;
@@ -59,7 +58,7 @@ public class EditingManager implements AutoCloseable {
         this.photoManager = photoManager;
         this.viewportRenderer = viewportRenderer;
         this.thumbnails = thumbnailRefresher;
-        this.viewModel = new EditingStage(viewportRenderer.frameProperty(), photoManager.selectedPhoto());
+        this.viewModel = editingStage;
         this.viewportDecoder = decoderThread.submit(PhotoDecoder::new).get();
         photoManager.selectedPhoto().addListener((obs, oldVal, newVal) -> changeEditState(newVal));
         viewModel.showOriginalProperty().addListener((obs, was, on) -> {
@@ -67,6 +66,21 @@ public class EditingManager implements AutoCloseable {
                 viewportRenderer.requestRender(effective(viewModel.getEditState()));
             }
         });
+    }
+
+    /**
+     * The text of a slider step, e.g. "Exposure +0.5 EV", "Temperature 6500 K", "Hue Red +12".
+     */
+    private static String describe(GradeParam param, float value) {
+        String group = switch (param.name().substring(0, 4)) {
+            case "HUE_" -> "Hue ";
+            case "SAT_" -> "Saturation ";
+            case "LUM_" -> "Luminance ";
+            default -> "";
+        };
+        int decimals = param.getIncrement() < 0.1f ? 2 : param.getIncrement() < 1.0f ? 1 : 0;
+        String number = String.format(Locale.ROOT, (param.getMinVal() < 0.0f ? "%+." : "%.") + decimals + "f", value);
+        return (group + param.getName() + " " + number + " " + param.getUnit()).strip();
     }
 
     /**
@@ -101,21 +115,6 @@ public class EditingManager implements AutoCloseable {
         write(editState, param, value);
         applySettings(photo);
         recordEdit(describe(param, value), photo, before, lastCommitted);
-    }
-
-    /**
-     * The text of a slider step, e.g. "Exposure +0.5 EV", "Temperature 6500 K", "Hue Red +12".
-     */
-    private static String describe(GradeParam param, float value) {
-        String group = switch (param.name().substring(0, 4)) {
-            case "HUE_" -> "Hue ";
-            case "SAT_" -> "Saturation ";
-            case "LUM_" -> "Luminance ";
-            default -> "";
-        };
-        int decimals = param.getIncrement() < 0.1f ? 2 : param.getIncrement() < 1.0f ? 1 : 0;
-        String number = String.format(Locale.ROOT, (param.getMinVal() < 0.0f ? "%+." : "%.") + decimals + "f", value);
-        return (group + param.getName() + " " + number + " " + param.getUnit()).strip();
     }
 
     /**
@@ -209,13 +208,18 @@ public class EditingManager implements AutoCloseable {
                 .thenCompose(v -> catalogTx.read(c -> editStateDao.findByPhotoId(photo.getId())))
                 .exceptionally(ex -> {
                     logger.error("Failed to find edit state for photo: {}", photo.getFile(), ex);
-                    hu.elte.ik.thesis.cinegrade.domain.error.ErrorHandler.getInstance().handle(ex);
+                    ErrorHandler.getInstance().handle(ex);
                     return Optional.empty();
                 })
                 .thenAcceptAsync(found -> {
                     if (photo != viewModel.getPhoto()) return;
                     viewModel.setEditState(found.orElseGet(() -> new EditState(photo.getId())));
                     lastCommitted = new EditState(photo.getId(), viewModel.getEditState());
+                    if (photo.isMissingPhoto()) {
+                        viewportRenderer.clear();
+                        viewModel.setLoading(false);
+                        return;
+                    }
                     viewportRenderer.requestRender(effective(viewModel.getEditState()));
                     showOnGpu(photo);
                 }, Platform::runLater);

@@ -11,8 +11,6 @@ import hu.elte.ik.thesis.cinegrade.javafx.ui.components.EditPane;
 import hu.elte.ik.thesis.cinegrade.javafx.ui.components.EditSlider;
 import hu.elte.ik.thesis.cinegrade.javafx.ui.presenters.HistogramService;
 import javafx.application.Platform;
-import javafx.beans.binding.BooleanBinding;
-import javafx.beans.binding.BooleanExpression;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -231,6 +229,12 @@ public class DevelopEditPanelController {
     private void showEditState(EditState editState) {
         panelsContainer.setDisable(editState == null);
         showWhiteBalanceType(editState);
+
+        PhotoEntry photo = editingManager.getViewModel().currentPhotoProperty().get();
+        if (photo != null && photo.isMissingPhoto()) {
+            histogramService.clear();
+            panelsContainer.setDisable(true);
+        }
     }
 
     /**
@@ -255,11 +259,6 @@ public class DevelopEditPanelController {
                             showMetadata(photo, metadata.orElse(null));
                         }
                     }, Platform::runLater);
-        }
-
-        if (photo != null && photo.isRaw()) {
-            histogramService.clear();
-            panelsContainer.setDisable(true);
         }
     }
 
