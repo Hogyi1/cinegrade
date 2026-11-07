@@ -1,445 +1,322 @@
-# CineGrade — 25-Day Master Execution & Deployment Plan (Thesis Project)
+# CineGrade: last desktop week (export, LUT, curves, wheels, presets, history)
 
-> **Thesis Title**: *"Komplex, cross-platform asztali digitális színkorrekciós alkalmazás és közösségi platform fejlesztése"*  
-> **Target Timeline**: **Up to 25 Days** (Focused engineering sprints).  
-> **Strategy**: Accelerated velocity through division of labor:  
-> - **AI Ownership**: All UI generation (JavaFX FXML/CSS, Tailwind CSS Angular SPA, custom grading canvases/controls, shaders).  
-> - **User Ownership**: Core backend business logic, domain services, and thesis documentation.  
-> - **Key Deliverables**: Packaged desktop installer (`jpackage` with native DLLs) + Deployed cloud platform (Dockerized Spring Boot & Angular).
+## Context
 
----
+`ExportRenderer.render` is done. One week is left on the desktop app (about 11-02 to 11-09), then the backend starts. Still missing: batch export, LUT export, curves and wheels, presets, and undo/history. `EditingManager` (571 lines) also needs its decoding moved out.
 
-## 1. System Ecosystem Architecture
-
-```mermaid
-flowchart TD
-    subgraph DesktopApp["CineGrade Desktop (JavaFX 23 + LWJGL 3.4 + LibRaw)"]
-        subgraph ImportPipeline["1. Media Import Pipeline"]
-            IP_UI["Import Panel & Staging Grid\n(AI Generated FXML & CSS)"]
-            IP_SRV["ImportService (Worker Thread)\n(ADD / COPY / MOVE)"]
-            THUMB_RAW["LibrawService\n(Fast Embedded RAW Preview)"]
-            THUMB_JPG["Java ImageIO\n(High-Quality Scaled Downsample)"]
-            EXIF_EXT["ExifToolService\n(Camera, Lens, ISO, Exposure)"]
-            SQL_CAT[("Catalog DB (SQLite)\nphotos, metadata, edit_states")]
-        end
-
-        subgraph DevPipeline["2. Development & Viewport Engine"]
-            DEV_UI["Development Panel & Filmstrip\n(Sliders, Curves, Wheels, Scopes)"]
-            HIST_MGR["HistoryManager\n(Undo / Redo Snapshot Stack)"]
-            ENG_MGR["EngineManager\n(Offscreen GLFW 3.3 Context)"]
-            GPU_GL["OpenGL 3.3 + GLSL Shaders\n(16-bit RGB16F, Curves 1D Tex, Wheels)"]
-            PBO_BUF["Double-Buffered PBO\n(glMapBufferRange -> WritableImage)"]
-            WAVE_GEN["Waveform / Histogram Scope\n(Real-Time Luma / RGB Parades)"]
-            LUT_GEN["LUTExporter\n(.cube 3D LUT Generator)"]
-        end
-
-        subgraph InAppWeb["3. In-App Community View"]
-            WV["JavaFX WebView\n(Embedded Community Portal)"]
-            JS_BRIDGE["JavaScript Bridge\n(window.cinegradeBridge.importPreset(...))"]
-        end
-    end
-
-    subgraph CloudEcosystem["Community Cloud Platform"]
-        SB_API["Spring Boot 3 REST API\n(/api/auth, /api/presets, /api/media)"]
-        CLOUD_DB[("PostgreSQL / Supabase\nUsers, Presets, Tags, Ratings")]
-        STORAGE["Local / S3 Storage\n(Before/After JPGs, .cgpreset)"]
-        ANGULAR_APP["Angular 18 + Tailwind CSS Frontend\n(Gallery, Before/After Slider, Upload Form)"]
-    end
-
-    subgraph PackagingDeploy["Packaging & Cloud Deployment"]
-        PKG_DESK["Desktop Packaging\n(jpackage Windows Executable + DLLs)"]
-        DOCKER["Cloud Deployment\n(Docker Compose / Render / Railway)"]
-    end
-
-    %% Data flow connections
-    IP_UI --> IP_SRV
-    IP_SRV --> THUMB_RAW & THUMB_JPG & EXIF_EXT
-    IP_SRV --> SQL_CAT
-    SQL_CAT --> DEV_UI
-    DEV_UI --> ENG_MGR & HIST_MGR
-    ENG_MGR --> GPU_GL --> PBO_BUF --> DEV_UI
-    ENG_MGR --> WAVE_GEN
-    DEV_UI --> LUT_GEN
-    WV <--> JS_BRIDGE
-    JS_BRIDGE --> DEV_UI
-    WV <==>|"Loads Portal"| ANGULAR_APP
-    ANGULAR_APP <--> SB_API
-    SB_API <--> CLOUD_DB & STORAGE
-    DesktopApp -.-> PKG_DESK
-    CloudEcosystem -.-> DOCKER
-```
+**Who writes what:** `[YOU]` is core logic and wiring, with sketches below. `[AI]` is FXML, CSS, custom controls and DDL, tagged in `AI_GENERATED.md`. UI is listed by hand, with no loops over enums.
 
 ---
 
-## 2. 25-Day Milestone Roadmap
+## Your questions, answered
 
-```mermaid
-gantt
-    title CineGrade 25-Day Master Roadmap
-    dateFormat  YYYY-MM-DD
-    axisFormat  Day %j
+| Question | Answer |
+|---|---|
+| Do I need a new texture class and reader for the LUT? | **No.** You don't need an input texture at all: the shader works out each lattice colour from the pixel position. `FrameBuffer` gets an internal-format parameter, and the readback is one `glReadPixels` call. |
+| 16F or 32F? | `RGBA32F`. The FBO must be RGBA, because `RGB16F` isn't guaranteed to be renderable. 16F only gives about 11 bits near white, and 32F costs just 4 MB at 65³. |
+| Can a LUT be turned back into an EditState? | **No.** A LUT only stores results, and many different edits give the same table. Conversion is one-way, so the preset has to be the source. |
+| Share the LUT or the preset? | **The preset is the source, and the LUT is generated from it.** The DB saves only the preset. A LUT is generated when exporting or sharing, so it can't go stale. |
+| Does the backend need GPU rendering? | **Not for this.** The desktop uploads `recipe.json`, a 33³ `.cube` and before/after JPEGs (already S7.3 in `SPRINT_PLAN.md`). To apply a look to another photo, the backend does a trilinear LUT lookup on the CPU. It won't include Texture, Clarity or Dehaze. |
+| Should `.cgpreset` be a Java object? | **Use JSON (Gson, already in the pom).** Spring can read it. Running `ObjectInputStream` on a file downloaded from someone else can execute code, so don't use it for shared files. |
+| Is a for loop right for export? | Yes, and your reasoning holds. Each photo is a separate GPU job, so thumbnail jobs can get in between photos instead of waiting for the whole batch. |
 
-    section Phase 1: Import & Catalog DB
-    Day 01 - ImportService Core (ADD/COPY/MOVE, RAW/JPG Thumbnails) :p1a, 2026-10-13, 1d
-    Day 02 - EXIF Extraction, SQLite Transactional Batch Persistence :p1b, after p1a, 1d
-    Day 03 - Development Panel Layout & Filmstrip Carousel Binding   :p1c, after p1b, 1d
+**Lumix Lab caveat:** as far as I remember, camera LUTs expect V-Log input, while ours are sRGB in and sRGB out (not checked). So our LUTs suit editors like Resolve or Photoshop, but a camera would need a V-Log version later. That's an extra input conversion in `latticeColor()`, and it's outside this week.
 
-    section Phase 2: OpenGL Viewport
-    Day 04 - Port JNA vs JNI Offscreen GLFW Engine (PBO Buffer)     :p2a, after p1c, 1d
-    Day 05 - 16-Bit Texture Pipeline & Background LibRaw Decode     :p2b, after p2a, 1d
-    Day 06 - Viewport Interactive Pan, Zoom & Fit-to-Screen Logic   :p2c, after p2b, 1d
-
-    section Phase 3: Grading Controls & History
-    Day 07 - GLSL Color Science (Exposure, Contrast, WB Temp/Tint)   :p3a, after p2c, 1d
-    Day 08 - Reactive Sliders UI (Two-Way Binding, Reset on Click)  :p3b, after p3a, 1d
-    Day 09 - Tone Curves Canvas & 1D Texture Spline Shader Lookup    :p3c, after p3b, 1d
-    Day 10 - Color Wheels (Lift/Gamma/Gain) & HistoryManager Undo/Redo:p3d, after p3c, 1d
-
-    section Phase 4: Scopes, Presets & 3D LUT
-    Day 11 - Real-Time Waveform & RGB Histogram Scope Monitor       :p4a, after p3d, 1d
-    Day 12 - PresetManager (.cgpreset JSON) & Photo Tagging/Filtering:p4b, after p4a, 1d
-    Day 13 - 3D LUT (.cube) Generator & Full-Res Batch Photo Exporter:p4c, after p4b, 1d
-
-    section Phase 5: Spring Boot Backend
-    Day 14 - Spring Boot 3 Setup, JPA Entities, JWT Auth Security   :p5a, after p4c, 1d
-    Day 15 - Preset CRUD REST API & Before/After Image Storage      :p5b, after p5a, 1d
-    Day 16 - Server-Side EXIF Auto-Tagging & Search/Rating Endpoints:p5c, after p5b, 1d
-
-    section Phase 6: Angular + Tailwind UI
-    Day 17 - Angular 18 + Tailwind Setup & Dark-Themed UI Tokens     :p6a, after p5c, 1d
-    Day 18 - Community Preset Gallery with Search & Tag Filters     :p6b, after p6a, 1d
-    Day 19 - Interactive Split-Screen Before/After Slider Component :p6c, after p6b, 1d
-    Day 20 - Web Preset Upload Form & User Profile Dashboard        :p6d, after p6c, 1d
-
-    section Phase 7: WebView & Cloud Deploy
-    Day 21 - JavaFX WebView Community Tab & 1-Click Import Bridge   :p7a, after p6d, 1d
-    Day 22 - Backend Dockerization & Cloud Deployment (Render/Supabase):p7b, after p7a, 1d
-    Day 23 - Angular Web Deployment (Vercel / Cloudflare Pages)     :p7c, after p7b, 1d
-
-    section Phase 8: Packaging & Polish
-    Day 24 - Desktop App Packaging (jpackage Windows Bundle + DLLs) :p8a, after p7c, 1d
-    Day 25 - Native Memory Audit, Demo Walkthrough & Final Polish   :p8b, after p8a, 1d
-```
+**Video editor workflow:** V-Log → Rec.709 → our LUT. Rec.709 and sRGB share primaries and differ only in the transfer curve. With "Exclude Exposure & WB" on, the shift should be minimal, because the remaining steps work on encoded values. With them included, shadows can shift a bit. Optional later: a "Rec.709 (gamma 2.4)" LUT option that converts the curve going in and out. Check this on day 2 in Resolve on a Rec.709 timeline.
 
 ---
 
-## 3. Technical Phase Breakdown & Deliverables
+## 1. Decoding: `PhotoDecoder` [YOU]
 
-### ── Phase 1: Photo Import Pipeline & SQLite Persistence (Days 1–3) ──
+New class, `infra/services/libraw/PhotoDecoder.java`. It takes `readImage` and `decodeForThumbnail` out of `EditingManager`.
 
-#### **Day 1: Complete `ImportService` Worker & Dual Thumbnail Pipeline**
-- **Objective**: Implement asynchronous worker in `ImportService.java` to process `ImportRequest` items.
-- **File Handling (`ImportMethod`)**:
-  - `ADD`: Retain files in original location on disk.
-  - `COPY`: Copy files to `<catalog_dir>/media/<filename>` (with collision resolution).
-  - `MOVE`: Move files to `<catalog_dir>/media/<filename>`.
-- **Dual Thumbnail Generation**:
-  - **RAW Formats**: Call `LibrawService.extractThumbnail()` to extract the embedded camera JPEG preview directly into `<catalog_dir>/cache/thumbnails/<uuid>.jpg` (15–25ms per image).
-  - **JPEG / Non-RAW Formats**: Use Java's `ImageIO.read()` -> smooth bilinear downsampling to max 512px dimension -> `ImageIO.write()` JPEG.
-- **Deliverable**: `ImportService` processes full batches in background with progress updates.
-
-#### **Day 2: Metadata Extraction & Transactional Batch Persistence**
-- **Objective**: Extract EXIF data and commit all records into SQLite in a single transaction.
-- **Metadata Extraction**:
-  - Call `ExifToolService.readMetaData()` for camera make, model, lens, ISO, aperture, shutter speed, focal length, capture date.
-- **Batch DAOs**:
-  - `PhotoDao.batchInsert(connection, photos)`: populates `photos` table.
-  - `MetadataDao.batchInsert(connection, metadataList)`: populates `photo_metadata` table.
-  - `EditstateDao.batchInsert(connection, defaultEditStates)`: populates `edit_states` table.
-  - All wrapped inside `connection.setAutoCommit(false)` ... `connection.commit()` for sub-second import performance.
-- **Deliverable**: Staged photos appear in SQLite catalog database.
-
-#### **Day 3: Development Panel Shell & Filmstrip Carousel**
-- **Objective**: UI layout for `developmentPanel.fxml` and interactive photo filmstrip.
-- **UI Structure**:
-  - Center: Main viewport `ImageView` backed by `WritableImage`.
-  - Bottom: Filmstrip carousel (`HBox` inside `ScrollPane`) rendering thumbnails, active selection highlight, rating stars (0–5), and pick/reject flags.
-  - Right: Tabbed / Accordion tool sidebar (Adjustments, Curves, Color Wheels).
-  - Left: Library navigator (Folders, Tags, Presets, History).
-- **Deliverable**: Clicking a filmstrip item activates the photo in `CatalogContext`.
-
----
-
-### ── Phase 2: OpenGL/LWJGL Offscreen Viewport Engine (Days 4–6) ──
-
-#### **Day 4: Port `JNA vs JNI` Rendering Engine to CineGrade**
-- **Objective**: Create `EngineManager` encapsulating offscreen GLFW context and PBO double-buffered rendering into JavaFX `ImageView`.
-- **Offscreen GLFW Setup**:
-  - Initialize hidden GLFW window (`GLFW_VISIBLE, GLFW_FALSE`) with OpenGL 3.3 Core profile.
-  - Run dedicated daemon rendering thread (`renderThread`).
-- **Double-Buffered PBO Pipeline**:
-  - Allocate 2 Pack Buffers (`GL_PIXEL_PACK_BUFFER`) sized to viewport dimensions (`width * height * 4` bytes).
-  - Asynchronous readback using `glReadPixels(..., GL_BGRA, GL_UNSIGNED_BYTE)` into buffer $i$, while reading buffer $1-i$ using `glMapBufferRange(GL_MAP_READ_BIT)`.
-  - Copy BGRA bytes directly to JavaFX `WritableImage.getPixelWriter().setPixels(...)`.
-  - Dispatch image swap to JavaFX thread via `Platform.runLater(() -> viewportImageView.setImage(frame))`.
-- **Deliverable**: Working GPU render loop streaming frames into JavaFX.
-
-#### **Day 5: 16-Bit Texture Pipeline & Background LibRaw Demosaic**
-- **Objective**: Instant photo switching, background 16-bit linear demosaic, and texture upload.
-- **Two-Stage Photo Switching**:
-  1. Instantly display cached thumbnail in `ImageView` (0ms perceived latency).
-  2. Background worker thread decodes full-res RAW via `LibrawService` (`libraw_set_output_bps(16)`, `libraw_set_demosaic(2)`).
-  3. Signal render thread via `sourceChanged = true` to upload `GL_RGB16F` texture.
-- **Deliverable**: Smooth switching between RAW and JPEG photos without freezing UI.
-
-#### **Day 6: Viewport Navigation (Zoom, Pan, Fit-to-Screen)**
-- **Objective**: Professional photo inspection tools.
-- **Math & Uniforms**:
-  - `u_uvScale`: Zoom factor (1.0 = Fit, 0.5 = 2x, 0.25 = 4x).
-  - `u_uvOffset`: Visible pan region in normalized $[0, 1]$ coordinates.
-  - Interactive mouse wheel zoom centered at cursor position; mouse drag pan.
-- **Deliverable**: Pan & zoom operating at 60fps in the viewport.
-
----
-
-### ── Phase 3: Color Grading Controls & Non-Destructive History (Days 7–10) ──
-
-#### **Day 7: GLSL Fragment Shader Color Mathematics**
-- **Objective**: Professional color grading algorithms implemented directly on the GPU.
-- **Shader Operations**:
-  - **Exposure**: $C_{out} = C_{in} \cdot 2^{exposure}$.
-  - **Contrast**: $C_{out} = (C_{in} - 0.5) \cdot contrast + 0.5$.
-  - **Highlights & Shadows Recovery**: Parabolic luminance masking curves.
-  - **White Balance**: Correlated Color Temperature (Kelvins) and Tint adjustment via chromatic adaptation.
-  - **Saturation & Vibrance**: Vibrance boosts lower-saturated colors while protecting skin tones.
-- **Deliverable**: `viewport.frag` shader with complete uniform inputs.
-
-#### **Day 8: Reactive Sliders UI Panel**
-- **Objective**: Modern dark-themed adjustment slider components.
-- **Features**:
-  - Sliders for Exposure, Contrast, Highlights, Shadows, Whites, Blacks, Temp, Tint, Saturation, Vibrance.
-  - Numeric text labels with direct editing.
-  - Double-click slider or label to reset to default ($0.0$).
-  - Two-way binding: Changing slider updates uniform and flags `needsUpdate = true`.
-- **Deliverable**: Interactive adjustments panel updating the viewport in real time.
-
-#### **Day 9: Tone Curves Component & 1D GPU Texture Spline**
-- **Objective**: RGB and Luma tone curves evaluated on GPU.
-- **Architecture**:
-  - Interactive canvas (`CurveEditorCanvas`) for manipulating control points across Master (RGB), Red, Green, and Blue channels.
-  - Monotone Cubic Spline / Catmull-Rom interpolation evaluated across 256 samples $[0, 255]$.
-  - Upload samples as a $256 \times 1$ RGB texture (`GL_RGB8` or `GL_RGB16F`) bound to `sampler2D curveSampler`.
-  - GLSL evaluates: `color.r = texture(curveSampler, vec2(color.r, 0.5)).r;`.
-- **Deliverable**: Interactive curve editor altering image tonal response in real time.
-
-#### **Day 10: 3-Way Color Wheels (Lift, Gamma, Gain) & HistoryManager**
-- **Objective**: Professional color wheels for Shadows, Midtones, and Highlights + Undo/Redo.
-- **Color Wheels**:
-  - Circular polar puck controls (Shadows = Lift, Midtones = Gamma, Highlights = Gain).
-  - Mathematical model:
-    $$C_{lift} = C \cdot (Gain - Lift) + Lift$$
-    $$C_{gamma} = C_{lift}^{1.0 / Gamma}$$
-- **HistoryManager**:
-  - Double-ended deque of immutable `EditState` snapshots.
-  - Keyboard accelerators (`Ctrl+Z`, `Ctrl+Y`) for Undo and Redo.
-  - Debounced auto-save to SQLite `edit_states` and `edit_history`.
-- **Deliverable**: Color wheels operational; full undo/redo stack functioning.
-
----
-
-### ── Phase 4: Scopes, Presets, 3D LUT Export & Batch Rendering (Days 11–13) ──
-
-#### **Day 11: Real-Time Waveform & RGB Histogram Monitor**
-- **Objective**: Live signal analysis for exposure and color balance.
-- **Pipeline**:
-  - Read downsampled viewport PBO pixels ($256 \times 144$) to minimize CPU readback load.
-  - Compute 256-bin RGB Histogram and Luma column parade.
-  - Draw waveform onto JavaFX `Canvas` overlay or dockable panel.
-- **Deliverable**: Waveform scope updating continuously as grading sliders move.
-
-#### **Day 12: PresetManager & Filtering / Tagging Database**
-- **Objective**: Save/apply `.cgpreset` files and filter catalog by metadata.
-- **Presets**:
-  - Export active `EditState` as `.cgpreset` JSON file (including sliders, curves, wheels).
-  - Presets sidebar with instant preview and 1-click apply.
-- **Tagging & Filtering**:
-  - Multi-tag assignment (`TagManager`, `TagBoardController`).
-  - Filter filmstrip by Rating ($\ge 3$ stars), Flags (Picked/Rejected), Color Labels, or Tags.
-- **Deliverable**: Complete preset saving and catalog filtering operational.
-
-#### **Day 13: 3D LUT (.cube) Generator & High-Res Batch Exporter**
-- **Objective**: Export standard 3D LUTs and render final graded images to disk.
-- **3D LUT (.cube) Export**:
-  - Sample an identity $33 \times 33 \times 33$ or $65 \times 65 \times 65$ RGB lattice.
-  - Pass lattice points through the active grading transformation.
-  - Write standard `.cube` file compatible with DaVinci Resolve, Premiere Pro, Photoshop.
-- **Batch Photo Export**:
-  - Choose target format (JPEG / TIFF), resolution, and quality.
-  - Offscreen FBO rendering of full-res RAW/JPEG -> write to disk with progress bar.
-- **Deliverable**: Export panel exports high-res photos and `.cube` LUT files.
-
----
-
-### ── Phase 5: Spring Boot Community Backend (Days 14–16) ──
-
-#### **Day 14: Spring Boot 3 Setup, JPA Entities & JWT Security**
-- **Objective**: Scalable REST API for user accounts and preset exchange.
-- **Entities**:
-  - `User`: username, email, passwordHash, avatarUrl, createdAt.
-  - `PresetPost`: title, author, description, tags, editParamsJson, likesCount, downloadsCount.
-  - `PresetMedia`: presetId, beforeImageUrl, afterImageUrl.
-- **Security**: JWT token-based authentication (`/api/auth/register`, `/api/auth/login`).
-- **Deliverable**: Spring Boot REST backend running with authenticated endpoints.
-
-#### **Day 15: Preset CRUD & Image Storage Service**
-- **Objective**: Manage preset posts and store Before/After preview images.
-- **Endpoints**:
-  - `GET /api/presets`: paginated preset feed with tag & query filtering.
-  - `GET /api/presets/{id}`: detailed view + `.cgpreset` download.
-  - `POST /api/presets`: multipart upload (preset JSON + Before/After JPEGs).
-- **Deliverable**: Presets can be created, searched, and fetched via REST.
-
-#### **Day 16: Server-Side EXIF Auto-Extraction & Search/Rating Endpoints**
-- **Objective**: Automatic metadata categorization and social interactions.
-- **Features**:
-  - Parse EXIF tags from uploaded sample images to categorize presets by camera make/model.
-  - `POST /api/presets/{id}/like`: toggle like.
-  - `POST /api/presets/{id}/rate`: submit 1–5 star rating.
-- **Deliverable**: Search presets by camera sensor and sort by popularity/rating.
-
----
-
-### ── Phase 6: Angular + Tailwind CSS Community Platform (Days 17–20) ──
-
-#### **Day 17: Angular 18 + Tailwind Setup & Dark Aesthetic UI Components**
-- **Objective**: Modern, responsive web frontend styled with Tailwind CSS.
-- **Features**:
-  - Angular 18 Standalone components, Tailwind CSS styling matching CineGrade dark aesthetic.
-  - Shared UI components: dark cards, badges, modal dialogs, search bars.
-- **Deliverable**: Functional frontend shell with navigation and theme.
-
-#### **Day 18: Community Preset Gallery with Search & Filters**
-- **Objective**: Preset exploration feed.
-- **Features**:
-  - Responsive grid of preset cards showing Before/After thumbnail, title, author, rating, and tags.
-  - Real-time search bar and category filter chips (Film, Vintage, Portrait, Landscape, Cinematic).
-- **Deliverable**: Live browsing of presets with instant filtering.
-
-#### **Day 19: Interactive Before/After Split Slider & Preset Detail View**
-- **Objective**: Showcase preset impact with an interactive comparison tool.
-- **Features**:
-  - Interactive split-screen slider: dragging vertical handle reveals unedited (left) vs graded (right) image.
-  - Full preset details, parameter breakdown, camera compatibility badge, and download button.
-- **Deliverable**: Smooth interactive before/after comparison component.
-
-#### **Day 20: Web Preset Upload Form & User Profile Dashboard**
-- **Objective**: Enable community sharing and user profiles.
-- **Features**:
-  - Upload form accepting `.cgpreset` JSON, title, description, tags, and Before/After images.
-  - User profile showing published presets, received likes, and downloaded presets.
-- **Deliverable**: End-to-end preset publishing flow on the web platform.
-
----
-
-### ── Phase 7: WebView Integration & Cloud Deployment (Days 21–23) ──
-
-#### **Day 21: JavaFX WebView Community Tab & 1-Click Import Bridge**
-- **Objective**: Native bridge connecting the web platform directly into CineGrade desktop.
-- **Architecture**:
-  - Add "Community" tab in CineGrade navigation hosting JavaFX `WebView`.
-  - Register Java bridge:
-    ```java
-    JSObject window = (JSObject) webEngine.executeScript("window");
-    window.setMember("cinegradeBridge", new CineGradeWebBridge(catalogContext));
-    ```
-  - In Angular: "Import into CineGrade" button executes `window.cinegradeBridge.importPreset(presetJson)`.
-  - CineGrade receives parameters, saves to local catalog, and applies instantly to active photo!
-- **Deliverable**: 1-click cloud preset import working inside desktop application.
-
-#### **Day 22: Backend Dockerization & Cloud Deployment**
-- **Objective**: Deploy Spring Boot backend and database to cloud infrastructure.
-- **Tasks**:
-  - Multi-stage `Dockerfile` for Spring Boot.
-  - Deploy PostgreSQL database (e.g. Supabase / Neon).
-  - Deploy API to free cloud tier (Render / Railway / Fly.io).
-- **Deliverable**: Live public REST API accessible over HTTPS.
-
-#### **Day 23: Angular Web Platform Deployment**
-- **Objective**: Deploy Angular frontend to production static hosting.
-- **Tasks**:
-  - Production build (`ng build --configuration production`).
-  - Deploy to Vercel / Cloudflare Pages / Netlify connected to backend API.
-- **Deliverable**: Live community web app reachable in any web browser and inside CineGrade WebView.
-
----
-
-### ── Phase 8: Desktop Packaging, Polish & Thesis Defense (Days 24–25) ──
-
-#### **Day 24: Desktop Application Packaging (`jpackage` Bundling)**
-- **Objective**: Standalone executable installer for CineGrade.
-- **Packaging Pipeline**:
-  - Package Java 21 runtime, JavaFX 23 modules, and native libraries (`libraw.dll`, LWJGL natives) using `jpackage`.
-  - Produce standalone Windows `.exe` / `.msi` requiring no external JDK installation.
-- **Deliverable**: Self-contained executable installer ready for evaluation.
-
-#### **Day 25: Native Memory Audit, Defense Walkthrough & Final Polish**
-- **Objective**: Verify stability, prevent leaks, and prepare thesis demonstration.
-- **Checks**:
-  - Verify GLFW context releases and LibRaw memory recycling.
-  - Execute end-to-end defense script:
-    1. Import shoot (mixed RAW + JPEG) -> under 3 seconds.
-    2. Real-time grading: Exposure + WB + S-curve + Color Wheels.
-    3. Export standard 3D LUT (`.cube`).
-    4. Open in-app Community portal -> 1-click import cloud preset.
-    5. Batch export high-res deliverables.
-- **Deliverable**: Fully verified, crash-free ecosystem with thesis presentation guide.
-
----
-
-## 4. Shared `.cgpreset` Protocol
-
-The desktop editor and cloud community platform share the exact same JSON schema:
-
-```json
-{
-  "id": "e3b0c442-98fc-1c14-9afbf4c8996fb924",
-  "name": "Kodak Portra 400 Warm",
-  "author": "cinegrade_user",
-  "version": "1.0",
-  "description": "Golden skin tones and gentle film roll-off",
-  "tags": ["Film", "Warm", "Portrait", "Vintage"],
-  "parameters": {
-    "exposure": 0.25,
-    "contrast": 1.15,
-    "highlights": -0.30,
-    "shadows": 0.20,
-    "whites": 0.05,
-    "blacks": -0.05,
-    "temperature": 5800.0,
-    "tint": 4.5,
-    "saturation": 0.95,
-    "vibrance": 1.05,
-    "curves": {
-      "rgb": [[0,0], [64,55], [128,135], [192,205], [255,255]],
-      "red": [[0,0], [255,255]],
-      "green": [[0,0], [255,255]],
-      "blue": [[0,0], [128,120], [255,255]]
-    },
-    "wheels": {
-      "lift": {"r": 0.02, "g": 0.0, "b": -0.02, "luma": 0.0},
-      "gamma": {"r": 0.05, "g": 0.02, "b": -0.03, "luma": 0.0},
-      "gain": {"r": 0.08, "g": 0.04, "b": -0.01, "luma": 0.0}
-    },
-    "lut": null
-  },
-  "preview": {
-    "before_url": "https://storage.cinegrade.app/presets/portra_before.jpg",
-    "after_url": "https://storage.cinegrade.app/presets/portra_after.jpg"
-  }
+```java
+public class PhotoDecoder implements AutoCloseable {   // one per thread, owns one LibrawService
+    public DecodedImage decode(PhotoEntry photo, BooleanSupplier cancelled);
+    public DecodedImage decode(PhotoEntry photo) { return decode(photo, () -> false); }
 }
 ```
 
+| User | Thread | Cancelled by |
+|---|---|---|
+| Viewport | `decoderThread` | `stale` |
+| Thumbnails | cpuPool | never |
+| Export | the export task thread | `isCancelled` |
+
+- There's one class, not two. "Can be stopped" is just the `BooleanSupplier` you pass.
+- Move `asShotOf` and `withAsShot` to `WhiteBalanceSolver` (section 3b), because export needs them too.
+- **Existing bug this fixes:** `EditingManager:83` creates a LibRaw handle on `decoderThread`, ignores the one passed in, and never closes it. Create the decoder on that thread and close it there in `close()`, and remove the unused `LibrawService` from `CatalogScopeFactory:69`.
+
 ---
 
-## 5. Summary Verification & Defense Checklist
+## 2. Batch export [YOU], panel layout [AI]
 
-| Step | Feature Under Test | Expected Defense Result |
-| :---: | :--- | :--- |
-| **1** | Batch Import (RAW + JPG) | Fast preview extraction; thumbnails populate immediately; records saved to SQLite. |
-| **2** | Real-time GPU Viewport | 60fps responsive grading feedback on 24MP+ images; zero UI thread freezing. |
-| **3** | Tone Curves & Color Wheels | Catmull-Rom spline adjusts tonal balance; 3-way color wheels shift shadows/highlights cleanly. |
-| **4** | History & Undo/Redo | `Ctrl+Z` / `Ctrl+Y` revert and reapply grades instantly without data loss. |
-| **5** | 3D LUT Export | Generated `.cube` file loads seamlessly into Photoshop / DaVinci Resolve with identical look. |
-| **6** | Web Community Platform | Responsive Tailwind UI; interactive Before/After split slider functions in browser. |
-| **7** | In-App 1-Click Cloud Sync | Clicking preset in desktop WebView instantly downloads and applies look to active photo. |
-| **8** | Standalone Packaging | Desktop app launches from `.exe` bundle without pre-installed JDK or external tooling. |
+**`ExportManager(photoManager, editingManager, catalogTx, editStateDao, exportRenderer, taskManager, exifToolService)`**
+
+```java
+public ExportBatchService exportCurrent(ExportOptions o);
+public ExportBatchService exportSelected(ExportOptions o);
+public ExportBatchService exportAll(ExportOptions o);
+public void cancelExport();
+```
+
+`PhotoExportOptions` record: `destination, format, quality, resizeLongEdge, keepExif, namingTemplate, conflictMode`.
+
+**`domain/tasks/ExportBatchService`** follows `ThumbnailBatchService`, and `TaskManager.configure` registers it:
+
+```java
+try (PhotoDecoder decoder = new PhotoDecoder()) {       // created on this thread, so one LibRaw per thread
+    Map<String, EditState> edits = loadSnapshots();     // read once at the start, later edits don't affect the batch
+    for (PhotoEntry photo : photos) {
+        if (isCancelled()) break;
+        DecodedImage decoded = decoder.decode(photo, this::isCancelled);
+        Pixels pixels = renderer.render(editFor(photo, decoded), decoded)
+            .whenComplete((v, ex) -> memFree(decoded.data()))   // NOT in a finally
+            .get().orElseThrow();
+        write(pixels, photo);                           // one broken photo logs a warning, the batch continues
+        updateProgress(...);
+    }
+}
+```
+
+**Things that will bite:**
+1. **Native memory:** `cancel()` interrupts `.get()` while the GPU may still be reading `decoded`. If you free it in a `finally`, the JVM can crash. Free it in `whenComplete`.
+2. **As-shot white balance:** photos that were pasted onto or never opened have `asShot = 0`. Apply `withAsShot(edit, asShotOf(decoded))` as `EditingManager:429` does, and use `new EditState(id)` when there's no DB row.
+3. **Eye toggles:** split `effective()` so export uses the bypass part but ignores before/after. Otherwise pressing `\` during an export writes originals.
+4. **Partial files:** write to `name.jpg.part`, then move it into place. An interrupt can otherwise leave half a JPEG.
+5. **Name clashes:** a RAW+JPEG pair both produce `IMG_1.jpg`, so always go through `conflictMode`.
+6. **VRAM:** the FBO, texture and both PBOs stay at full size after an export. Add `ExportRenderer.release()`, which resizes them to 1×1, and call it when the batch ends.
+7. **Encoding:** make the raster-wrapping part of `ThumbnailFactory.fromPixels` a public `toBufferedImage(bgra, w, h)` and reuse it. It doesn't copy and has the right row order.
+
+**Small `ExportRenderer` cleanup:** the Javadoc still mentions thumbnails and `MAX_EDGE`, and the `close()` log says "Thumbnail renderer".
+
+**Panel:**
+- **Wire:** current, selected and all scopes, format, quality, resize, EXIF, destination, naming, conflict, progress, cancel.
+- **Hide for now [AI]:** By tag (no tags exist), Color Space (sRGB only), the export preset combo.
+- **Add later if time allows:** Visible and Last import. They need new getters on `PhotoManager`.
+
+---
+
+## 3. LUT export [YOU], LUT tab wiring [YOU]
+
+**`fragment.frag`**, using a width of N and height of N²:
+
+```glsl
+uniform int lutSize;   // 0 = normal photo
+vec3 latticeColor() {
+    ivec2 p = ivec2(floor(gl_FragCoord.xy));
+    return vec3(p.x, p.y % lutSize, p.y / lutSize) / float(lutSize - 1);
+}
+// in main():
+vec3 source = lutSize > 0 ? latticeColor() : texture(texImage, uv).rgb;
+```
+
+With this layout, reading the pixels row by row **is already `.cube` order** (R fastest, B slowest), so nothing needs re-sorting.
+
+**`ExportRenderer.renderLut`:**
+
+```java
+public CompletableFuture<float[]> renderLut(EditState lutState, int size) {
+    // lutFbo: its own FrameBuffer(1, 1, GL_RGBA32F), resized to (size, size * size)
+    // bind, use shader, upload block, linearInput = 0, lutSize = size, draw
+    // glReadPixels(0, 0, size, size * size, GL_RGB, GL_FLOAT, floatBuffer)
+    // finally: lutSize = 0
+}
+```
+
+**Things that will bite:**
+1. **Reset `lutSize` to 0 in a `finally`.** `ThumbnailRenderer` and `ExportRenderer` share the background worker's one shader, so otherwise the next thumbnail comes out as a rainbow.
+2. **Spatial settings must be zero.** Texture, Clarity and Dehaze are already in the shader, and they'd blur between neighbouring lattice cells and produce garbage. Add `GradeParam.isSpatial()` and zero those params before rendering.
+3. **`Locale.ROOT` in `String.format`.** On a Hungarian Windows, the default locale writes `0,123456`, which breaks the `.cube` file.
+4. **"Exclude Exposure & WB":** set exposure to 0, temperature to neutral, tint to as-shot, offset to 0. Keep the source photo's as-shot values, so the LUT stores the shift from neutral and not a fixed Kelvin.
+
+**`infra/utils/lut/CubeWriter`:** writes `TITLE`, `LUT_3D_SIZE`, `DOMAIN_MIN`, `DOMAIN_MAX`, then one `%.6f %.6f %.6f` line per entry.
+
+**`ExportManager.exportLut(EditState source, LutOptions options)`:** the tab's checkboxes zero the excluded groups, then it renders and writes on ioPool.
+
+**[AI]** Change the LUT tab's notice so it also lists Texture, Clarity and Dehaze.
+
+---
+
+## 3b. Eyedropper and Auto white balance [YOU]
+
+Rename `WhiteBalancer` to `engine/grade/WhiteBalanceSolver`, which both features then share. This fills the empty `EditingManager.autoWhiteBalance(UV)`.
+
+```java
+public static Optional<Result> fromCamera(float[] camMul, float[] preMul);    // today's estimate, neutral = 5500 K
+public static Optional<Result> fromSample(float[] linearRgb, float neutralKelvin, float asShotTint);
+    // m[i] = 1 / sample[i], then the same solve; returned tint = solved tint + asShotTint
+private static Optional<Result> solve(double[] m, double neutralKelvin);      // gains(kelvin, neutralKelvin)
+```
+
+`ViewportRenderer.sample(EditState defaults, ViewTransform view)`, on the interactive worker, because it already holds the texture:
+1. Render into a 5×5 `RGBA32F` FBO with `editState.defaults()`, so no current grade or white balance affects the sample.
+2. **Eyedropper:** zoom = `5 / imageWidth`, centred on `ViewportNavigator.toTextureUV`. **Auto:** `ViewTransform.FIT`, which gives a grey-world average.
+3. Average the pixels, convert sRGB to linear, then call `fromSample`.
+
+Rules:
+- Reject samples with a clipped or near-black channel, with a notice like "Pick another spot".
+- RAW: set `temperature` and `tint`.
+- JPEG/TIFF: set `temperatureOffset = 100 * toSliderPosition(kelvin)`, and keep temperature at 5500.
+- Save it through `applySettings`, so it's one undoable step.
+- The shader's uv zoom is the same on both axes, so on a landscape photo the sample covers about 5×3 source pixels. That's fine.
+
+UI: an eyedropper button and an Auto button in the white balance row [AI layout, YOU wiring].
+
+**Test:** a grey patch reads neutral after the click, on both a 3200 K and a 5500 K photo.
+
+---
+
+## 4. Curves [YOU math], curve control [AI]
+
+- **Data:** master, R, G and B point lists, stored in the existing `curvesJson` field and `curves_json` column, so no schema change. The value is null when there's no curve.
+- **Spline:** Fritsch-Carlson monotone cubic, sampled to 256 entries per channel. It's monotone, so the curve can't overshoot and invert tones.
+- **To the GPU:** add `vec4 curve[256]` to the **existing UBO** (4 KB, under the guaranteed 16 KB minimum). `BaseBlockUniform.convertTo` fills it. No new texture class, and all three renderers get it automatically.
+- **Shader:** `applyCurves(c)` looks up the two nearest entries and mixes them. It runs after `applyTones`, in display space.
+- **Bypass:** add `Section.CURVES`. `effective()` needs an explicit curves reset, because curves aren't a `GradeParam`.
+- **Pane:** re-add the Curves pane removed on 11-01, with a canvas control and a channel selector.
+
+## 5. Color wheels [YOU math], wheel control [AI]
+
+- **Params:** `LIFT`, `GAMMA` and `GAIN` already exist. Add `LIFT_HUE`, `LIFT_SAT`, `GAMMA_HUE`, `GAMMA_SAT`, `GAIN_HUE` and `GAIN_SAT` as `GradeParam`s, so they work with presets, history and bypass without extra code. Storage is `float[9]` in `EditState`.
+- **To the GPU:** Java converts hue, saturation and luminance to RGB, then sends 3 `vec4`s in the UBO.
+- **Shader:** ASC CDL (slope, offset, power), as `SPRINT_PLAN.md` S3.1 decided. It runs after `applyCurves`, before vibrance.
+- **Side effect:** this needs a new `wheels` column, so existing catalogs won't have it and need recreating.
+
+---
+
+## 6. Presets [YOU], dialog and list UI [AI]
+
+**The checkboxes decide what gets stored, so unchecked values simply aren't in the preset:**
+
+```java
+public class Preset {
+    int formatVersion = 1;
+    long id;                          // local DB id, not in the file
+    String name, author, description, category;
+    Instant createdAt, updatedAt;
+    Map<String, Float> values;        // GradeParam name -> value, ONLY the checked ones
+    WhiteBalanceType whiteBalance;    // null if white balance is unchecked
+    Curves curves;                    // null if unchecked
+    void applyTo(EditState target);   // goes through GradeParam.write
+}
+```
+
+"What else" beyond author, name and createdAt: `formatVersion` (for loading old files), `updatedAt` (presets can be modified), `description` and `category` (the column exists, and search needs them). A preview image can come with the share flow.
+
+It never stores `photoId`, `asShot*`, `lutPath` or EditState's `updatedAt`, because those belong to one photo.
+
+**Storage:**
+- **Table:** use the existing **`global_presets`** in the app DB, so presets work in every catalog, not one catalog each.
+- **No schema change:** the whole preset goes into `edit_parameters_json`, and `name`, `category` and `created_at` already exist.
+- **DAO:** move `PresetDao` from `dao/catalog` to `dao/app`, accessing the DB the way `UserDao` does.
+- **Leftover:** the catalog's `presets` table stays unused.
+
+**`PresetManager`** sits at app level, next to `CatalogManager`: `list`, `save`, `update`, `delete`, `importFile(File)`, `exportFile(Preset, File)`.
+
+**Opening a file works like `CatalogManager.openProject`:** check the file, show a confirm dialog with name, author and what's included, then save.
+- Files from other people are untrusted, so clamp values to `GradeParam` min and max, and ignore unknown names.
+- Use the existing `LUT_FILE_INVALID` style for a new `ErrorCode`.
+
+**`EditingManager.applyPreset(Preset)`:**
+- Works on the current photo and the multi-selection.
+- **Unlike `pasteSettings`, it must read each photo's edit from the DB first.** A preset is partial, so a blind write would wipe the unchecked settings.
+- If the preset has `whiteBalance = AS_SHOT`, call `applyWhiteBalance`, and keep the target's own as-shot values.
+
+**Save dialog [AI layout, YOU wiring]:** `createPresetBtn` opens it, with name, author (prefilled from `UserManager.getUsername()`, editable), description, and checkboxes listed by hand:
+- White Balance and Exposure, **unchecked by default**, because they depend on the scene
+- Contrast, Highlights, Shadows, Whites, Blacks
+- Texture, Clarity, Dehaze
+- Vibrance, Saturation
+- HSL: a parent checkbox plus Hue, Sat and Lum children
+- Curves
+- Wheels
+
+**Left panel [AI]:** replace the fake "Kodak Portra" rows with real rows and a right-click menu: Update with current, Rename, Delete, Export `.cgpreset`, Export `.cube`.
+
+---
+
+## 7. History [YOU], notice label and list [AI]
+
+```java
+public record HistoryEntry(String description, Set<String> photoIds, Runnable undo, Runnable redo) {}
+
+public class HistoryManager {   // one per CatalogScope, not persisted
+    private final LinkedList<HistoryEntry> undoStack, redoStack;   // max 100, removeFirst() drops the oldest
+    private boolean replaying;
+    public void record(HistoryEntry e);       // ignored while replaying; clears redoStack
+    public void undo(); public void redo();   // set replaying = true around the Runnable
+    public void forgetPhoto(String photoId);  // drops entries touching a removed photo
+    public ReadOnlyStringProperty noticeProperty();
+}
+```
+
+`PhotoManager` and `EditingManager` take it in their constructors and call `record`. Everything runs on the FX thread.
+
+**You need `redo` as well as `undo`, and the `replaying` flag is essential.** Without the flag, undo calls `updateRating`, which records a new entry, and Ctrl+Z just flips back and forth forever.
+
+**Things that will bite:**
+1. **Slider "before" value:** by the time `commit` runs, `preview` has already changed the edit. Keep a `lastCommitted` snapshot in `EditingManager`, and update it on photo load, on commit and in `applyAsShot`.
+2. **Use whole-state snapshots for edits.** One `restoreEdit(photo, EditState)` covers sliders, white balance, paste, reset and presets, and new curves or wheels work automatically. If the photo isn't open, it saves to the DB and updates the thumbnail.
+3. **Paste and presets on non-open photos:** read their "before" state from the DB first, because `pasteSettings` doesn't today.
+4. **Multi-photo rating, label and like:** capture a `Map<PhotoEntry, oldValue>`, because the photos may differ. Record the entry in `thenRun`, after the DB write succeeded.
+
+| Undoable | Not undoable |
+|---|---|
+| Slider commit, WB preset, paste, reset, apply preset, rating, label, like, comment | Delete from disk, remove from catalog, import |
+
+**One exception to "every action has an opposite":** a deleted file is gone, and removing from the catalog cascades away the edit and metadata. Both of those call `forgetPhoto` instead, and keep their confirm dialog.
+
+**UI:**
+- Ctrl+Z and Ctrl+Y in `InputListener` (neither is bound yet) [YOU]
+- A label on the viewport bound to `noticeProperty`, fading after 2 seconds, e.g. "Exposure +0.50" or "Undo: Rating" [AI]
+- A real list in `historyStepsContainer` [AI]
+- Hide the `takeSnapshotBtn` button [AI]
+
+The `edit_history` table stays unused.
+
+---
+
+## Week order
+
+Curves and wheels come before presets, so `Preset` is only designed once. History comes after presets, so it covers all of them.
+
+| Day | Work | Done when |
+|---|---|---|
+| 1 | Commit the current work. `PhotoDecoder`, batch export, Images tab | 20 mixed photos export while dragging a slider, and cancel works |
+| 2 | `renderLut`, `CubeWriter`, LUT tab, then eyedropper and Auto WB (same float FBO) | Identity test passes, the `.cube` matches the viewport in Resolve or Photoshop, and a grey patch goes neutral |
+| 3 | Curves | S-curve matches in viewport, export and LUT |
+| 4 | Wheels | Same check |
+| 5 | Presets, dialog, `.cgpreset` | Partial preset keeps the unchecked values, and a file round-trip works |
+| 6 | History and notice | Undo and redo work for each undoable action, the 101st entry drops the oldest |
+| 7 | Bug bash and tests | Full flow works |
+
+**If time runs short, cut in this order:** history list panel → Visible and Last import scopes → EXIF copy → wheels. Keep the LUT export and curves.
+
+**After this week:** the backend, using the upload described in the first table.
+
+## Todo
+
+- [ ] **`RelinkManager` [YOU], relink action [AI]:** right-click a missing photo, then Relink. A `FileChooser` opens with the initial file name set to the missing file's exact name. When a file is picked, every other missing photo whose file name is in that folder is relinked too. Update the path in the DB, clear `missingPhoto` and bump the thumbnail version.
+- [ ] **`PresetManager` [YOU]:** section 6 (create, apply, partial presets, `.cgpreset` import and export).
+- [ ] **Social media bridge [YOU]:** the upload from the desktop to the backend (`recipe.json`, the 33³ `.cube`, before and after JPEGs), S7.3 and DAY 7 in `SPRINT_PLAN.md`.
+- [ ] **Skip decoding missing photos [YOU]:** `EditingManager.showOnGpu` still tries to decode a missing original, so selecting one logs an error and shows a toast every time. Return early when `photo.isMissingPhoto()` (the viewport already shows the thumbnail and a Missing badge).
+
+---
+
+## Verification
+
+**Tests:**
+- Default `EditState` gives an identity LUT. Run at 17, 33 and 65 and assert a tiny error, then tighten the limit once you see the real sRGB round-trip error.
+- `Preset` JSON round-trip, clamping and unknown names
+- Spline is monotone and identity at default
+- `HistoryManager` cap and replay
+- `CubeWriter` under a Hungarian locale
+
+**By hand:**
+- Exported JPEG matches the viewport
+- LUT applied in Resolve or Photoshop matches a render with no spatial settings
+- Thumbnails stay normal after a LUT export
+- Closing the app mid-export shuts down cleanly with no JVM crash
+
+**Note:** `src/test` is empty, and `mvn` isn't on PATH on this machine, so the build goes through IntelliJ or needs Maven added.

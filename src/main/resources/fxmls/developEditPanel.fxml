@@ -60,5 +60,13 @@
                 <VBox fx:id="metadataTable" minWidth="0.0" styleClass="metadata-table"/>
             </content>
         </ScrollPane>
+
+        <!-- Copy / Paste settings, always visible below both tabs -->
+        <HBox spacing="10.0" styleClass="edit-action-bar">
+            <children>
+                <Button fx:id="copySettingsBtn" maxWidth="Infinity" mnemonicParsing="false" styleClass="edit-copy-btn" text="Copy" HBox.hgrow="ALWAYS"/>
+                <Button fx:id="pasteSettingsBtn" maxWidth="Infinity" mnemonicParsing="false" styleClass="edit-paste-btn" text="Paste" HBox.hgrow="ALWAYS"/>
+            </children>
+        </HBox>
     </children>
 </VBox>

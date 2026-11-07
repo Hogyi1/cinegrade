@@ -328,6 +328,50 @@
     -fx-text-fill: -clr-text-primary;
 }
 
+/* [AI-GENERATED] Copy / Paste bar at the bottom of the edit panel */
+.edit-action-bar {
+    -fx-border-color: -clr-border-subtle;
+    -fx-border-width: 1px 0 0 0;
+    -fx-padding: 10px 14px 12px 14px;
+}
+
+.edit-copy-btn,
+.edit-paste-btn {
+    -fx-background-radius: 16px;
+    -fx-text-fill: -clr-text-primary;
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-padding: 7px 0;
+    -fx-cursor: hand;
+}
+
+.edit-copy-btn {
+    -fx-background-color: -clr-purple-dark;
+}
+.edit-copy-btn:hover {
+    -fx-background-color: derive(-clr-purple-dark, 15%);
+}
+.edit-copy-btn:pressed {
+    -fx-background-color: -clr-almostgrey;
+}
+
+.edit-paste-btn {
+    -fx-background-color: -clr-blue;
+}
+.edit-paste-btn:hover {
+    -fx-background-color: -clr-blue-hover;
+}
+.edit-paste-btn:pressed {
+    -fx-background-color: -clr-blue-active;
+}
+
+.edit-copy-btn:disabled,
+.edit-paste-btn:disabled {
+    -fx-background-color: -clr-surface;
+    -fx-text-fill: -clr-text-dim;
+    -fx-opacity: 1;
+}
+
 /* Edit / Metadata switch below the histogram */
 .panel-tab-bar {
     -fx-background-color: -clr-dark;
@@ -638,31 +682,35 @@
 }
 
 /* --------------------------------------------------------------------------
-   Left Panel (Presets & History)
+   Left Panel (Presets)
    -------------------------------------------------------------------------- */
-.left-tab-bar {
-    -fx-background-color: transparent;
+/* [AI-GENERATED] */
+.left-panel-header {
     -fx-border-color: -clr-border-subtle;
     -fx-border-width: 0 0 1px 0;
-    -fx-padding: 8px 12px;
-    -fx-spacing: 8px;
+    -fx-padding: 10px 12px;
 }
 
-.left-tab-btn {
-    -fx-background-color: transparent;
-    -fx-text-fill: -clr-text-muted;
-    -fx-font-weight: bold;
-    -fx-font-size: 11.5px;
-    -fx-padding: 4px 10px;
-    -fx-cursor: hand;
-}
-.left-tab-btn:hover {
+.left-panel-title {
     -fx-text-fill: -clr-text-primary;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
 }
-.left-tab-btn:selected {
-    -fx-text-fill: -clr-blue;
-    -fx-border-color: -clr-blue;
-    -fx-border-width: 0 0 2px 0;
+
+/* A category name: only a label above its presets, never clickable */
+.preset-category {
+    -fx-text-fill: -clr-text-muted;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-padding: 10px 2px 4px 2px;
+    -fx-border-color: -clr-border-subtle;
+    -fx-border-width: 0 0 1px 0;
+}
+
+.preset-empty {
+    -fx-text-fill: -clr-text-dim;
+    -fx-font-size: 11px;
+    -fx-padding: 2px 2px 6px 2px;
 }
 
 .preset-item {
@@ -679,6 +727,20 @@
 .preset-item:hover {
     -fx-background-color: -clr-surface;
     -fx-border-color: -clr-blue;
+}
+
+/* [AI-GENERATED] Preset card (a Label with .preset-item) and the notice under the list */
+.preset-item {
+    -fx-text-fill: -clr-text-primary;
+    -fx-font-size: 12px;
+}
+
+.preset-notice {
+    -fx-text-fill: -clr-text-secondary;
+    -fx-font-size: 11px;
+    -fx-background-color: -clr-surface-card;
+    -fx-background-radius: 6px;
+    -fx-padding: 6px 10px;
 }
 
 .history-item {

@@ -25,17 +25,6 @@ public enum GradeParam {
     VIBRANCE("Vibrance", Section.BASIC, -100.0f, 100.0f, 0.0f, "", 1.0f),
     SATURATION("Saturation", Section.BASIC, -100.0f, 100.0f, 0.0f, "", 1.0f),
 
-    // Color wheels, master luminance of shadows / midtones / highlights
-    LIFT("Lift", Section.COLOR_WHEELS, -1.0f, 1.0f, 0.0f, "", 0.01f),
-    GAMMA("Gamma", Section.COLOR_WHEELS, -1.0f, 1.0f, 0.0f, "", 0.01f),
-    GAIN("Gain", Section.COLOR_WHEELS, -1.0f, 1.0f, 0.0f, "", 0.01f),
-
-    // Detail & effects: 0 means the pass is off
-    SHARPEN("Sharpen", Section.DETAIL, 0.0f, 100.0f, 0.0f, "", 1.0f),
-    NOISE_REDUCTION("Noise Reduction", Section.DETAIL, 0.0f, 100.0f, 0.0f, "", 1.0f),
-    GRAIN("Grain", Section.DETAIL, 0.0f, 100.0f, 0.0f, "", 1.0f),
-    VIGNETTE("Vignette", Section.DETAIL, -100.0f, 100.0f, 0.0f, "", 1.0f),
-
     // Color mixer (HSL): shift of each of the 8 hue ranges, same order in all three groups
     HUE_RED("Red", Section.COLOR_MIXER, -100.0f, 100.0f, 0.0f, "", 1.0f),
     HUE_ORANGE("Orange", Section.COLOR_MIXER, -100.0f, 100.0f, 0.0f, "", 1.0f),
@@ -180,9 +169,7 @@ public enum GradeParam {
     @Getter
     public enum Section {
         BASIC("Basic"),
-        COLOR_MIXER("Color Mixer"),
-        COLOR_WHEELS("Color Wheels"),
-        DETAIL("Detail & Effects");
+        COLOR_MIXER("Color Mixer");
 
         private final String title;
 

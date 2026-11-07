@@ -779,3 +779,104 @@
     -fx-background-color: linear-gradient(to right, derive(-clr-hue-magenta, -60%), -clr-hue-magenta, derive(-clr-hue-magenta, 60%));
     -fx-pref-height: 4px;
 }
+
+/* --------------------------------------------------------------------------
+   [AI-GENERATED] PresetDialog: save-as-preset form on the confirm dialog plate
+   -------------------------------------------------------------------------- */
+.preset-dialog-label {
+    -fx-text-fill: -clr-text-secondary;
+    -fx-font-size: 11.5px;
+    -fx-font-weight: 600;
+}
+
+.preset-dialog-field,
+.preset-dialog-field.combo-box {
+    -fx-control-inner-background: -clr-surface-input;
+    -fx-background-color: -clr-surface-input;
+    -fx-background-radius: 8px;
+    -fx-border-color: -clr-border-subtle;
+    -fx-border-width: 1px;
+    -fx-border-radius: 8px;
+    -fx-text-fill: -clr-text-primary;
+    -fx-prompt-text-fill: -clr-text-muted;
+    -fx-highlight-fill: -clr-blue;
+    -fx-font-size: 12.5px;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+}
+.preset-dialog-field:focused,
+.preset-dialog-field.combo-box:focused {
+    -fx-border-color: -clr-blue;
+}
+/* Author: read-only, shown muted */
+.preset-dialog-field:readonly {
+    -fx-text-fill: -clr-text-muted;
+    -fx-background-color: -clr-surface;
+}
+.preset-dialog-field.combo-box .text-field {
+    -fx-background-color: transparent;
+    -fx-text-fill: -clr-text-primary;
+    -fx-prompt-text-fill: -clr-text-muted;
+}
+.preset-dialog-field.combo-box .arrow-button {
+    -fx-background-color: transparent;
+}
+.preset-dialog-field.combo-box .arrow {
+    -fx-background-color: -clr-text-secondary;
+}
+.preset-dialog-field .content {
+    -fx-background-color: -clr-surface-input;
+    -fx-background-radius: 8px;
+}
+.preset-dialog-field.combo-box .combo-box-popup .list-view {
+    -fx-background-color: -clr-surface-input;
+    -fx-border-color: -clr-border;
+    -fx-background-radius: 6px;
+    -fx-border-radius: 6px;
+}
+.preset-dialog-field.combo-box .combo-box-popup .list-cell {
+    -fx-background-color: transparent;
+    -fx-text-fill: -clr-text-primary;
+    -fx-padding: 5px 10px;
+}
+.preset-dialog-field.combo-box .combo-box-popup .list-cell:hover {
+    -fx-background-color: -clr-darkgrey;
+}
+
+.preset-dialog-settings {
+    -fx-background-color: -clr-surface;
+    -fx-background-radius: 10px;
+    -fx-border-color: -clr-border-subtle;
+    -fx-border-radius: 10px;
+    -fx-padding: 12px 14px;
+}
+
+.preset-dialog-section {
+    -fx-text-fill: -clr-text-muted;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-padding: 0 0 2px 0;
+}
+
+.preset-dialog-check {
+    -fx-text-fill: -clr-text-primary;
+    -fx-font-size: 12px;
+}
+.preset-dialog-check .box {
+    -fx-background-color: -clr-surface-input;
+    -fx-background-radius: 4px;
+    -fx-border-color: -clr-border;
+    -fx-border-radius: 4px;
+}
+.preset-dialog-check:selected .box,
+.preset-dialog-check:indeterminate .box {
+    -fx-background-color: -clr-blue;
+    -fx-border-color: -clr-blue;
+}
+.preset-dialog-check:selected .mark,
+.preset-dialog-check:indeterminate .mark {
+    -fx-background-color: -clr-text-primary;
+}
+.preset-dialog-child {
+    -fx-padding: 0 0 0 18px;
+}

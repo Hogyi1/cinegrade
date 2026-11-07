@@ -5,6 +5,7 @@ import hu.elte.ik.thesis.cinegrade.domain.exceptions.CineGradeException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.concurrent.CompletableFuture;
@@ -123,7 +124,7 @@ public final class TransactionRunner implements AutoCloseable {
 
     @FunctionalInterface
     public interface SqlWork<T> {
-        T run(Connection connection) throws SQLException;
+        T run(Connection connection) throws SQLException, IOException;
     }
 
     @FunctionalInterface

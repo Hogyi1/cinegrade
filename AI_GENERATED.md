@@ -22,6 +22,9 @@ This document tracks all AI-generated files, UI views (FXML), stylesheets (CSS),
 | `src/main/resources/fxmls/navigationPanel.fxml` | Top workspace navigation bar with animated selection bubble and clickable labels | `<!-- [AI-GENERATED] -->` |
 | `src/main/resources/fxmls/importPanel.fxml` | Media import panel view with drag-and-drop plate, empty state plate, batch controls, thumbnail zoom slider (0.45x-1.5x), import spinner overlay, and floating sidebar with File Handling selector (Add, Copy, Move), search bar, and dark token filter buttons | `<!-- [AI-GENERATED] -->` |
 | `src/main/resources/fxmls/importPhotoCard.fxml` | Staged import photo thumbnail card component with format badges, duplicate & missing photo/thumbnail badges, text truncation with ellipsis, and selection toggle | `<!-- [AI-GENERATED] -->` |
+| `src/main/resources/fxmls/editSlider.fxml` | fx:root HBox for `EditSlider`: name label, slider, typed value field, unit label | `<!-- [AI-GENERATED] -->` |
+| `src/main/resources/fxmls/editPane.fxml` | fx:root TitledPane for `EditPane`: eye ToggleButton (SVG eye / crossed-out eye) in the title, VBox body | `<!-- [AI-GENERATED] -->` |
+| `src/main/resources/fxmls/developEditPanel.fxml` | (update) tone curve removed; histogram canvas follows the panel width (unmanaged, bound to `histogramHolder`), EXIF line below it; Edit / Metadata tab switch and metadata table | `<!-- [AI-GENERATED] -->` |
 
 ---
 
@@ -37,6 +40,7 @@ This document tracks all AI-generated files, UI views (FXML), stylesheets (CSS),
 | `src/main/resources/css/theme.css` | Color tokens and theme definitions (dark / light) | `/* [AI-GENERATED] */` |
 | `src/main/resources/css/navigationPanel.css` | Stylesheet for workspace navigation bar, selection bubble, and inactive clickable label states | `/* [AI-GENERATED] */` |
 | `src/main/resources/css/importPanel.css` | Stylesheet for media import dropzone, responsive staging grid, cards, missing badges, sleek zoom slider (0.45x-1.5x), import loading overlay with vector spinner, and floating sidebar | `/* [AI-GENERATED] */` |
+| `src/main/resources/css/components.css` | (section) `.edit-pane*` (title, :bypassed dimming, `.edit-pane-group` header, `.edit-pane-eye` with on/off SVG `.eye-icon`) and `.edit-slider*` (name, slider track/thumb, value field, unit) | `/* [AI-GENERATED] */` on the section headers |
 
 ---
 
@@ -57,7 +61,8 @@ This document tracks all AI-generated files, UI views (FXML), stylesheets (CSS),
 | `src/main/java/hu/elte/ik/thesis/cinegrade/infra/database/dao/EditstateDao.java` | DAO for photo edit states | `EditState.java` | `// [AI-GENERATED]` |
 | `src/main/java/hu/elte/ik/thesis/cinegrade/infra/database/dao/MetadataDao.java` | DAO for photo EXIF and technical metadata | `PhotoMetadata.java` | `// [AI-GENERATED]` |
 | `src/main/java/hu/elte/ik/thesis/cinegrade/infra/database/dao/PhotoDao.java` | DAO for imported photos and thumbnails | `PhotoEntry.java` | `// [AI-GENERATED]` |
-| `src/main/java/hu/elte/ik/thesis/cinegrade/infra/database/dao/PresetDao.java` | DAO for grading presets | Grading Preset entity | `// [AI-GENERATED]` |
+| `src/main/java/hu/elte/ik/thesis/cinegrade/infra/database/dao/catalog/PresetDao.java` | DAO for grading presets (rewritten) | `findAllJson`, `upsert` (keeps `created_at`), `delete`, `updateName` on the app database's `presets` table; UUID ids, category stored by enum name | `// [AI-GENERATED]` |
+| `src/main/java/hu/elte/ik/thesis/cinegrade/infra/database/schema/AppSchemaInitializer.java` | `presets` table SQL, `dropGlobalPresets` | `global_presets` replaced by `presets` (TEXT id, `USER_PRESETS` default); the unused old table is dropped | `// [AI-GENERATED TABLE STRINGS]`, `// [AI-GENERATED METHOD]` |
 | `src/main/java/hu/elte/ik/thesis/cinegrade/infra/database/dao/RecentCatalogDao.java` | DAO for recently opened catalogs in app database | `Catalog.java` | `// [AI-GENERATED]` |
 | `src/main/java/hu/elte/ik/thesis/cinegrade/infra/database/dao/SettingsDao.java` | Key-value settings DAO for global application database | Key-value Strings (`app_settings`) | `// [AI-GENERATED]` |
 | `src/main/java/hu/elte/ik/thesis/cinegrade/infra/database/dao/UserDao.java` | DAO for user session and authentication persistence | `User.java` | `// [AI-GENERATED]` |
@@ -67,9 +72,9 @@ This document tracks all AI-generated files, UI views (FXML), stylesheets (CSS),
 | :--- | :--- | :--- | :--- |
 | `src/main/java/hu/elte/ik/thesis/cinegrade/domain/catalog/Catalog.java` | Catalog representation with path, name, timestamps, and size | `RecentCatalogDao` | `// [AI-GENERATED]` |
 | `src/main/java/hu/elte/ik/thesis/cinegrade/domain/catalog/CatalogFolder.java` | Tree folder model for organizing catalog photos | `CatalogsFolderDao` | `// [AI-GENERATED]` |
-| `src/main/java/hu/elte/ik/thesis/cinegrade/domain/editing/EditState.java` | Grading parameters model (exposure, contrast, LUT, curves) | `EditStateDao` | `// [AI-GENERATED]` |
-| `src/main/java/hu/elte/ik/thesis/cinegrade/domain/editing/PhotoEntry.java` | Photo record entry model | `PhotoDao` | `// [AI-GENERATED]` |
-| `src/main/java/hu/elte/ik/thesis/cinegrade/domain/editing/PhotoMetadata.java` | EXIF metadata model (ISO, lens, aperture, shutter speed) | `MetadataDao` | `// [AI-GENERATED]` |
+| `src/main/java/hu/elte/ik/thesis/cinegrade/domain/objects/EditState.java` | Grading parameters model (exposure, contrast, LUT, curves) | `EditStateDao` | `// [AI-GENERATED]` |
+| `src/main/java/hu/elte/ik/thesis/cinegrade/domain/objects/PhotoEntry.java` | Photo record entry model | `PhotoDao` | `// [AI-GENERATED]` |
+| `src/main/java/hu/elte/ik/thesis/cinegrade/domain/objects/PhotoMetadata.java` | EXIF metadata model (ISO, lens, aperture, shutter speed) | `MetadataDao` | `// [AI-GENERATED]` |
 | `src/main/java/hu/elte/ik/thesis/cinegrade/domain/user/User.java` | User profile and authentication model | `UserDao` | `// [AI-GENERATED]` |
 
 ### UI Component Controllers
@@ -107,6 +112,48 @@ This document tracks all AI-generated files, UI views (FXML), stylesheets (CSS),
 | `src/main/java/hu/elte/ik/thesis/cinegrade/javafx/ui/components/ImportPhotoCard.java` | `updateItem`, `unbindCurrentEntry`, `applyThumbnail` (perf fix) | Shows the pre-decoded `StageEntry.decodedThumbnail` (decodes once as fallback), binds `fitWidth`/`fitHeight` once in `setupCellLayout`, keeps the entry bound across GridRowSkin's `updateIndex(-1)` and only rebinds when the item changes | `// [AI-GENERATED METHOD]` |
 | `src/main/java/hu/elte/ik/thesis/cinegrade/app/managers/imports/StagingArea.java` | extractor, `selectionListener`, `scheduleCountersUpdate`, `updateCounters` (perf fix) | `isSelected` removed from the list extractor (each update refilled all grid cells); one shared selection listener per entry; counters recomputed once per pulse instead of per change | file already `// [AI-GENERATED]` |
 | `src/main/java/hu/elte/ik/thesis/cinegrade/app/scope/CatalogScope.java`, `CatalogScopeFactory.java`, `app/main/App.java`, `javafx/ui/editing/ImportPanelController.java` | Wiring | `stagingArea` scope component; `ImportPanelController(ImportManager, StagingArea)` registered in the `ControllerFactory` | untagged (wiring) |
+| `src/main/java/hu/elte/ik/thesis/cinegrade/javafx/ui/components/EditSlider.java` | Whole file | fx:root slider row for one `GradeParam`: preview on every change, commit on mouse release / Enter / focus lost / keyboard step / double-click reset, silent `setValue` | `// [AI-GENERATED]` |
+| `src/main/java/hu/elte/ik/thesis/cinegrade/javafx/ui/components/EditPane.java` | Whole file | fx:root collapsible section with eye toggle (`enabledProperty`, `:bypassed`); rows are added to `getBody()` | `// [AI-GENERATED]` |
+| `src/main/java/hu/elte/ik/thesis/cinegrade/engine/GradeParam.java` | `Section`, `isWhiteBalance`, `read`, `write` | Section of each param for the edit panel (`Group` removed); EditState accessors per param | file already `// [AI-GENERATED]` |
+| `src/main/java/hu/elte/ik/thesis/cinegrade/engine/renderer/ThumbnailRenderer.java` | constructor, `load`, `render`, `applySize`, `Pixels` | Own `ImageTexture` on the background GPU worker; `load` uploads the open photo, `render(photoId, edit)` skips stale photos, uploads/binds its UBO, reads BGRA at `MAX_EDGE` | `// [AI-GENERATED METHOD]` |
+| `src/main/java/hu/elte/ik/thesis/cinegrade/infra/services/libraw/LibRaw.java` | `ProgressCallback`, `libraw_set_progress_handler` | JNA binding of LibRaw's progress callback (non-zero return cancels the decode) | `// [AI-GENERATED METHOD]` |
+| `src/main/java/hu/elte/ik/thesis/cinegrade/infra/services/libraw/LibrawService.java` | `decodeRaw(File, BooleanSupplier)` | Decode that LibRaw aborts mid-way when the supplier turns true (photo switched) | `// [AI-GENERATED METHOD]` |
+| `src/main/java/hu/elte/ik/thesis/cinegrade/engine/renderer/ViewportRenderer.java` | `getImageTexture` | Shares the uploaded texture with `ThumbnailRenderer` (GPU thread only) | `// [AI-GENERATED METHOD]` |
+| `src/main/java/hu/elte/ik/thesis/cinegrade/infra/utils/thumbnail/ThumbnailFactory.java` | `fromPixels` | Wraps GPU BGRA readback in a `BufferedImage` and encodes it as JPEG | `// [AI-GENERATED METHOD]` |
+| `src/main/java/hu/elte/ik/thesis/cinegrade/infra/services/storage/ThumbnailService.java` | `putPixels` | JPEG encode on the CPU pool, then `put` | `// [AI-GENERATED METHOD]` |
+| `src/main/java/hu/elte/ik/thesis/cinegrade/app/managers/editing/EditingManager.java` | `preview`, `commit`, `setSectionEnabled`, `updateThumbnail`, `effective` (+ `applySettings` snapshot, `copySettings` copy, default `EditState` when none saved) | Slider glue, eye bypass, thumbnail render → encode → store → `thumbnailVersion` bump | `// [AI-GENERATED METHOD]` |
+| `src/main/java/hu/elte/ik/thesis/cinegrade/javafx/ui/editing/DevelopEditPanelController.java` | `buildPanes`, `showPhoto`, `showEditState`, tab helpers | Rewritten without loops: every `EditPane`, header and `EditSlider` listed explicitly; RAW / JPEG switch of the white balance rows; Edit / Metadata and Hue / Saturation / Luminance tabs | untagged (wiring), listed here because AI-written |
+| `src/main/java/hu/elte/ik/thesis/cinegrade/javafx/ui/editing/DevelopEditPanelController.java` | `showMetadata`, `metadataRow`, `exifSummary`, `iso`, `aperture` | Metadata tab (name / value rows) and the EXIF line under the histogram | `// [AI-GENERATED METHOD]` |
+| `src/main/java/hu/elte/ik/thesis/cinegrade/javafx/ui/components/EditSlider.java` | constructor, `show`, `setOnChanged` | `new EditSlider(param, editingManager)`: follows the current edit, previews and commits by itself | file already `// [AI-GENERATED]` |
+| `src/main/java/hu/elte/ik/thesis/cinegrade/app/managers/editing/EditingManager.java` | `loadMetadata` | Pass-through to `MetadataDao` on the catalog DB thread | untagged (wiring), listed here because AI-written |
+| `src/main/java/hu/elte/ik/thesis/cinegrade/infra/database/dao/catalog/MetadataDao.java` | `mapRowToMetadata` (fix) | NULL iso / aperture map to 0 instead of throwing a NullPointerException | file already `// [AI-GENERATED]` |
+| `src/main/resources/css/developmentPanel.css` | `.panel-tab-bar`, `.metadata-table`, `.metadata-row`, `.metadata-name`, `.metadata-value` | Edit / Metadata switch and metadata table styling | `/* [AI-GENERATED] */` |
+| `Documentation/STATUS.md` | whole file | Snapshot of what is done and missing | `<!-- [AI-GENERATED] -->` |
+| `src/main/java/hu/elte/ik/thesis/cinegrade/engine/grade/WhiteBalancer.java` | Whole file (rewrite of `AsShotWhiteBalance`) | One solver with a neutral parameter, `fromCamera`, `fromSample`, plus `asShotOf` and `withAsShot` moved from `EditingManager`; `fromWbPixel` and `fromLinearPixel` removed | `// [AI-GENERATED]` |
+| `src/main/java/hu/elte/ik/thesis/cinegrade/app/managers/editing/EditingViewModel.java` | Whole file | Properties of the develop page, moved out of `EditingManager` | `// [AI-GENERATED]` |
+| `src/main/java/hu/elte/ik/thesis/cinegrade/app/managers/editing/ThumbnailRefresher.java` | Whole file (Extract Class) | Thumbnail job queue moved as-is from `EditingManager`; `update` is its one entry point | `// [AI-GENERATED]` |
+| `src/main/java/hu/elte/ik/thesis/cinegrade/app/managers/editing/EditingManager.java` | Extraction edits, `showOnGpu`, `applyAsShot`, `close` | Uses `EditingStage`, `ThumbnailRefresher` and `WhiteBalancer`; stale decodes cancel again, missing flag only when the file is gone, viewport decoder closed on its thread | untagged (mechanical move, small fixes) |
+| `src/main/java/hu/elte/ik/thesis/cinegrade/app/managers/editing/EditingManager.java` | `pickWhiteBalance` | Eyedropper: samples the photo and sets temperature or offset and tint, saved like a commit | `// [AI-GENERATED METHOD]` |
+| `src/main/resources/fxmls/developViewport.fxml` | `eyedropperToggle`, `pickHintBar` | White balance picker button and hint bar | `<!-- [AI-GENERATED] -->` (file) |
+| `src/main/resources/images/icons/Eyedropper.png`, `images/cursors/eyedropper.png` | Whole files | Author's icon recolored for the dark UI, cursor with a dark outline | — (images) |
+| `src/main/java/hu/elte/ik/thesis/cinegrade/app/managers/editing/EditingManager.java` | `resetSettings` | Ctrl+Shift+R: photo back to default settings | `// [AI-GENERATED METHOD]` |
+| `src/main/java/hu/elte/ik/thesis/cinegrade/domain/objects/EditState.java` | `hsl` field, `HSL_COLORS`/`HSL_STRIDE`/`HSL_SIZE`, copy/equals/hashCode | Color mixer values (8 colors x hue, sat, lum, pad) | `// [AI-GENERATED]` (file) |
+| `src/main/java/hu/elte/ik/thesis/cinegrade/engine/grade/BaseBlockUniform.java` | HSL loop in `convertTo`, buffer size | Uploads the 8 `hsl__*` vec4 of `BasicBlock` | `// [AI-GENERATED]` comment |
+| `src/main/java/hu/elte/ik/thesis/cinegrade/engine/GradeParam.java` | HSL `read`/`write`, `isHsl`, `hslIndex` | Maps the 24 color mixer params onto `EditState.hsl` | `// [AI-GENERATED]` (file) |
+| `src/main/java/hu/elte/ik/thesis/cinegrade/infra/database/dao/catalog/EditStateDao.java` | `hsl` column, `formatHsl`, `parseHsl` | Stores the color mixer as comma separated text | `// [AI-GENERATED]` (file) |
+| `src/main/java/hu/elte/ik/thesis/cinegrade/infra/database/schema/CatalogSchemaInitializer.java` | `hsl TEXT` column of `edit_states` | Color mixer storage | — (one DDL line) |
+| `pom.xml` | TwelveMonkeys `imageio-jpeg`, `imageio-tiff` | CMYK JPEG / TIFF reading | `<!-- [AI-GENERATED] -->` |
+| `src/main/resources/fxmls/developViewport.fxml` | `thumbnailImageView`, `loadProgressOverlay` | Loading placeholder and spinner | `<!-- [AI-GENERATED] -->` (file) |
+| `src/main/resources/css/developmentPanel.css` | `.viewport-placeholder`, `.viewport-loading-overlay`, `.viewport-spinner` | Placeholder/spinner styling | `/* [AI-GENERATED] */` |
+| `src/main/resources/fxmls/developViewport.fxml` | `missingBadge` | Red "Missing" badge in the HUD when the original file is gone | `<!-- [AI-GENERATED] -->` (file) |
+| `src/main/resources/css/developmentPanel.css` | `.hud-missing-badge` | Missing badge styling (same look as the filmstrip badge) | `/* [AI-GENERATED] */` |
+| `src/main/resources/shaders/fragment.frag` | `applyContrast`, `C_PIVOT` | Power S-curve contrast in sRGB around middle grey (replaces the linear-light `contrastMatrix`) | `// [AI-GENERATED METHOD]` |
+| `src/main/resources/shaders/fragment.frag` | `applyTones` (fix), `*_STRENGTH` / `TONE_CHANNEL_MIX` constants | Levels step removed (one mask per slider), named strengths, per-channel add takes over near black | `// [AI-GENERATED METHOD]` |
+| `src/main/resources/shaders/fragment.frag` | `kelvinToRgb_Helland`, `whiteBalanceGains`, `applyTemperature_Helland`, `applyTemperature_BeRo`, `WB_NEUTRAL_KELVIN` / `WB_KELVIN_STRENGTH` | Blackbody white balance (Tanner Helland fit, and BeRo's CC0 `kelvinToRgb_BeRo` copied with attribution) with tint on green; `main` uses the BeRo one | `// [AI-GENERATED METHOD]` (BeRo function: third-party, attributed) |
+| `src/main/resources/shaders/fragment.frag` | `WB_WARM_KELVIN_STRENGTH`, `temp` parameter of `whiteBalanceGains` | Separate (stronger) Kelvin strength above neutral | `// [AI-GENERATED METHOD]` |
+| `src/main/java/hu/elte/ik/thesis/cinegrade/engine/GradeParam.java` | `toSliderPosition`, `fromSliderPosition` | Temperature slider track linear in mireds (-1 / 0 / 1 = min / default / max), identity for every other param | file already `// [AI-GENERATED]` |
+| `src/main/java/hu/elte/ik/thesis/cinegrade/javafx/ui/components/EditSlider.java` | `value()`, position conversion in the constructor, `setValue`, `reset`, listener, `applyText`, `commit` | Slider holds the track position, callbacks and the value field still get the Kelvin value | file already `// [AI-GENERATED]` |
+| `src/main/resources/shaders/fragment.frag` | `// region` markers | Shader split into collapsible regions; code only moved | untagged (layout) |
 
 ---
 
@@ -121,3 +168,31 @@ Whenever an AI assistant generates new artifacts:
    - CSS file: `/* [AI-GENERATED] */` (placed on line 1)
 2. Append the new entry to this `AI_GENERATED.md` file under the appropriate section.
 3. Preserve all existing `import` statements without modification.
+| `src/main/java/hu/elte/ik/thesis/cinegrade/engine/ShaderHotReload.java` | whole file (DEV, remove before release) | Watches `src/main/resources/shaders`, rebuilds the shader on both GPU workers on save | `// [AI-GENERATED]` |
+| `src/main/java/hu/elte/ik/thesis/cinegrade/engine/gl/ShaderProgram.java` | `reload`, `compileSource` (DEV) | Builds a program from new sources, keeps the old one on error | `// [AI-GENERATED METHOD]` |
+| `src/main/java/hu/elte/ik/thesis/cinegrade/engine/GpuWorker.java` | `reloadShader` (DEV) | Runs the shader reload on the worker's GL thread, rebinds the UBO block | `// [AI-GENERATED METHOD]` |
+| `src/main/java/hu/elte/ik/thesis/cinegrade/engine/renderer/ViewportRenderer.java` | `rerender` (DEV) | Redraws with the latest edit after a shader reload | `// [AI-GENERATED METHOD]` |
+| `Documentation/REMOVE_BEFORE_RELEASE.md` | whole file | Checklist of dev-only code to remove | `<!-- [AI-GENERATED] -->` |
+| `src/main/resources/fxmls/exportPanel.fxml`, `src/main/resources/css/exportPanel.css` | Whole files (redesign) | Photos and 3D LUT tabs on floating plates: photo choice with live counts, segmented format and LUT size, file settings, action bar with a live summary | `<!-- [AI-GENERATED] -->`, `/* [AI-GENERATED] */` |
+| `src/main/java/hu/elte/ik/thesis/cinegrade/javafx/ui/editing/ExportPanelController.java` | Whole class | Binds the export panel to `ExportStage`: live counts, summary and button state, file pickers, saved folders, `reset()` | `// [AI-GENERATED]` |
+| `src/main/resources/fxmls/developLeftPanel.fxml` | Whole file (redesign) | Presets only: title with + New, search, category names as plain labels with an empty hint under each; History and Tags tabs removed | `<!-- [AI-GENERATED] -->` |
+| `src/main/resources/fxmls/developEditPanel.fxml` | (update) Copy / Paste bar | Always visible bar below the Edit and Metadata tabs | `<!-- [AI-GENERATED] -->` |
+| `src/main/resources/css/developmentPanel.css` | Left panel and Copy / Paste blocks | `.left-panel-header`, `.left-panel-title`, `.preset-category`, `.preset-empty`, `.edit-action-bar`, `.edit-copy-btn`, `.edit-paste-btn`; the old left tab styles removed | `/* [AI-GENERATED] */` |
+| `src/main/resources/css/importPanel.css` | (update) light theme | Hard-coded white text and dark surfaces replaced by theme tokens (text, sidebar, empty drop zone, loading overlay, scroll thumb, spinner, remove button); white kept only on blue, red, purple and black | `/* [AI-GENERATED] */` |
+| `src/main/resources/fxmls/developLeftPanel.fxml` | (update) preset tree | Import and + New in the header, search, `TreeView` of roots / categories / presets with one context menu (apply, update, rename, move, export `.cgedit` / `.cube`, delete, new category; no delete category), notice label | `<!-- [AI-GENERATED] -->` |
+| `src/main/resources/fxmls/presetDialog.fxml` | Whole file | Save-as-preset form: name, category path combo, author, description, settings to include listed by hand (Light / Color / Detail, Color mixer parent with Hue / Saturation / Luminance) | `<!-- [AI-GENERATED] -->` |
+| `src/main/java/hu/elte/ik/thesis/cinegrade/javafx/ui/components/PresetDialog.java` | Whole class | `fx:root` component for `presetDialog.fxml`: field getters / setters, Color mixer parent sync, Save disabled on blank name, `showAndWait(owner)` | `// [AI-GENERATED]` |
+| `src/main/resources/css/developmentPanel.css` | Preset tree block | `.preset-tree`, `.preset-group-cell`, `.preset-notice` | `/* [AI-GENERATED] */` |
+| `src/main/resources/css/components.css` | PresetDialog block | `.preset-dialog-label`, `-field`, `-settings`, `-section`, `-check`, `-child` | `/* [AI-GENERATED] */` |
+| `src/main/java/hu/elte/ik/thesis/cinegrade/infra/database/dao/catalog/PresetDao.java` | (update) `findAllJson`, `upsert(Preset, String)` | Stores and returns the whole preset JSON; parsing moved to `PresetService`, `mapRowToPreset` / `parseInstant` removed | file already `// [AI-GENERATED]` |
+| `src/main/java/hu/elte/ik/thesis/cinegrade/infra/services/storage/database/PresetService.java` | `loadBuiltIns`, `readResource` | Read-only built-in presets from `resources/presets`, listed in `builtin.txt` | `// [AI-GENERATED METHOD]` |
+| `src/main/java/hu/elte/ik/thesis/cinegrade/javafx/ui/editing/DevelopPresetPanelController.java` | `rebuild`, `rootItem`, `ask`, `PresetCell` | Preset tree built from the paths (unused categories are not built), text prompt with the app stylesheets, cell with muted category rows and double-click apply | `// [AI-GENERATED METHOD]` |
+| `src/main/resources/presets/builtin.txt` | whole file | List of built-in `.cgedit` files | untagged (data) |
+| `src/main/resources/fxmls/developLeftPanel.fxml` | (rework) | Tree removed: Import in the header, search, one collapsible pane per category with preset cards, preset context menu (update, rename, move, export `.cgedit`, disabled Share, delete), Save / Clear bar | `<!-- [AI-GENERATED] -->` |
+| `src/main/resources/fxmls/presetDialog.fxml`, `PresetDialog.java` | (rework) | Category combo from the saved categories, read-only author, one-line description; Detail, wheels and curve checkboxes removed | `<!-- [AI-GENERATED] -->`, `// [AI-GENERATED]` |
+| `src/main/java/hu/elte/ik/thesis/cinegrade/javafx/ui/editing/DevelopPresetPanelController.java` | `rebuild`, `card`, `clearPopupRoot` | Category panes, preset cards (click applies, tooltip shows the description), transparent popup root instead of a clip | `// [AI-GENERATED METHOD]` |
+| `src/main/java/hu/elte/ik/thesis/cinegrade/infra/services/storage/database/PresetService.java` | `loadBuiltIns`, `readFolder` | Every `.cgedit` in `resources/presets`, from the classes folder or the jar (`builtin.txt` removed) | `// [AI-GENERATED METHOD]` |
+| `src/main/java/hu/elte/ik/thesis/cinegrade/infra/database/dao/catalog/PresetDao.java` | (rework) | `preset_categories` reads / inserts, presets joined with their category name, upsert links the category by name | file already `// [AI-GENERATED]` |
+| `src/main/java/hu/elte/ik/thesis/cinegrade/infra/database/schema/AppSchemaInitializer.java` | `preset_categories` table and seed, `presets.category_id` | One layer of categories, "User presets" always there | `// [AI-GENERATED TABLE STRINGS]` |
+| `src/main/java/hu/elte/ik/thesis/cinegrade/engine/GradeParam.java` | (update) | Lift / Gamma / Gain, Sharpen, Noise reduction, Grain, Vignette and the Color Wheels / Detail sections removed (not implemented yet) | file already `// [AI-GENERATED]` |
+| `src/main/resources/css/developmentPanel.css`, `components.css` | (update) | Preset tree styles removed, `.preset-item` text, read-only dialog field | `/* [AI-GENERATED] */` |

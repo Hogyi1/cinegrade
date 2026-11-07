@@ -63,6 +63,10 @@ public class DevelopEditPanelController {
     private VBox panelsContainer;
     @FXML
     private VBox metadataTable;
+    @FXML
+    private Button copySettingsBtn;
+    @FXML
+    private Button pasteSettingsBtn;
 
     @Getter
     private HistogramService histogramService;
@@ -84,6 +88,13 @@ public class DevelopEditPanelController {
         oneAlwaysSelected(editTabBtn, metadataTabBtn);
 
         buildPanes();
+
+        copySettingsBtn.setTooltip(new Tooltip("Copy this photo's settings (Ctrl+C)"));
+        pasteSettingsBtn.setTooltip(new Tooltip("Paste the copied settings onto the selected photos (Ctrl+V)"));
+        copySettingsBtn.setOnAction(e -> editingManager.copySettings());
+        pasteSettingsBtn.setOnAction(e -> editingManager.pasteSettings());
+        copySettingsBtn.disableProperty().bind(editingManager.getViewModel().currentEditStateProperty().isNull());
+        pasteSettingsBtn.disableProperty().bind(editingManager.getViewModel().currentEditStateProperty().isNull());
 
         editingManager.getViewModel().currentPhotoProperty().addListener((obs, oldPhoto, newPhoto) -> showPhoto(newPhoto));
         editingManager.getViewModel().currentEditStateProperty().addListener((obs, oldState, newState) -> showEditState(newState));

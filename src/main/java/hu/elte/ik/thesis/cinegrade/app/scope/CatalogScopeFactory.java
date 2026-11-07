@@ -13,6 +13,8 @@ import hu.elte.ik.thesis.cinegrade.app.managers.photos.PhotoManager;
 import hu.elte.ik.thesis.cinegrade.app.managers.concurrency.tasks.TaskManager;
 import hu.elte.ik.thesis.cinegrade.app.managers.imports.StagingPipeline;
 import hu.elte.ik.thesis.cinegrade.app.managers.photos.PhotoLibrary;
+import hu.elte.ik.thesis.cinegrade.app.managers.presets.PresetManager;
+import hu.elte.ik.thesis.cinegrade.app.managers.presets.PresetStage;
 import hu.elte.ik.thesis.cinegrade.domain.catalog.Catalog;
 import hu.elte.ik.thesis.cinegrade.engine.renderer.ExportRenderer;
 import hu.elte.ik.thesis.cinegrade.engine.renderer.ThumbnailRenderer;
@@ -24,6 +26,7 @@ import hu.elte.ik.thesis.cinegrade.infra.database.dao.catalog.PhotoDao;
 import hu.elte.ik.thesis.cinegrade.infra.database.dao.preview.PhotoBlobDao;
 import hu.elte.ik.thesis.cinegrade.infra.services.exiftool.ExifToolService;
 import hu.elte.ik.thesis.cinegrade.infra.services.storage.StorageService;
+import hu.elte.ik.thesis.cinegrade.infra.services.storage.database.PresetService;
 import hu.elte.ik.thesis.cinegrade.infra.utils.thumbnail.ThumbnailFactory;
 import hu.elte.ik.thesis.cinegrade.infra.database.CatalogDatabase;
 import hu.elte.ik.thesis.cinegrade.infra.database.PreviewDatabase;
@@ -38,19 +41,21 @@ public class CatalogScopeFactory {
     private final ViewportRenderer viewportRenderer;
     private final ThumbnailRenderer thumbnailRenderer;
     private final ExportRenderer exportRenderer;
+    private final TransactionRunner appTx;
 
     public CatalogScopeFactory(TaskManager taskManager,
                                ThumbnailFactory thumbnailFactory,
                                ThreadPoolManager threadPoolManager,
                                ViewportRenderer viewportRenderer,
                                ThumbnailRenderer thumbnailRenderer,
-                               ExportRenderer exportRenderer) {
+                               ExportRenderer exportRenderer, TransactionRunner appTx) {
         this.taskManager = taskManager;
         this.thumbnailFactory = thumbnailFactory;
         this.threadPoolManager = threadPoolManager;
         this.viewportRenderer = viewportRenderer;
         this.thumbnailRenderer = thumbnailRenderer;
         this.exportRenderer = exportRenderer;
+        this.appTx = appTx;
     }
 
     public CatalogScope open(Catalog catalog) {
@@ -69,6 +74,7 @@ public class CatalogScopeFactory {
             ThumbnailService thumbnailService = resources.push(new ThumbnailService(blobDao, thumbnailFactory, threadPoolManager.getCpuPool()));
             ExifToolService exifToolService = new ExifToolService();
             StorageService storageService = new StorageService(catalog.getProjectDirectory());
+            PresetService presetService = new PresetService();
 
             HistoryManager historyManager = new HistoryManager();
             PhotoLibrary photoLibrary = new PhotoLibrary();
@@ -122,7 +128,10 @@ public class CatalogScopeFactory {
                     threadPoolManager.getCpuPool(),
                     exportStage));
 
-            return new CatalogScope(resources, catalog, thumbnailService, catalogService, stagingArea, importManager, editingManager, exportManager, photoManager, photoLibrary);
+            PresetStage presetStage = new PresetStage(editingStage.currentPhotoProperty(), editingStage.currentEditStateProperty());
+            PresetManager presetManager = new PresetManager(editingManager, presetService, presetStage, appTx);
+
+            return new CatalogScope(resources, catalog, thumbnailService, catalogService, stagingArea, importManager, editingManager, exportManager, photoManager, photoLibrary, presetManager);
         } catch (Exception e) {
             resources.close();
             throw new RuntimeException("Failed to open catalog scope", e);

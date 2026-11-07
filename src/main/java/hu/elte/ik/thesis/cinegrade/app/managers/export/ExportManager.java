@@ -2,7 +2,6 @@ package hu.elte.ik.thesis.cinegrade.app.managers.export;
 
 import hu.elte.ik.thesis.cinegrade.app.managers.concurrency.tasks.TaskManager;
 import hu.elte.ik.thesis.cinegrade.app.managers.editing.EditingManager;
-import hu.elte.ik.thesis.cinegrade.app.managers.photos.PhotoManager;
 import hu.elte.ik.thesis.cinegrade.domain.objects.EditState;
 import hu.elte.ik.thesis.cinegrade.domain.objects.LutExportOption;
 import hu.elte.ik.thesis.cinegrade.domain.objects.PhotoExportOptions;
@@ -13,14 +12,12 @@ import hu.elte.ik.thesis.cinegrade.domain.exceptions.CineGradeException;
 import hu.elte.ik.thesis.cinegrade.domain.tasks.ExportBatchService;
 import hu.elte.ik.thesis.cinegrade.domain.tasks.ExportLutService;
 import hu.elte.ik.thesis.cinegrade.engine.renderer.ExportRenderer;
-import hu.elte.ik.thesis.cinegrade.infra.services.storage.database.LastPathService;
 import javafx.application.Platform;
 import lombok.Getter;
 
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.ThreadPoolExecutor;
 

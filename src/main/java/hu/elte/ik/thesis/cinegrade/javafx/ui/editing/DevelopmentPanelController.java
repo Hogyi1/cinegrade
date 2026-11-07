@@ -26,7 +26,7 @@ public class DevelopmentPanelController implements PanelController {
     @FXML
     private VBox developFilmstrip;
     @FXML
-    private DevelopLeftPanelController developLeftPanelController;
+    private DevelopPresetPanelController developLeftPanelController;
     @FXML
     private DevelopViewportController developViewportController;
     @FXML
@@ -51,6 +51,7 @@ public class DevelopmentPanelController implements PanelController {
         inputListener.bind(new KeyCodeCombination(KeyCode.C, KeyCombination.SHORTCUT_DOWN), editingManager::copySettings);
         inputListener.bind(new KeyCodeCombination(KeyCode.V, KeyCombination.SHORTCUT_DOWN), editingManager::pasteSettings);
         inputListener.bind(new KeyCodeCombination(KeyCode.R, KeyCombination.SHORTCUT_DOWN, KeyCombination.SHIFT_DOWN), editingManager::resetSettings);
+        inputListener.bind(new KeyCodeCombination(KeyCode.S, KeyCombination.SHORTCUT_DOWN, KeyCombination.SHIFT_DOWN), developLeftPanelController::savePreset);
         inputListener.bind(new KeyCodeCombination(KeyCode.B, KeyCombination.SHORTCUT_DOWN, KeyCombination.SHIFT_DOWN),
                 () -> editingManager.showBefore(!editingManager.getViewModel().showOriginalProperty().get()));
         inputListener.bind(new KeyCodeCombination(KeyCode.Z, KeyCombination.SHORTCUT_DOWN), () -> editingManager.getHistoryManager().undo());

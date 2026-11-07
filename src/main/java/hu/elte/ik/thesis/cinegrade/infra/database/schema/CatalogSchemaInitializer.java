@@ -89,41 +89,16 @@ public class CatalogSchemaInitializer {
             );
             """;
 
-    private static final String CREATE_TABLE_EDIT_HISTORY = """
-            CREATE TABLE IF NOT EXISTS edit_history (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                photo_id TEXT NOT NULL,
-                step_order INTEGER NOT NULL,
-                description TEXT NOT NULL,
-                parameters_json TEXT NOT NULL,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (photo_id) REFERENCES photos(id) ON DELETE CASCADE
-            );
-            """;
-
-    private static final String CREATE_TABLE_PRESET = """
-            CREATE TABLE IF NOT EXISTS presets (
-                id TEXT PRIMARY KEY,
-                name TEXT NOT NULL,
-                category TEXT DEFAULT 'User',
-                edit_parameters_json TEXT NOT NULL,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-            );
-            """;
-
     private static final String CREATE_INDEX_PHOTOPATH = "CREATE INDEX IF NOT EXISTS idx_photos_path ON photos(file_path);";
     private static final String CREATE_INDEX_RATING = "CREATE INDEX IF NOT EXISTS idx_photos_rating ON photos(rating);";
     private static final String CREATE_INDEX_IMPORT = "CREATE INDEX IF NOT EXISTS idx_photos_import ON photos(import_id);";
     private static final String CREATE_INDEX_METADATA_DATE = "CREATE INDEX IF NOT EXISTS idx_metadata_date ON photo_metadata(capture_date);";
-    private static final String CREATE_INDEX_HISTORY_PHOTO = "CREATE INDEX IF NOT EXISTS idx_edit_history_photo ON edit_history(photo_id, step_order);";
 
     private static final SchemaEntity[] TABLES = {
             new SchemaEntity("catalog_info", CREATE_TABLE_CATALOG_INFO),
             new SchemaEntity("photos", CREATE_TABLE_PHOTOENTRY),
             new SchemaEntity("photo_metadata", CREATE_TABLE_PHOTO_METADATA),
-            new SchemaEntity("edit_states", CREATE_TABLE_EDITSTATE),
-            new SchemaEntity("edit_history", CREATE_TABLE_EDIT_HISTORY),
-            new SchemaEntity("presets", CREATE_TABLE_PRESET)
+            new SchemaEntity("edit_states", CREATE_TABLE_EDITSTATE)
     };
 
     private static final SchemaEntity[] INDEXES = {
@@ -131,7 +106,6 @@ public class CatalogSchemaInitializer {
             new SchemaEntity("idx_photos_rating", CREATE_INDEX_RATING),
             new SchemaEntity("idx_photos_import", CREATE_INDEX_IMPORT),
             new SchemaEntity("idx_metadata_date", CREATE_INDEX_METADATA_DATE),
-            new SchemaEntity("idx_edit_history_photo", CREATE_INDEX_HISTORY_PHOTO)
     };
 
     public static void initialize(Connection connection) {
