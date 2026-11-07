@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- [AI-GENERATED] -->
+
+<?import hu.elte.ik.thesis.cinegrade.javafx.ui.components.SearchBar?>
+<?import java.net.URL?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.CheckBox?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ProgressIndicator?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.Slider?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.FlowPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+<?import org.controlsfx.control.GridView?>
+<StackPane fx:id="importPanelRoot" alignment="CENTER" prefHeight="850.0" prefWidth="1380.0"
+           styleClass="import-panel-root"
+           xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+           fx:controller="hu.elte.ik.thesis.cinegrade.javafx.ui.editing.ImportPanelController">
+    <stylesheets>
+        <URL value="@../css/theme.css"/>
+        <URL value="@../css/importPanel.css"/>
+    </stylesheets>
+
+    <!-- Central Import Dialog Layout -->
+    <children>
+        <VBox alignment="CENTER" maxWidth="1360.0" spacing="12.0" VBox.vgrow="ALWAYS">
+            <children>
+                <!-- Main Import Content Row (Left Plate + Right Floating Sidebar) -->
+                <HBox alignment="CENTER" spacing="18.0" VBox.vgrow="ALWAYS">
+                    <children>
+                        <!-- Left: Main Import Dialog Plate -->
+                        <VBox alignment="CENTER" styleClass="import-plate" HBox.hgrow="ALWAYS" VBox.vgrow="ALWAYS">
+                            <children>
+                                <!-- Inner Staging Plate (with blue highlight border) -->
+                                <VBox fx:id="dropZone" styleClass="inner-plate" VBox.vgrow="ALWAYS">
+                                    <children>
+                                        <!-- Top Staging Toolbar -->
+                                        <HBox alignment="CENTER_LEFT" spacing="14.0" styleClass="staging-toolbar">
+                                            <children>
+                                                <Label fx:id="stagedCountLabel" styleClass="staged-count-text" text="18 Photos Staged"/>
+                                                <Label fx:id="selectedBadge" styleClass="selected-badge" text="16 Selected to Import"/>
+                                                <Label fx:id="totalSizeLabel" styleClass="total-size-text" text="• 1.42 GB total"/>
+
+                                                <Region HBox.hgrow="ALWAYS"/>
+
+                                                <!-- Red Remove Selected Button next to Select All -->
+                                                <Button fx:id="removeSelectedButton" mnemonicParsing="false" styleClass="btn-remove-selected" text="Remove (32)"/>
+                                                <Button fx:id="selectAllButton" mnemonicParsing="false" styleClass="btn-batch-select" text="Select All"/>
+                                                <Button fx:id="deselectAllButton" mnemonicParsing="false" styleClass="btn-batch-select" text="Deselect All"/>
+
+                                                <!-- Thumbnail Zoom Slider -->
+                                                <HBox alignment="CENTER" spacing="7.0" styleClass="thumb-zoom-box">
+                                                    <children>
+                                                        <Label styleClass="thumb-zoom-label" text="Thumbnail:"/>
+                                                        <Label styleClass="thumb-zoom-icon" text="−"/>
+                                                        <Slider fx:id="thumbnailSizeSlider" max="1.5" min="0.45" prefWidth="120.0" styleClass="thumbnail-slider" value="1.0"/>
+                                                        <Label styleClass="thumb-zoom-icon" text="+"/>
+                                                    </children>
+                                                </HBox>
+                                            </children>
+                                        </HBox>
+
+                                        <!-- Staging Grid (Photos Container with Drag & Drop Overlay, Empty State, and Progress Overlay) -->
+                                        <StackPane VBox.vgrow="ALWAYS">
+                                            <children>
+                                                <!-- Empty Staging State (matching Figma pasted-image-1.png) -->
+                                                <VBox fx:id="emptyStateContainer" alignment="CENTER" spacing="10.0" styleClass="empty-staging-container">
+                                                    <children>
+                                                        <Label styleClass="empty-staging-title" text="Drag &amp; Drop Photos or Folders Here"/>
+                                                        <Label styleClass="empty-staging-subtitle" text="Supports RAW camera formats (.CR2, .CR3, .ARW, .NEF, .RW2), JPEG, PNG, TIFF"/>
+                                                    </children>
+                                                </VBox>
+
+                                                <GridView fx:id="cardsGridView" styleClass="staging-flow-pane" />
+
+                                                <!-- Drop Hint Overlay (Visible on Drag Over) -->
+                                                <VBox fx:id="dropHint" alignment="CENTER" mouseTransparent="true" spacing="12.0" styleClass="drop-hint-overlay" visible="false">
+                                                    <children>
+                                                        <Label styleClass="drop-hint-icon" text="📥" />
+                                                        <Label styleClass="drop-hint-title" text="Drop photos or folders to stage" />
+                                                        <Label styleClass="drop-hint-subtitle" text="Release files to append them to the import queue" />
+                                                    </children>
+                                                </VBox>
+
+                                                <!-- Import Progress / Spinner Overlay (Active during Import) -->
+                                                <VBox fx:id="stageProgressOverlay" alignment="CENTER" mouseTransparent="false" spacing="14.0" styleClass="import-loading-overlay" visible="false" managed="false">
+                                                    <children>
+                                                        <ProgressIndicator fx:id="stageProgressIndicator" prefHeight="48.0" prefWidth="48.0" styleClass="import-spinner"/>
+                                                        <Label fx:id="importProgressTitle" styleClass="import-progress-title" text="Staging Photos..."/>
+                                                        <Label fx:id="importProgressSubtitle" styleClass="import-progress-subtitle" text="Registering media and processing thumbnails"/>
+                                                    </children>
+                                                </VBox>
+                                            </children>
+                                        </StackPane>
+
+                                        <!-- Bottom Plate Drag & Drop Hint Banner -->
+                                        <HBox alignment="CENTER" styleClass="drop-hint-banner">
+                                            <children>
+                                                <Label styleClass="drop-hint-text" text="Drag &amp; drop additional photos or folders anywhere on this plate to append to staging queue"/>
+                                            </children>
+                                        </HBox>
+                                    </children>
+                                </VBox>
+
+                                <!-- Bottom Plate Footer Actions -->
+                                <HBox alignment="CENTER_LEFT" spacing="16.0" styleClass="plate-footer">
+                                    <children>
+                                        <Button fx:id="browseFilesButton" mnemonicParsing="false" styleClass="btn-open-files" text="📂 Open Files..."/>
+
+                                        <Region HBox.hgrow="ALWAYS"/>
+
+                                        <Button fx:id="cancelButton" mnemonicParsing="false" styleClass="btn-plate-cancel" text="Cancel"/>
+                                        <Button fx:id="importButton" mnemonicParsing="false" styleClass="btn-import-commit" text="Import (16)"/>
+                                    </children>
+                                </HBox>
+                            </children>
+                        </VBox>
+
+                        <!-- Right: Floating Sidebar (File Handling, Search, Filters) -->
+                        <VBox alignment="TOP_CENTER" maxWidth="310.0" minWidth="270.0" prefWidth="290.0" spacing="16.0" styleClass="floating-sidebar" VBox.vgrow="ALWAYS">
+                            <children>
+                                <!-- File Handling / Import Method Section -->
+                                <VBox spacing="6.0" styleClass="sidebar-section">
+                                    <children>
+                                        <Label styleClass="sidebar-section-title" text="File Handling"/>
+                                        <Label styleClass="sidebar-section-caption" text="How do you want to import files?"/>
+                                        <ComboBox fx:id="importMethodComboBox" maxWidth="Infinity" promptText="Add" styleClass="import-method-selector-box"/>
+                                    </children>
+                                </VBox>
+
+                                <Region styleClass="sidebar-divider"/>
+
+                                <!-- Search Section -->
+                                <VBox spacing="6.0" styleClass="sidebar-section">
+                                    <children>
+                                        <Label styleClass="sidebar-section-title" text="Search"/>
+                                        <SearchBar fx:id="searchField" prefHeight="38.0" promptText="Search photos..."/>
+                                    </children>
+                                </VBox>
+
+                                <Region styleClass="sidebar-divider"/>
+
+                                <!-- Staging / Filter Options Section -->
+                                <VBox spacing="8.0" styleClass="sidebar-section">
+                                    <children>
+                                        <Label styleClass="sidebar-section-title" text="Filter Options"/>
+                                        <Label styleClass="sidebar-section-caption" text="Duplicate detection only checks for similar file names." wrapText="true"/>
+                                        <VBox spacing="8.0" styleClass="sidebar-filters-container">
+                                            <children>
+                                                <!-- Auto Pair Filter Button with Real JavaFX CheckBox -->
+                                                <Button fx:id="autoPairButton" alignment="CENTER_LEFT" maxWidth="Infinity" mnemonicParsing="false" styleClass="sidebar-filter-btn">
+                                                    <graphic>
+                                                        <CheckBox fx:id="autoPairCheckBox" mouseTransparent="true" selected="true" styleClass="sidebar-checkbox" text="Auto Pair"/>
+                                                    </graphic>
+                                                </Button>
+
+                                                <!-- Remove Duplicates Filter Button with Real JavaFX CheckBox -->
+                                                <Button fx:id="duplicatesButton" alignment="CENTER_LEFT" maxWidth="Infinity" mnemonicParsing="false" styleClass="sidebar-filter-btn">
+                                                    <graphic>
+                                                        <CheckBox fx:id="duplicatesCheckBox" mouseTransparent="true" selected="true" styleClass="sidebar-checkbox" text="Remove duplicates"/>
+                                                    </graphic>
+                                                </Button>
+                                            </children>
+                                        </VBox>
+                                    </children>
+                                </VBox>
+                            </children>
+                        </VBox>
+                    </children>
+                </HBox>
+            </children>
+        </VBox>
+    </children>
+</StackPane>

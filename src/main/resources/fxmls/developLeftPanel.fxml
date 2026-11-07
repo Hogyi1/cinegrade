@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- [AI-GENERATED] -->
+
+<?import hu.elte.ik.thesis.cinegrade.javafx.ui.components.SearchBar?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ContextMenu?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.MenuItem?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.SeparatorMenuItem?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox fx:id="leftPanelRoot" fx:controller="hu.elte.ik.thesis.cinegrade.javafx.ui.editing.DevelopPresetPanelController" prefWidth="260.0" minWidth="240.0" maxWidth="300.0"
+      styleClass="sidebar-panel"
+      xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1">
+    <fx:define>
+        <!-- Right click on a preset card; built-in presets have no menu -->
+        <ContextMenu fx:id="presetContextMenu">
+            <items>
+                <MenuItem fx:id="renamePresetItem" mnemonicParsing="false" text="Rename"/>
+                <MenuItem fx:id="movePresetItem" mnemonicParsing="false" text="Move to category..."/>
+                <SeparatorMenuItem fx:id="editSeparator"/>
+                <MenuItem fx:id="exportPresetItem" mnemonicParsing="false" text="Export .cgedit"/>
+                <!-- Upload to the CineGrade site, comes with the API -->
+                <MenuItem fx:id="sharePresetItem" disable="true" mnemonicParsing="false" text="Share"/>
+                <SeparatorMenuItem fx:id="deleteSeparator"/>
+                <MenuItem fx:id="deletePresetItem" mnemonicParsing="false" styleClass="menu-item-danger" text="Delete"/>
+            </items>
+        </ContextMenu>
+        <!-- Right click on the title of an empty category (not User presets) -->
+        <ContextMenu fx:id="categoryContextMenu">
+            <items>
+                <MenuItem fx:id="deleteCategoryItem" mnemonicParsing="false" styleClass="menu-item-danger" text="Delete category"/>
+            </items>
+        </ContextMenu>
+    </fx:define>
+    <children>
+        <!-- Title and import from a .cgedit file -->
+        <HBox alignment="CENTER_LEFT" spacing="6.0" styleClass="left-panel-header">
+            <children>
+                <Label styleClass="left-panel-title" text="Presets"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Button fx:id="importPresetBtn" mnemonicParsing="false" styleClass="hud-btn" text="Import"/>
+            </children>
+        </HBox>
+
+        <VBox fx:id="presetsViewContainer">
+            <padding>
+                <Insets bottom="10.0" left="12.0" right="12.0" top="10.0"/>
+            </padding>
+            <children>
+                <SearchBar fx:id="presetSearchField" promptText="Search presets..."/>
+            </children>
+        </VBox>
+
+        <!-- One collapsible pane per category, edge to edge like the edit panel's; preset cards inside, filled by the controller -->
+        <ScrollPane fitToWidth="true" hbarPolicy="NEVER" styleClass="sidebar-scroll" VBox.vgrow="ALWAYS">
+            <content>
+                <VBox fx:id="presetGroupsContainer" minWidth="0.0" spacing="1.0"/>
+            </content>
+        </ScrollPane>
+
+        <!-- Reset every setting (Ctrl+Shift+R) / save the current edit as a preset (Ctrl+Shift+S); same look as Copy / Paste -->
+        <HBox spacing="10.0" styleClass="edit-action-bar">
+            <children>
+                <Button fx:id="clearSettingsBtn" maxWidth="Infinity" mnemonicParsing="false" styleClass="edit-copy-btn" text="Clear" HBox.hgrow="ALWAYS"/>
+                <Button fx:id="savePresetBtn" maxWidth="Infinity" mnemonicParsing="false" styleClass="edit-paste-btn" text="Save" HBox.hgrow="ALWAYS"/>
+            </children>
+        </HBox>
+    </children>
+</VBox>

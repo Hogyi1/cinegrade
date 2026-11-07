@@ -1,0 +1,259 @@
+package hu.elte.ik.thesis.cinegrade.javafx.ui.catalog;
+
+import hu.elte.ik.thesis.cinegrade.app.managers.catalog.CatalogManager;
+import hu.elte.ik.thesis.cinegrade.app.managers.user.UserManager;
+import hu.elte.ik.thesis.cinegrade.domain.catalog.Catalog;
+import hu.elte.ik.thesis.cinegrade.domain.enums.ErrorCode;
+import hu.elte.ik.thesis.cinegrade.domain.enums.ViewType;
+import hu.elte.ik.thesis.cinegrade.domain.error.ErrorHandler;
+import hu.elte.ik.thesis.cinegrade.domain.exceptions.CineGradeException;
+import hu.elte.ik.thesis.cinegrade.domain.navigation.SceneManager;
+import hu.elte.ik.thesis.cinegrade.domain.theme.ThemeManager;
+import hu.elte.ik.thesis.cinegrade.infra.services.storage.database.LastPathService;
+import hu.elte.ik.thesis.cinegrade.javafx.ui.components.CatalogViewItem;
+import hu.elte.ik.thesis.cinegrade.javafx.ui.dialog.NewProjectDialogController;
+import hu.elte.ik.thesis.cinegrade.javafx.ui.editing.NavigationController;
+import hu.elte.ik.thesis.cinegrade.javafx.ui.components.SearchBar;
+import javafx.application.Platform;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleObjectProperty;
+import javafx.collections.ObservableList;
+import javafx.collections.transformation.FilteredList;
+import javafx.collections.transformation.SortedList;
+import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.ListView;
+import javafx.scene.control.TextField;
+import javafx.scene.image.ImageView;
+import javafx.scene.layout.HBox;
+import javafx.scene.paint.Color;
+import javafx.stage.*;
+import javafx.stage.FileChooser.*;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.Comparator;
+import java.util.function.Consumer;
+
+public class ProjectMenuController {
+
+    private static final Logger logger = LogManager.getLogger(ProjectMenuController.class);
+    private final CatalogManager catalogManager;
+    private final UserManager userManager;
+    private final SceneManager sceneManager;
+    private final ObjectProperty<Catalog> selectedProperty = new SimpleObjectProperty<>();
+    private final Consumer<Catalog> removeRecentConsumer;
+    private final Consumer<Catalog> deleteConsumer;
+    private final Stage modalStage;
+    private final LastPathService lastPaths = new LastPathService();
+
+    @FXML
+    private Button newProjectButton;
+    @FXML
+    private Button openProjectButton;
+    @FXML
+    private HBox homeNav;
+    @FXML
+    private HBox socialNav;
+    @FXML
+    private Label welcomeLabel;
+    @FXML
+    private SearchBar searchField;
+    @FXML
+    private ListView<Catalog> catalogListView;
+    @FXML
+    private HBox sizeFilter;
+    @FXML
+    private HBox nameFilter;
+    @FXML
+    private HBox recentFilter;
+    @FXML
+    private HBox creationFilter;
+    private HBox activeFilter;
+    @FXML
+    private ImageView sortNameIcon;
+    @FXML
+    private ImageView sortSizeIcon;
+    @FXML
+    private ImageView sortRecentIcon;
+    @FXML
+    private ImageView sortCreationIcon;
+    @FXML
+    private NavigationController navigationBarController;
+
+    private ObservableList<Catalog> catalogObservableList;
+    private FilteredList<Catalog> filteredList;
+    private SortedList<Catalog> sortedList;
+
+    public ProjectMenuController(CatalogManager catalogManager, UserManager userManager, SceneManager sceneManager) {
+        this.catalogManager = catalogManager;
+        this.userManager = userManager;
+        this.sceneManager = sceneManager;
+        this.modalStage = new Stage();
+
+        deleteConsumer = catalogManager::deleteCatalog;
+        removeRecentConsumer = catalogManager::removeFromRecent;
+
+        catalogManager.refreshCatalogs();
+    }
+
+    @FXML
+    public void initialize() {
+        navigationBarController.setWorkspaceMode(false, "", null);
+        catalogObservableList = catalogManager.getCatalogs();
+        filteredList = new FilteredList<>(catalogObservableList, pr -> true);
+        sortedList = new SortedList<>(filteredList, Comparator.comparing(Catalog::getCatalogName));
+
+        setupListView();
+        setupWelcomeLabel();
+        setupButtons();
+        catalogListView.setItems(sortedList);
+    }
+
+    private void setupButtons() {
+        newProjectButton.setOnMouseClicked(e -> createNewProjectModal());
+
+        openProjectButton.setOnMouseClicked(e -> {
+            logger.info("Open Project button clicked, opening FileChooser");
+            SceneManager.chooseFile("Open CineGrade project", catalogManager.getDefaultPath(),
+                    new ExtensionFilter("CG projects", "*.cgproj"), selectedFile -> {
+                        logger.info("Selected project file from chooser: {}", selectedFile.getAbsolutePath());
+                        try {
+                            catalogManager.openCatalog(selectedFile);
+                            logger.info("Catalog opened successfully from file {} ", selectedFile);
+                            sceneManager.switchView(ViewType.EDIT_PAGE);
+                            e.consume();
+                            lastPaths.setAppProjectPath(selectedFile.getParentFile().toPath());
+                        } catch (Exception ex) {
+                            ErrorHandler.getInstance().handle(ex);
+                        }
+                    });
+        });
+
+        homeNav.setOnMouseClicked(e -> {
+            //TODO
+            // Handle home navigation click
+        });
+
+        socialNav.setOnMouseClicked(e -> sceneManager.switchView(ViewType.SOCIALS));
+    }
+
+    private void setupWelcomeLabel() {
+        String userName = userManager.getUsername();
+        String text = userName.isBlank() ? "Welcome back!" : "Welcome back, " + userName + "!";
+        welcomeLabel.setText(text);
+    }
+
+    private void setupListView() {
+        catalogListView.setCellFactory(lvC -> new CatalogViewItem(removeRecentConsumer, deleteConsumer));
+
+        catalogListView.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+            if (newValue != selectedProperty.getValue() && newValue != null) {
+                selectedProperty.set(null);
+                logger.info("Catalog selected from recent list: {} (destination: {})", newValue.getCatalogName(), newValue.getProjectFilePath());
+                try {
+                    catalogManager.openCatalog(newValue);
+                    logger.info("Catalog opened successfully, switching view to {}", ViewType.EDIT_PAGE);
+                    sceneManager.switchView(ViewType.EDIT_PAGE);
+                } catch (Exception ex) {
+                    ErrorHandler.getInstance().handle(ex);
+                    Platform.runLater(() ->{
+                        selectedProperty.set(null);
+                        catalogListView.getSelectionModel().clearSelection();
+                    });
+                }
+            }
+        });
+
+        searchField.textProperty().addListener((obs, oldValue, newValue) -> {
+            String text = searchField.getText().trim().toLowerCase();
+            filteredList.setPredicate(catalog -> text.isEmpty() || catalog.getCatalogName().toLowerCase().contains(text));
+        });
+
+        Comparator<Catalog> nameComparator = Comparator.comparing(Catalog::getCatalogName, String.CASE_INSENSITIVE_ORDER);
+        Comparator<Catalog> sizeComparator = Comparator.comparing(Catalog::getSize);
+        Comparator<Catalog> recentComparator = Comparator.comparing(Catalog::getLastOpenedAt);
+        Comparator<Catalog> createdComparator = Comparator.comparing(Catalog::getCreatedAt);
+
+        setupSortFilter(nameFilter, sortNameIcon, nameComparator);
+        setupSortFilter(sizeFilter, sortSizeIcon, sizeComparator);
+        setupSortFilter(recentFilter, sortRecentIcon, recentComparator);
+        setupSortFilter(creationFilter, sortCreationIcon, createdComparator);
+
+        activateSortFilter(recentFilter);
+    }
+
+    private void activateSortFilter(HBox filterBox) {
+        filterBox.getOnMouseClicked().handle(null);
+    }
+
+    private void setupSortFilter(HBox filterBox, ImageView sortIcon, Comparator<Catalog> baseComparator) {
+        filterBox.getProperties().put("active", false);
+        filterBox.getProperties().put("reversed", false);
+        sortIcon.setVisible(false);
+
+        filterBox.setOnMouseClicked(e -> {
+            boolean isActive = (boolean) filterBox.getProperties().get("active");
+            boolean isReversed = (boolean) filterBox.getProperties().get("reversed");
+
+            if (activeFilter != null && activeFilter != filterBox) {
+                activeFilter.getProperties().put("active", false);
+                activeFilter.getProperties().put("reversed", false);
+                hideAllSortIcons();
+            }
+
+            activeFilter = filterBox;
+
+            if (isActive) {
+                isReversed = !isReversed;
+            } else {
+                isActive = true;
+                isReversed = false;
+            }
+
+            filterBox.getProperties().put("active", isActive);
+            filterBox.getProperties().put("reversed", isReversed);
+
+            sortIcon.setVisible(true);
+            sortIcon.setRotate(isReversed ? 180 : 0);
+
+            sortedList.setComparator(isReversed ? baseComparator : baseComparator.reversed());
+        });
+    }
+
+    private void hideAllSortIcons() {
+        sortNameIcon.setVisible(false);
+        sortSizeIcon.setVisible(false);
+        sortRecentIcon.setVisible(false);
+        sortCreationIcon.setVisible(false);
+    }
+
+    private void createNewProjectModal() {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxmls/newProjectModal.fxml"));
+            loader.setControllerFactory(factory -> new NewProjectDialogController(catalogManager::createNewProject, catalogManager.getDefaultPath(), sceneManager));
+
+            Parent root = loader.load();
+            NewProjectDialogController controller = loader.getController();
+
+            Stage projectModalStage = new Stage(StageStyle.TRANSPARENT);
+            projectModalStage.initModality(Modality.APPLICATION_MODAL);
+            projectModalStage.initOwner(sceneManager.getActiveWindow());
+            projectModalStage.setTitle("CineGrade — New Project");
+            projectModalStage.setResizable(false);
+            Scene scene = new Scene(root);
+            scene.setFill(Color.TRANSPARENT);
+            projectModalStage.setScene(scene);
+
+            projectModalStage.showAndWait();
+        } catch (IOException ex) {
+            throw new CineGradeException(ErrorCode.REQ_RESOURCE_MISSING, ex, "/fxmls/newProjectModal.fxml");
+        }
+    }
+}

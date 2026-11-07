@@ -1,0 +1,765 @@
+/* [AI-GENERATED] */
+/* ==========================================================================
+   CineGrade Development Panel Stylesheet
+   Uses Theme Tokens from theme.css (-clr-*) for seamless dark/light toggle
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   Root Development Layout
+   -------------------------------------------------------------------------- */
+.development-panel-root {
+    -fx-background-color: -clr-almostdarkgrey;
+    -fx-padding: 10px;
+}
+
+/* Gap between the panels above and the filmstrip */
+.development-bottom {
+    -fx-padding: 10px 0 0 0;
+}
+
+/* --------------------------------------------------------------------------
+   Center Viewport
+   -------------------------------------------------------------------------- */
+.viewport-root {
+    -fx-background-color: -clr-dark;
+    -fx-background-radius: 12px;
+    -fx-border-color: -clr-border-subtle;
+    -fx-border-width: 1px;
+    -fx-border-radius: 12px;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.25), 20, 0, 0, 4);
+}
+
+.viewport-stack {
+    -fx-background-color: transparent;
+    -fx-alignment: center;
+}
+
+.viewport-image-view {
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.65), 30, 0, 0, 8);
+}
+
+/* [AI-GENERATED] loading placeholder + spinner */
+.viewport-placeholder {
+    -fx-opacity: 1;
+}
+
+.viewport-loading-overlay {
+    -fx-background-color: transparent;
+}
+
+.viewport-spinner {
+    -fx-progress-color: -clr-blue;
+}
+
+.viewport-spinner .indeterminate-indicator .progress {
+    -fx-background-color: -clr-blue;
+}
+
+/* Floating Viewport HUD Bar */
+.viewport-hud {
+    -fx-background-color: -clr-surface;
+    -fx-background-radius: 8px;
+    -fx-border-color: -clr-border;
+    -fx-border-radius: 8px;
+    -fx-border-width: 1px;
+    -fx-padding: 6px 14px;
+    -fx-spacing: 12px;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.4), 12, 0, 0, 4);
+}
+
+.hud-filename {
+    -fx-text-fill: -clr-text-primary;
+    -fx-font-family: -font-family-primary;
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+}
+
+.hud-meta {
+    -fx-text-fill: -clr-text-muted;
+    -fx-font-family: -font-family-secondary;
+    -fx-font-size: 11px;
+}
+
+/* [AI-GENERATED] red badge in the HUD when the original file is missing (same look as the filmstrip badge) */
+.hud-missing-badge {
+    -fx-background-color: -clr-danger;
+    -fx-background-radius: 8px;
+    -fx-text-fill: #FFFFFF;
+    -fx-font-family: -font-family-primary;
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+    -fx-padding: 1px 7px;
+}
+
+.hud-btn {
+    -fx-background-color: -clr-surface-card;
+    -fx-background-radius: 6px;
+    -fx-text-fill: -clr-text-secondary;
+    -fx-font-size: 11px;
+    -fx-padding: 4px 10px;
+    -fx-cursor: hand;
+    -fx-border-color: -clr-border;
+    -fx-border-radius: 6px;
+    -fx-border-width: 1px;
+}
+.hud-btn:hover {
+    -fx-background-color: -clr-almostgrey;
+    -fx-text-fill: -clr-text-primary;
+    -fx-border-color: -clr-blue;
+}
+.hud-btn:selected {
+    -fx-background-color: -clr-blue;
+    -fx-text-fill: -clr-text-primary;
+    -fx-border-color: -clr-blue;
+}
+
+/* --------------------------------------------------------------------------
+   Left & Right Sidebars Common Styles
+   -------------------------------------------------------------------------- */
+/* Floating plates, like the import panel's */
+.sidebar-panel,
+.sidebar-panel-right {
+    -fx-background-color: -clr-surface-card;
+    -fx-background-radius: 12px;
+    -fx-border-color: -clr-border-subtle;
+    -fx-border-width: 1px;
+    -fx-border-radius: 12px;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.25), 20, 0, 0, 4);
+}
+
+.sidebar-scroll {
+    -fx-background-color: transparent;
+    -fx-background: transparent;
+    -fx-padding: 0;
+}
+.sidebar-scroll > .viewport {
+    -fx-background-color: transparent;
+}
+.sidebar-scroll .scroll-bar:vertical {
+    -fx-background-color: transparent;
+    -fx-pref-width: 7px;
+}
+.sidebar-scroll .scroll-bar:vertical .thumb {
+    -fx-background-color: -clr-border;
+    -fx-background-radius: 4px;
+}
+.sidebar-scroll .scroll-bar:vertical .thumb:hover {
+    -fx-background-color: -clr-text-muted;
+}
+
+/* --------------------------------------------------------------------------
+   Histogram Section in Right Panel
+   -------------------------------------------------------------------------- */
+.histogram-container {
+    -fx-background-color: -clr-dark;
+    -fx-background-radius: 11px 11px 0 0;
+    -fx-border-color: -clr-border-subtle;
+    -fx-border-width: 0 0 1px 0;
+    -fx-padding: 10px 14px;
+    -fx-spacing: 6px;
+}
+
+.histogram-canvas {
+    -fx-background-color: -clr-surface-input;
+    -fx-border-color: -clr-border-subtle;
+    -fx-border-radius: 4px;
+    -fx-border-width: 1px;
+}
+
+.histogram-exif {
+    -fx-text-fill: -clr-text-muted;
+    -fx-font-family: -font-family-secondary;
+    -fx-font-size: 10.5px;
+}
+
+.clipping-badge-shadow {
+    -fx-background-color: -clr-darkblue;
+    -fx-text-fill: -clr-blue-hover;
+    -fx-font-size: 9.5px;
+    -fx-font-weight: bold;
+    -fx-background-radius: 3px;
+    -fx-padding: 1px 5px;
+}
+
+.clipping-badge-highlight {
+    -fx-background-color: -clr-almostgrey;
+    -fx-text-fill: -clr-danger-hover;
+    -fx-font-size: 9.5px;
+    -fx-font-weight: bold;
+    -fx-background-radius: 3px;
+    -fx-padding: 1px 5px;
+}
+
+/* --------------------------------------------------------------------------
+   Collapsible Groups & TitledPanes (Right Panel)
+   -------------------------------------------------------------------------- */
+.collapsible-group {
+    -fx-text-fill: -clr-text-primary;
+    -fx-font-weight: bold;
+    -fx-font-size: 12px;
+}
+
+.collapsible-group > .title {
+    -fx-background-color: -clr-darkgrey;
+    -fx-border-color: -clr-border-subtle;
+    -fx-border-width: 1px 0 1px 0;
+    -fx-padding: 8px 12px;
+    -fx-cursor: hand;
+}
+.collapsible-group > .title:hover {
+    -fx-background-color: -clr-surface;
+}
+
+/* Move TitledPane arrow button to the far right */
+.collapsible-group > .title > .arrow-button {
+    -fx-padding: 0 4px 0 0;
+    -fx-alignment: center-right;
+}
+.collapsible-group > .title > .arrow-button > .arrow {
+    -fx-background-color: -clr-text-muted;
+}
+
+.collapsible-group > .content {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-padding: 12px 14px;
+}
+
+/* Eye Toggle in Pane Graphic */
+.group-eye-toggle {
+    -fx-background-color: transparent;
+    -fx-cursor: hand;
+    -fx-padding: 2px 6px;
+    -fx-font-size: 11px;
+    -fx-text-fill: -clr-blue;
+}
+.group-eye-toggle:hover {
+    -fx-background-color: rgba(20, 107, 209, 0.15);
+    -fx-background-radius: 4px;
+}
+.group-eye-toggle:selected {
+    -fx-text-fill: -clr-blue;
+}
+.group-eye-toggle:hover:selected {
+    -fx-text-fill: -clr-blue-hover;
+}
+
+/* --------------------------------------------------------------------------
+   Edit Controls & Sliders
+   -------------------------------------------------------------------------- */
+.slider-row {
+    -fx-alignment: center-left;
+    -fx-spacing: 8px;
+    -fx-pref-height: 26px;
+}
+
+.slider-label {
+    -fx-text-fill: -clr-text-secondary;
+    -fx-font-size: 11.5px;
+    -fx-min-width: 76px;
+    -fx-pref-width: 76px;
+}
+
+.slider-value-label {
+    -fx-text-fill: -clr-text-primary;
+    -fx-font-family: -font-family-secondary;
+    -fx-font-size: 11px;
+    -fx-alignment: center-right;
+    -fx-min-width: 42px;
+    -fx-pref-width: 42px;
+}
+
+.grade-slider {
+    -fx-pref-height: 18px;
+}
+.grade-slider .track {
+    -fx-background-color: -clr-border-subtle;
+    -fx-pref-height: 3px;
+    -fx-background-radius: 2px;
+}
+.grade-slider .thumb {
+    -fx-background-color: -clr-text-secondary;
+    -fx-pref-width: 11px;
+    -fx-pref-height: 11px;
+    -fx-background-radius: 6px;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.35), 4, 0, 0, 1);
+}
+.grade-slider:hover .thumb {
+    -fx-background-color: -clr-blue-hover;
+    -fx-pref-width: 13px;
+    -fx-pref-height: 13px;
+    -fx-background-radius: 7px;
+}
+
+/* Section Subheaders */
+.edit-subsection-header {
+    -fx-text-fill: -clr-text-dim;
+    -fx-font-size: 10.5px;
+    -fx-font-weight: bold;
+    -fx-padding: 8px 0 2px 0;
+}
+
+/* --------------------------------------------------------------------------
+   Tone Curves Component
+   -------------------------------------------------------------------------- */
+.curve-canvas-box {
+    -fx-background-color: -clr-surface-input;
+    -fx-border-color: -clr-border-subtle;
+    -fx-border-radius: 6px;
+    -fx-border-width: 1px;
+    -fx-padding: 8px;
+    -fx-alignment: center;
+}
+
+.curve-channel-btn {
+    -fx-background-color: -clr-darkgrey;
+    -fx-text-fill: -clr-text-secondary;
+    -fx-font-size: 10.5px;
+    -fx-font-weight: bold;
+    -fx-padding: 3px 10px;
+    -fx-background-radius: 4px;
+    -fx-cursor: hand;
+}
+.curve-channel-btn:hover {
+    -fx-background-color: -clr-surface;
+}
+.curve-channel-btn:selected {
+    -fx-background-color: -clr-blue;
+    -fx-text-fill: -clr-text-primary;
+}
+
+/* [AI-GENERATED] Copy / Paste bar at the bottom of the edit panel */
+.edit-action-bar {
+    -fx-border-color: -clr-border-subtle;
+    -fx-border-width: 1px 0 0 0;
+    -fx-padding: 10px 14px 12px 14px;
+}
+
+.edit-copy-btn,
+.edit-paste-btn {
+    -fx-background-radius: 16px;
+    -fx-text-fill: -clr-text-primary;
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-padding: 7px 0;
+    -fx-cursor: hand;
+}
+
+.edit-copy-btn {
+    -fx-background-color: -clr-purple-dark;
+}
+.edit-copy-btn:hover {
+    -fx-background-color: derive(-clr-purple-dark, 15%);
+}
+.edit-copy-btn:pressed {
+    -fx-background-color: -clr-almostgrey;
+}
+
+.edit-paste-btn {
+    -fx-background-color: -clr-blue;
+}
+.edit-paste-btn:hover {
+    -fx-background-color: -clr-blue-hover;
+}
+.edit-paste-btn:pressed {
+    -fx-background-color: -clr-blue-active;
+}
+
+.edit-copy-btn:disabled,
+.edit-paste-btn:disabled {
+    -fx-background-color: -clr-surface;
+    -fx-text-fill: -clr-text-dim;
+    -fx-opacity: 1;
+}
+
+/* Edit / Metadata switch below the histogram */
+.panel-tab-bar {
+    -fx-background-color: -clr-dark;
+    -fx-border-color: -clr-border-subtle;
+    -fx-border-width: 0 0 1px 0;
+    -fx-padding: 8px 14px;
+}
+
+/* Metadata tab: name | value rows */
+.metadata-table {
+    -fx-padding: 12px 14px;
+    -fx-spacing: 8px;
+}
+
+.metadata-row {
+    -fx-spacing: 10px;
+}
+
+.metadata-name {
+    -fx-text-fill: -clr-text-muted;
+    -fx-font-size: 11px;
+    -fx-min-width: 90px;
+    -fx-pref-width: 90px;
+}
+
+.metadata-value {
+    -fx-text-fill: -clr-text-primary;
+    -fx-font-size: 11px;
+}
+
+/* Color mixer: Hue / Saturation / Luminance tabs above the 8 sliders */
+.mixer-tab-bar {
+    -fx-padding: 4px 0 8px 0;
+}
+
+/* --------------------------------------------------------------------------
+   Color Wheels Component Placeholder
+   -------------------------------------------------------------------------- */
+.color-wheels-container {
+    -fx-alignment: center;
+    -fx-spacing: 12px;
+    -fx-padding: 6px 0;
+}
+
+.wheel-card {
+    -fx-background-color: -clr-dark;
+    -fx-border-color: -clr-border-subtle;
+    -fx-border-radius: 8px;
+    -fx-border-width: 1px;
+    -fx-padding: 10px;
+    -fx-alignment: center;
+    -fx-spacing: 6px;
+}
+
+.wheel-title {
+    -fx-text-fill: -clr-text-secondary;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+}
+
+.wheel-disc-placeholder {
+    -fx-background-color: -clr-darkgrey;
+    -fx-background-radius: 50px;
+    -fx-border-color: -clr-border;
+    -fx-border-radius: 50px;
+    -fx-border-width: 1px;
+    -fx-min-width: 90px;
+    -fx-min-height: 90px;
+    -fx-pref-width: 90px;
+    -fx-pref-height: 90px;
+}
+
+/* --------------------------------------------------------------------------
+   Bottom Filmstrip & Filter Bar
+   -------------------------------------------------------------------------- */
+/* Outer plate (like .import-plate) */
+.filmstrip-root {
+    -fx-background-color: -clr-surface-card;
+    -fx-background-radius: 12px;
+    -fx-border-color: -clr-border-subtle;
+    -fx-border-width: 1px;
+    -fx-border-radius: 12px;
+    -fx-padding: 8px 10px 10px 10px;
+    -fx-spacing: 8px;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.25), 20, 0, 0, 4);
+}
+
+.filmstrip-filter-bar {
+    -fx-spacing: 10px;
+    -fx-min-height: 36px;
+    -fx-pref-height: 36px;
+}
+
+/* All photos | Last import */
+.filmstrip-segmented {
+    -fx-background-color: -clr-surface-input;
+    -fx-background-radius: 10px;
+    -fx-border-color: -clr-border-subtle;
+    -fx-border-width: 1px;
+    -fx-border-radius: 10px;
+    -fx-padding: 3px;
+    -fx-spacing: 2px;
+}
+.filmstrip-segment {
+    -fx-background-color: transparent;
+    -fx-background-radius: 7px;
+    -fx-text-fill: -clr-text-muted;
+    -fx-font-size: 12px;
+    -fx-font-weight: 600;
+    -fx-padding: 4px 12px;
+    -fx-cursor: hand;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+}
+.filmstrip-segment:hover {
+    -fx-text-fill: -clr-text-primary;
+}
+.filmstrip-segment:selected {
+    -fx-background-color: -clr-blue;
+    -fx-text-fill: #FFFFFF;
+    -fx-effect: dropshadow(gaussian, rgba(20, 107, 209, 0.4), 6, 0, 0, 1);
+}
+
+.filmstrip-count {
+    -fx-text-fill: -clr-text-primary;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+}
+
+.filmstrip-selected-badge {
+    -fx-background-color: rgba(20, 107, 209, 0.18);
+    -fx-background-radius: 12px;
+    -fx-border-color: -clr-blue;
+    -fx-border-radius: 12px;
+    -fx-text-fill: -clr-blue-hover;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-padding: 2px 10px;
+}
+
+.filmstrip-filter-title {
+    -fx-text-fill: -clr-text-secondary;
+    -fx-font-size: 12.5px;
+}
+
+.filmstrip-separator {
+    -fx-background-color: -clr-border;
+    -fx-min-width: 1px;
+    -fx-max-width: 1px;
+    -fx-pref-height: 22px;
+    -fx-max-height: 22px;
+}
+
+/* Icon toggles (edited, not edited, liked, commented): dim until switched on */
+.filmstrip-icon-toggle {
+    -fx-background-color: transparent;
+    -fx-background-radius: 8px;
+    -fx-border-color: transparent;
+    -fx-border-radius: 8px;
+    -fx-padding: 5px;
+    -fx-opacity: 0.5;
+    -fx-cursor: hand;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+}
+.filmstrip-icon-toggle:hover {
+    -fx-background-color: -clr-surface;
+    -fx-opacity: 0.85;
+}
+.filmstrip-icon-toggle:selected {
+    -fx-background-color: rgba(20, 107, 209, 0.22);
+    -fx-border-color: -clr-blue;
+    -fx-opacity: 1;
+}
+
+/* Rating filter */
+.filmstrip-operation-btn {
+    -fx-background-color: -clr-surface-input;
+    -fx-background-radius: 7px;
+    -fx-text-fill: -clr-text-secondary;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-padding: 1px 6px;
+    -fx-min-width: 26px;
+    -fx-cursor: hand;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+}
+.filmstrip-operation-btn:hover {
+    -fx-text-fill: -clr-blue-hover;
+}
+
+.filmstrip-star-btn {
+    -fx-background-color: transparent;
+    -fx-padding: 2px;
+    -fx-cursor: hand;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+}
+.filmstrip-star-shape {
+    -fx-shape: "M12 2 L14.9 8.6 L22 9.3 L16.6 14 L18.2 21 L12 17.3 L5.8 21 L7.4 14 L2 9.3 L9.1 8.6 Z";
+    -fx-background-color: -clr-text-dim;
+    -fx-min-width: 14px;
+    -fx-min-height: 14px;
+    -fx-max-width: 14px;
+    -fx-max-height: 14px;
+}
+.filmstrip-star-btn:hover .filmstrip-star-shape {
+    -fx-background-color: -clr-text-muted;
+}
+.filmstrip-star-btn.filled .filmstrip-star-shape {
+    -fx-background-color: -clr-warning;
+}
+
+/* Color label of the selection: rounded swatches, a white rim on hover */
+.filmstrip-color-btn {
+    -fx-min-width: 16px;
+    -fx-min-height: 16px;
+    -fx-max-width: 16px;
+    -fx-max-height: 16px;
+    -fx-padding: 0;
+    -fx-background-radius: 5px;
+    -fx-background-insets: 2px;
+    -fx-border-color: transparent;
+    -fx-border-width: 1.5px;
+    -fx-border-radius: 6px;
+    -fx-cursor: hand;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+}
+.filmstrip-color-btn:hover {
+    -fx-border-color: -clr-text-primary;
+}
+.filmstrip-color-btn.color-none {
+    -fx-background-color: -clr-surface-input;
+    -fx-border-color: -clr-text-dim;
+}
+.filmstrip-color-btn.color-none:hover {
+    -fx-border-color: -clr-text-primary;
+}
+.filmstrip-color-btn.color-red { -fx-background-color: -clr-danger; }
+.filmstrip-color-btn.color-yellow { -fx-background-color: -clr-warning; }
+.filmstrip-color-btn.color-green { -fx-background-color: -clr-success; }
+.filmstrip-color-btn.color-blue { -fx-background-color: -clr-blue; }
+
+/* Inner plate of the strip (like .inner-plate, without the blue rim) */
+.filmstrip-strip {
+    -fx-background-color: -clr-dark;
+    -fx-background-radius: 10px;
+    -fx-border-color: -clr-border-subtle;
+    -fx-border-width: 1px;
+    -fx-border-radius: 10px;
+    -fx-padding: 8px 6px 2px 6px;
+}
+
+.filmstrip-list,
+.filmstrip-list:focused {
+    -fx-background-color: transparent;
+    -fx-background-insets: 0;
+    -fx-padding: 0;
+    -fx-border-color: transparent;
+}
+.filmstrip-list .placeholder .label {
+    -fx-text-fill: -clr-text-muted;
+    -fx-font-size: 12.5px;
+}
+.filmstrip-list .corner {
+    -fx-background-color: transparent;
+}
+
+/* Only sideways: the list is one card high, the vertical bar never shows */
+.filmstrip-list .scroll-bar:vertical {
+    -fx-pref-width: 0;
+    -fx-max-width: 0;
+    -fx-opacity: 0;
+}
+
+/* Horizontal bar, same look as the import grid's */
+.filmstrip-list .scroll-bar:horizontal {
+    -fx-background-color: transparent;
+    -fx-pref-height: 8px;
+    -fx-padding: 0;
+}
+.filmstrip-list .scroll-bar:horizontal .track {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+}
+.filmstrip-list .scroll-bar:horizontal .thumb {
+    -fx-background-color: -clr-border;
+    -fx-background-radius: 4px;
+    -fx-background-insets: 1px;
+}
+.filmstrip-list .scroll-bar:horizontal .thumb:hover {
+    -fx-background-color: -clr-blue-hover;
+}
+.filmstrip-list .scroll-bar:horizontal .thumb:pressed {
+    -fx-background-color: -clr-blue-active;
+}
+.filmstrip-list .scroll-bar .increment-button,
+.filmstrip-list .scroll-bar .decrement-button {
+    -fx-pref-width: 0;
+    -fx-padding: 0;
+}
+.filmstrip-list .scroll-bar .increment-arrow,
+.filmstrip-list .scroll-bar .decrement-arrow {
+    -fx-shape: " ";
+    -fx-padding: 0;
+}
+
+/* --------------------------------------------------------------------------
+   Left Panel (Presets)
+   -------------------------------------------------------------------------- */
+/* [AI-GENERATED] */
+.left-panel-header {
+    -fx-border-color: -clr-border-subtle;
+    -fx-border-width: 0 0 1px 0;
+    -fx-padding: 10px 12px;
+}
+
+.left-panel-title {
+    -fx-text-fill: -clr-text-primary;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+}
+
+/* A category name: only a label above its presets, never clickable */
+.preset-category {
+    -fx-text-fill: -clr-text-muted;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-padding: 10px 2px 4px 2px;
+    -fx-border-color: -clr-border-subtle;
+    -fx-border-width: 0 0 1px 0;
+}
+
+.preset-empty {
+    -fx-text-fill: -clr-text-dim;
+    -fx-font-size: 11px;
+    -fx-padding: 2px 2px 6px 2px;
+}
+
+.preset-item {
+    -fx-background-color: -clr-darkgrey;
+    -fx-border-color: -clr-border-subtle;
+    -fx-border-radius: 6px;
+    -fx-background-radius: 6px;
+    -fx-border-width: 1px;
+    -fx-padding: 8px 12px;
+    -fx-cursor: hand;
+    -fx-spacing: 8px;
+    -fx-alignment: center-left;
+}
+.preset-item:hover {
+    -fx-background-color: -clr-surface;
+    -fx-border-color: -clr-blue;
+}
+
+/* [AI-GENERATED] Preset card (a Label with .preset-item), full width, name centered */
+.preset-item {
+    -fx-text-fill: -clr-text-primary;
+    -fx-font-size: 12px;
+    -fx-alignment: center;
+}
+
+/* Category pane: tighter than the edit panel's; an open, empty one is only 10px tall.
+   Two classes, so it wins over .edit-pane > .content whatever order the stylesheets load in */
+.edit-pane.preset-group > .content {
+    -fx-padding: 8px 12px 8px 12px;
+}
+.edit-pane.preset-group.empty > .content {
+    -fx-padding: 5px 0 5px 0;
+}
+
+
+.history-item {
+    -fx-text-fill: -clr-text-secondary;
+    -fx-font-size: 11px;
+    -fx-padding: 6px 12px;
+    -fx-cursor: hand;
+    -fx-border-color: -clr-border-subtle;
+    -fx-border-width: 0 0 1px 0;
+}
+.history-item:hover {
+    -fx-background-color: -clr-surface;
+    -fx-text-fill: -clr-text-primary;
+}
+.history-item-current {
+    -fx-text-fill: -clr-blue;
+    -fx-font-weight: bold;
+    -fx-background-color: -clr-surface-card;
+}

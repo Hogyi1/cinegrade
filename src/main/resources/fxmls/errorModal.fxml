@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- [AI-GENERATED] -->
+
+<?import java.net.URL?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.shape.Circle?>
+<?import javafx.scene.shape.SVGPath?>
+
+<VBox prefHeight="460.0" prefWidth="640.0" styleClass="modal-root" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="hu.elte.ik.thesis.cinegrade.javafx.ui.dialog.ErrorModalController">
+    <stylesheets>
+        <URL value="@../css/theme.css" />
+        <URL value="@../css/modal.css" />
+    </stylesheets>
+    <children>
+        <!-- Main Content Area -->
+        <VBox spacing="16.0" VBox.vgrow="ALWAYS">
+            <padding>
+                <Insets bottom="16.0" left="22.0" right="22.0" top="20.0" />
+            </padding>
+            <children>
+                <!-- Top Section: Big Red Icon & Header Info -->
+                <HBox alignment="CENTER_LEFT" spacing="18.0">
+                    <children>
+                        <!-- Big Red Cross Badge -->
+                        <StackPane alignment="CENTER" minHeight="56.0" minWidth="56.0" prefHeight="56.0" prefWidth="56.0" styleClass="modal-icon-bubble">
+                            <children>
+                                <Circle fill="#e02424" radius="22.0" stroke="TRANSPARENT" />
+                                <SVGPath content="M 19 6.41 L 17.59 5 L 12 10.59 L 6.41 5 L 5 6.41 L 10.59 12 L 5 17.59 L 6.41 19 L 12 13.41 L 17.59 19 L 19 17.59 L 13.41 12 Z" fill="WHITE" scaleX="1.15" scaleY="1.15" />
+                            </children>
+                        </StackPane>
+
+                        <!-- Titles -->
+                        <VBox alignment="CENTER_LEFT" spacing="4.0" HBox.hgrow="ALWAYS">
+                            <children>
+                                <Label styleClass="modal-title" text="Fatal Application Error" />
+                                <Label styleClass="modal-subtitle" text="An unrecoverable error has occurred. Details and logs are available below." />
+                            </children>
+                        </VBox>
+                    </children>
+                </HBox>
+
+                <!-- Error Code & Description Tag -->
+                <Label fx:id="errorLabel" maxWidth="1.7976931348623157E308" styleClass="modal-error-badge" text="[8006] DB_SCHEMA_INIT_FAILED" wrapText="true" />
+
+                <!-- Details / StackTrace Box with Copy Tooltip Overlay -->
+                <StackPane VBox.vgrow="ALWAYS">
+                    <children>
+                        <TextArea fx:id="errorMsgArea" editable="false" promptText="Stack trace details..." styleClass="modal-textarea" wrapText="true" />
+                        <Label fx:id="copyLabel" mouseTransparent="true" styleClass="tooltip-badge" text="Copied to clipboard!" visible="false" StackPane.alignment="TOP_RIGHT">
+                            <StackPane.margin>
+                                <Insets right="14.0" top="10.0" />
+                            </StackPane.margin>
+                        </Label>
+                    </children>
+                </StackPane>
+            </children>
+        </VBox>
+
+        <!-- Bottom Action Bar -->
+        <HBox alignment="CENTER_LEFT" spacing="12.0" styleClass="modal-footer">
+            <children>
+                <Button fx:id="logButton" mnemonicParsing="false" prefHeight="34.0" styleClass="btn, btn-primary" text="Open logs" />
+                <Button fx:id="closeButton" mnemonicParsing="false" prefHeight="34.0" prefWidth="90.0" styleClass="btn, btn-danger" text="Close" />
+                <Pane HBox.hgrow="ALWAYS" />
+                <Label styleClass="modal-hint-label" text="Click stack trace to copy" />
+            </children>
+        </HBox>
+    </children>
+</VBox>

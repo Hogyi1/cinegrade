@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- [AI-GENERATED] -->
+<?import java.net.URL?>
+<?import javafx.scene.control.CheckBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox fx:id="cardRoot" alignment="TOP_CENTER"
+      styleClass="import-card, import-card-selected"
+      xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1">
+    <stylesheets>
+        <URL value="@../css/theme.css"/>
+        <URL value="@../css/importPanel.css"/>
+    </stylesheets>
+
+    <children>
+        <!-- Thumbnail Section (fills vertical space above metadata footer) -->
+        <StackPane fx:id="thumbnailContainer" VBox.vgrow="ALWAYS"
+                   styleClass="card-thumbnail-container">
+            <children>
+                <ImageView fx:id="thumbnailImageView" pickOnBounds="true"
+                           preserveRatio="true" smooth="true"/>
+
+                <!-- Top Overlay: Selection Checkbox -->
+                <HBox alignment="CENTER_LEFT" styleClass="card-overlay-top" StackPane.alignment="TOP_CENTER">
+                    <children>
+                        <CheckBox fx:id="selectCheckBox" mnemonicParsing="false" selected="true"
+                                  styleClass="card-checkbox"/>
+                        <Region HBox.hgrow="ALWAYS"/>
+                    </children>
+                </HBox>
+
+                <!-- Bottom Overlay: Duplicate Warning Badge & Format Badge -->
+                <HBox alignment="BOTTOM_LEFT" styleClass="card-overlay-bottom" StackPane.alignment="BOTTOM_CENTER">
+                    <children>
+                        <Label fx:id="duplicateBadge" styleClass="card-duplicate-badge, card-raw-badge"
+                               style="-fx-background-color: #D97706;" text="Duplicate" visible="false"/>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <Label fx:id="formatBadge" styleClass="card-raw-badge" text="RAW"/>
+                    </children>
+                </HBox>
+            </children>
+        </StackPane>
+
+        <!-- Card Metadata Footer (Fixed height ~64px) -->
+        <VBox minHeight="64.0" prefHeight="64.0" maxHeight="64.0" spacing="4.0" styleClass="card-meta-container">
+            <children>
+                <HBox alignment="CENTER_LEFT" spacing="6.0">
+                    <children>
+                        <Label fx:id="fileNameLabel" maxWidth="Infinity" HBox.hgrow="ALWAYS"
+                               styleClass="card-filename" text="DSC_0941.CR3" textOverrun="ELLIPSIS"/>
+                        <Label fx:id="fileSizeLabel" styleClass="card-filesize" text="48.2 MB" minWidth="-Infinity"/>
+                    </children>
+                </HBox>
+                <HBox alignment="CENTER_LEFT">
+                    <children>
+                        <Label fx:id="metaLabel" maxWidth="Infinity" HBox.hgrow="ALWAYS"
+                               styleClass="card-meta-text" text="6000 × 4000 • RAW" textOverrun="ELLIPSIS"/>
+                    </children>
+                </HBox>
+            </children>
+        </VBox>
+    </children>
+</VBox>

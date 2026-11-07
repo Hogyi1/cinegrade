@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- [AI-GENERATED] -->
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.CheckBox?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<!-- Root is the PresetDialog itself; looks like the confirm dialog, field styles in components.css (.preset-dialog) -->
+<fx:root type="javafx.scene.layout.VBox" styleClass="confirm-dialog, preset-dialog" spacing="14.0"
+         prefWidth="400.0" maxWidth="400.0" minWidth="400.0"
+         xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1">
+    <children>
+        <Label fx:id="titleLabel" styleClass="confirm-dialog-title" text="Save preset"/>
+
+        <!-- Name and category -->
+        <HBox spacing="10.0">
+            <children>
+                <VBox spacing="4.0" HBox.hgrow="ALWAYS">
+                    <children>
+                        <Label styleClass="preset-dialog-label" text="Name"/>
+                        <TextField fx:id="nameField" promptText="Golden hour" styleClass="preset-dialog-field"/>
+                    </children>
+                </VBox>
+                <VBox spacing="4.0" HBox.hgrow="ALWAYS">
+                    <children>
+                        <Label styleClass="preset-dialog-label" text="Category"/>
+                        <!-- The saved categories; typing a new name creates it -->
+                        <ComboBox fx:id="categoryBox" editable="true" maxWidth="Infinity" promptText="User presets" styleClass="preset-dialog-field"/>
+                    </children>
+                </VBox>
+            </children>
+        </HBox>
+
+        <VBox spacing="4.0">
+            <children>
+                <Label styleClass="preset-dialog-label" text="Author"/>
+                <!-- The signed-in user, not editable -->
+                <TextField fx:id="authorField" editable="false" focusTraversable="false" styleClass="preset-dialog-field"/>
+            </children>
+        </VBox>
+
+        <VBox spacing="4.0">
+            <children>
+                <Label styleClass="preset-dialog-label" text="Description"/>
+                <!-- Shown as the tooltip of the preset card -->
+                <TextField fx:id="descriptionField" promptText="Optional" styleClass="preset-dialog-field"/>
+            </children>
+        </VBox>
+
+        <!-- What the preset stores: unchecked settings are not in the preset, applying keeps the photo's own -->
+        <Label styleClass="preset-dialog-label" text="Settings to include"/>
+        <HBox spacing="18.0" styleClass="preset-dialog-settings">
+            <children>
+                <VBox spacing="6.0" HBox.hgrow="ALWAYS">
+                    <children>
+                        <Label styleClass="preset-dialog-section" text="Light"/>
+                        <!-- Unchecked by default: they depend on the scene -->
+                        <CheckBox fx:id="whiteBalanceCheck" mnemonicParsing="false" styleClass="preset-dialog-check" text="White balance"/>
+                        <CheckBox fx:id="exposureCheck" mnemonicParsing="false" styleClass="preset-dialog-check" text="Exposure"/>
+                        <CheckBox fx:id="contrastCheck" mnemonicParsing="false" selected="true" styleClass="preset-dialog-check" text="Contrast"/>
+                        <CheckBox fx:id="highlightsCheck" mnemonicParsing="false" selected="true" styleClass="preset-dialog-check" text="Highlights"/>
+                        <CheckBox fx:id="shadowsCheck" mnemonicParsing="false" selected="true" styleClass="preset-dialog-check" text="Shadows"/>
+                        <CheckBox fx:id="whitesCheck" mnemonicParsing="false" selected="true" styleClass="preset-dialog-check" text="Whites"/>
+                        <CheckBox fx:id="blacksCheck" mnemonicParsing="false" selected="true" styleClass="preset-dialog-check" text="Blacks"/>
+                    </children>
+                </VBox>
+                <VBox spacing="6.0" HBox.hgrow="ALWAYS">
+                    <children>
+                        <Label styleClass="preset-dialog-section" text="Color"/>
+                        <CheckBox fx:id="vibranceCheck" mnemonicParsing="false" selected="true" styleClass="preset-dialog-check" text="Vibrance"/>
+                        <CheckBox fx:id="saturationCheck" mnemonicParsing="false" selected="true" styleClass="preset-dialog-check" text="Saturation"/>
+                        <!-- Parent of the three below: checking it checks all, it shows indeterminate when only some are -->
+                        <CheckBox fx:id="colorMixerCheck" mnemonicParsing="false" selected="true" styleClass="preset-dialog-check" text="Color mixer"/>
+                        <CheckBox fx:id="hueCheck" mnemonicParsing="false" selected="true" styleClass="preset-dialog-check, preset-dialog-child" text="Hue"/>
+                        <CheckBox fx:id="hslSaturationCheck" mnemonicParsing="false" selected="true" styleClass="preset-dialog-check, preset-dialog-child" text="Saturation"/>
+                        <CheckBox fx:id="luminanceCheck" mnemonicParsing="false" selected="true" styleClass="preset-dialog-check, preset-dialog-child" text="Luminance"/>
+                    </children>
+                </VBox>
+            </children>
+        </HBox>
+
+        <HBox alignment="CENTER_RIGHT" spacing="10.0">
+            <children>
+                <Button fx:id="cancelButton" cancelButton="true" mnemonicParsing="false"
+                        styleClass="confirm-dialog-cancel" text="Cancel"/>
+                <Button fx:id="saveButton" defaultButton="true" mnemonicParsing="false"
+                        styleClass="confirm-dialog-confirm" text="Save preset"/>
+            </children>
+        </HBox>
+    </children>
+</fx:root>

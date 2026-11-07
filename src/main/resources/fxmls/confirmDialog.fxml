@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+<!-- Root is the ConfirmDialog itself; styles in components.css (.confirm-dialog) -->
+<fx:root type="javafx.scene.layout.VBox" styleClass="confirm-dialog" spacing="18.0"
+         prefWidth="420.0" maxWidth="420.0" minWidth="420.0"
+         xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1">
+    <children>
+        <HBox alignment="TOP_LEFT" spacing="14.0">
+            <children>
+                <!-- Warning badge, only for dangerous actions -->
+                <StackPane fx:id="iconBadge" styleClass="confirm-dialog-icon" managed="false" visible="false">
+                    <children>
+                        <Region styleClass="confirm-dialog-icon-mark"/>
+                    </children>
+                </StackPane>
+
+                <VBox spacing="6.0" HBox.hgrow="ALWAYS">
+                    <children>
+                        <Label fx:id="titleLabel" styleClass="confirm-dialog-title" text="Are you sure?" wrapText="true"/>
+                        <Label fx:id="messageLabel" styleClass="confirm-dialog-message" wrapText="true"/>
+                    </children>
+                </VBox>
+            </children>
+        </HBox>
+
+        <HBox alignment="CENTER_RIGHT" spacing="10.0">
+            <children>
+                <Button fx:id="cancelButton" cancelButton="true" mnemonicParsing="false"
+                        styleClass="confirm-dialog-cancel" text="Cancel"/>
+                <Button fx:id="confirmButton" defaultButton="true" mnemonicParsing="false"
+                        styleClass="confirm-dialog-confirm" text="Confirm"/>
+            </children>
+        </HBox>
+    </children>
+</fx:root>
