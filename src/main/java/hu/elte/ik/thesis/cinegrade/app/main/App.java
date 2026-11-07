@@ -18,6 +18,7 @@ import hu.elte.ik.thesis.cinegrade.engine.renderer.ThumbnailRenderer;
 import hu.elte.ik.thesis.cinegrade.engine.renderer.ViewportRenderer;
 import hu.elte.ik.thesis.cinegrade.infra.config.AppConfig;
 import hu.elte.ik.thesis.cinegrade.infra.config.SystemInfo;
+import hu.elte.ik.thesis.cinegrade.infra.database.TransactionRunner;
 import hu.elte.ik.thesis.cinegrade.infra.utils.thumbnail.ThumbnailFactory;
 import hu.elte.ik.thesis.cinegrade.infra.services.storage.StorageService;
 import hu.elte.ik.thesis.cinegrade.infra.utils.logger.LoggerUtils;
@@ -64,6 +65,8 @@ public class App extends Application {
 
     private TaskToastPresenter taskToastPresenter;
     private ErrorPresenter errorToastPresenter;
+
+    private TransactionRunner appTx;
 
     @Override
     public void init() {
@@ -143,9 +146,10 @@ public class App extends Application {
                 catalogManager.getCurrentScope().stagingArea()));
         controllerFactory.register(DevelopmentPanelController.class, () -> new DevelopmentPanelController(catalogManager.getCurrentScope()));
         controllerFactory.register(ExportPanelController.class, () -> new ExportPanelController(catalogManager.getCurrentScope()));
-        controllerFactory.register(DevelopLeftPanelController.class, () -> new DevelopLeftPanelController(
+        controllerFactory.register(DevelopPresetPanelController.class, () -> new DevelopPresetPanelController(
+                catalogManager.getCurrentScope().presetManager(),
                 catalogManager.getCurrentScope().editingManager(),
-                catalogManager.getCurrentScope().photoManager()));
+                userManager));
         controllerFactory.register(DevelopViewportController.class, () -> new DevelopViewportController(
                 catalogManager.getCurrentScope().editingManager()));
         controllerFactory.register(DevelopEditPanelController.class, () -> new DevelopEditPanelController(
@@ -185,13 +189,15 @@ public class App extends Application {
                 java.util.List.of(renderEngine.getInteractive(), renderEngine.getBackground()), viewportRenderer::rerender));
         thumbnailRenderer = resources.push(new ThumbnailRenderer(renderEngine.getBackground()));
         exportRenderer = resources.push(new ExportRenderer(renderEngine.getBackground()));
+        appTx = resources.push(new TransactionRunner(AppDatabase.getInstance().getConnection(), "appTx"));
 
         catalogManager = new CatalogManager(new CatalogScopeFactory(taskManager,
                 thumbnailFactory,
                 threadPoolManager,
                 viewportRenderer,
                 thumbnailRenderer,
-                exportRenderer), storageService);
+                exportRenderer,
+                appTx), storageService);
 
         resources.push(catalogManager);
         userManager = new UserManager();
