@@ -39,11 +39,24 @@ public class AppSchemaInitializer {
             );
             """;
 
-    private static final String CREATE_TABLE_GLOBAL_PRESETS = """
-            CREATE TABLE IF NOT EXISTS global_presets (
-                id INTEGER PRIMARY KEY,
+    // One layer of preset categories; a category stays even when it has no presets
+    private static final String CREATE_TABLE_PRESET_CATEGORIES = """
+            CREATE TABLE IF NOT EXISTS preset_categories (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL UNIQUE COLLATE NOCASE
+            );
+            """;
+
+    // The first category, always there; new presets go here when no category is given
+    private static final String SEED_USER_PRESETS = """
+            INSERT OR IGNORE INTO preset_categories (name) VALUES ('User presets');
+            """;
+
+    private static final String CREATE_TABLE_PRESETS = """
+            CREATE TABLE IF NOT EXISTS presets (
+                id TEXT PRIMARY KEY,
+                category_id INTEGER NOT NULL REFERENCES preset_categories(id),
                 name TEXT NOT NULL,
-                category TEXT DEFAULT 'User',
                 edit_parameters_json TEXT NOT NULL,
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP
             );
@@ -70,21 +83,18 @@ public class AppSchemaInitializer {
             CREATE UNIQUE INDEX IF NOT EXISTS idx_recent_catalogs_file ON recent_catalogs(project_file_path COLLATE NOCASE);
             """;
 
-    private static final String CREATE_INDEX_GLOBAL_PRESETS_CAT = """
-            CREATE INDEX IF NOT EXISTS idx_global_presets_category ON global_presets(category);
-            """;
-
     private static final SchemaEntity[] TABLES = {
             new SchemaEntity("app_settings", CREATE_TABLE_APP_SETTINGS),
             new SchemaEntity("recent_catalogs", CREATE_TABLE_RECENT_CATALOGS),
-            new SchemaEntity("global_presets", CREATE_TABLE_GLOBAL_PRESETS),
+            new SchemaEntity("preset_categories", CREATE_TABLE_PRESET_CATEGORIES),
+            new SchemaEntity("preset_categories seed", SEED_USER_PRESETS),
+            new SchemaEntity("presets", CREATE_TABLE_PRESETS),
             new SchemaEntity("user_session", CREATE_TABLE_USER_SESSION)
     };
 
     private static final SchemaEntity[] INDEXES = {
             new SchemaEntity("idx_recent_catalogs_opened", CREATE_INDEX_RECENT_CATALOGS_DATE),
-            new SchemaEntity("idx_recent_catalogs_file", CREATE_INDEX_RECENT_CATALOGS_FILE),
-            new SchemaEntity("idx_global_presets_category", CREATE_INDEX_GLOBAL_PRESETS_CAT)
+            new SchemaEntity("idx_recent_catalogs_file", CREATE_INDEX_RECENT_CATALOGS_FILE)
     };
 
     public static void initialize(Connection connection) {
@@ -102,6 +112,7 @@ public class AppSchemaInitializer {
         }
 
         migrateRecentCatalogs(connection);
+        dropGlobalPresets(connection);
 
         logger.info("Initializing app indexes..");
         for (SchemaEntity index : INDEXES) {
@@ -137,6 +148,17 @@ public class AppSchemaInitializer {
             }
         } catch (SQLException ex) {
             throw new CineGradeException(ErrorCode.DB_SCHEMA_INIT_FAILED, ex, "recent_catalogs migration");
+        }
+    }
+
+    // [AI-GENERATED METHOD]
+    // Old app databases have global_presets with an INTEGER id, replaced by presets (TEXT UUID id).
+    // Nothing ever wrote to it, so it is dropped instead of copied; its index goes with it.
+    private static void dropGlobalPresets(Connection connection) {
+        try {
+            executeStatement(connection, "DROP TABLE IF EXISTS global_presets;");
+        } catch (SQLException ex) {
+            throw new CineGradeException(ErrorCode.DB_SCHEMA_INIT_FAILED, ex, "global_presets migration");
         }
     }
 
