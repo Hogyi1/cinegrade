@@ -23,6 +23,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.lwjgl.system.MemoryUtil;
 
+import java.nio.file.Files;
 import java.util.*;
 import java.util.concurrent.*;
 
@@ -216,6 +217,10 @@ public class EditingManager implements AutoCloseable {
                     if (photo != viewModel.getPhoto()) return;
                     viewModel.setEditState(found.orElseGet(() -> new EditState(photo.getId())));
                     lastCommitted = new EditState(photo.getId(), viewModel.getEditState());
+                    if (photo.isMissingPhoto() && Files.exists(photo.getFile().toPath())){
+                        photo.missingPhotoProperty().set(false);
+                    }
+
                     if (photo.isMissingPhoto()) {
                         viewportRenderer.clear();
                         viewModel.setLoading(false);
