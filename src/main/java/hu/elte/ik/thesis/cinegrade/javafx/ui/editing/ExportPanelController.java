@@ -3,6 +3,7 @@ package hu.elte.ik.thesis.cinegrade.javafx.ui.editing;
 import hu.elte.ik.thesis.cinegrade.app.managers.export.ExportManager;
 import hu.elte.ik.thesis.cinegrade.app.managers.export.ExportStage;
 import hu.elte.ik.thesis.cinegrade.app.scope.CatalogScope;
+import hu.elte.ik.thesis.cinegrade.domain.enums.WorkspacePanel;
 import hu.elte.ik.thesis.cinegrade.domain.objects.PhotoEntry;
 import hu.elte.ik.thesis.cinegrade.domain.enums.PhotoExtension;
 import hu.elte.ik.thesis.cinegrade.domain.navigation.SceneManager;
@@ -205,7 +206,7 @@ public class ExportPanelController implements PanelController {
             } else {
                 exportManager.exportPhotos();
             }
-            navigationController.switchToPreviousPanel();
+            navigationController.switchTo(WorkspacePanel.DEVELOPMENT);
         });
     }
 
