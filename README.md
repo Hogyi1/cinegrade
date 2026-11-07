@@ -3,6 +3,14 @@
 
 A desktop photo grading app (ELTE IK thesis). You can do non-destructive editing on the GPU through OpenGL, export to JPEG/TIFF and to `.cube` 3D LUTs, and save looks as presets. The community platform, a separate Angular and Spring Boot project, is built into the app through a WebView.
 
+## Szakdolgozat
+
+**GPU-gyorsított színkorrekciós asztali alkalmazás közösségi platformmal**
+
+A szakdolgozatom célja egy komplex, cross-platform asztali digitális színkorrekciós alkalmazás és közösségi platform fejlesztése. A szoftver JavaFX alapokra épül, és egy OpenGL-alapú, GPU-gyorsított renderelést alkalmaz, amely valós idejű, nem destruktív képszerkesztési élményt biztosít egy professzionális felületen. A rendszer lehetővé teszi az egyedi színprofilok létrehozását, amelyekből különböző precizitású szabványos 3D LUT (.cube) fájlok generálhatók. A felhasználók lokálisan végezhetik el a képek feldolgozását és exportálását.
+
+Az alkalmazás részeként egy webalapú közösségi platform is készül, amely Angular frontenddel és Spring Boot alapú backenddel valósul meg, és JavaFX WebView segítségével az asztali alkalmazásba is integrálásra kerül, ezáltal a közösségi modul a böngészőből és az alkalmazáson belül is elérhetőek lesznek. A felhasználók megoszthatják beállításaikat egy interaktív „Előtte/Utána” nézetben, valamint mások munkáit böngészhetik és értékelhetik. A rendszer támogatja a színkorrekciós beállítások egy-kattintásos importálását, valamint a feltöltött médiákból automatikusan kinyeri a releváns EXIF metaadatokat a pontosabb kategorizálás érdekében. A felhasználók a LUT-ok között különböző beállítások alapján kereshetnek és szűrhetnek, ezzel javítva a felhasználói élményt.
+
 ## Requirements
 
 - JDK 21 or newer
