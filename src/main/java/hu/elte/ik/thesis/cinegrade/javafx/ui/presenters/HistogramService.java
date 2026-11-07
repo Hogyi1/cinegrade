@@ -81,6 +81,6 @@ public class HistogramService {
 
     public void clear() {
         last = null;
-        graphicsContext.clearRect(0, 0, canvas.getWidth(), canvas.getHeight());
+        redraw();
     }
 }

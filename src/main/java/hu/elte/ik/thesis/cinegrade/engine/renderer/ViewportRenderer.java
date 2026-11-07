@@ -1,6 +1,5 @@
 package hu.elte.ik.thesis.cinegrade.engine.renderer;
 
-import com.sun.prism.impl.BufferUtil;
 import hu.elte.ik.thesis.cinegrade.app.scope.ResourceStack;
 import hu.elte.ik.thesis.cinegrade.domain.objects.EditState;
 import hu.elte.ik.thesis.cinegrade.engine.GpuWorker;
@@ -15,11 +14,9 @@ import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.scene.image.Image;
 import javafx.scene.image.PixelFormat;
 import javafx.scene.image.WritableImage;
-import lombok.Getter;
 import lombok.Setter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.lwjgl.system.MemoryUtil;
 
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
@@ -29,7 +26,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
-import static hu.elte.ik.thesis.cinegrade.engine.grade.WhiteBalancer.srgbToLinear;
 import static org.lwjgl.opengl.GL11C.*;
 import static org.lwjgl.opengl.GL30C.GL_RGBA32F;
 
@@ -62,7 +58,7 @@ public class ViewportRenderer implements AutoCloseable {
     private WritableImage[] writableImages = new WritableImage[2];
     private int writeIndex, width, height;
     private int areaWidth, areaHeight;
-    private boolean hasImage;
+    private volatile boolean hasImage;
     @Setter
     private volatile Consumer<ByteBuffer> histogramDraw;
 

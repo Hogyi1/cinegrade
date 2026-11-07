@@ -37,7 +37,7 @@ public enum AppConfig {
             logger.debug("Could not load app.properties: " + e.getMessage());
         }
 
-        boolean isPackaged = System.getProperty("jpackage.app-path") != null;
+        boolean isPackaged = System.getProperty("jpackage.app-destination") != null;
         String env = System.getProperty("app.env", properties.getProperty("app.env", "development"));
         this.developmentMode = !isPackaged && "development".equalsIgnoreCase(env);
 
@@ -82,7 +82,7 @@ public enum AppConfig {
 
     public Optional<Path> getPackagedConfigFile() {
         if (!developmentMode) {
-            String appPath = System.getProperty("jpackage.app-path");
+            String appPath = System.getProperty("jpackage.app-destination");
             if (appPath != null) {
 
                 // In jpackage: <install_dir>/CineGrade.exe -> <install_dir>/app/CineGrade.cfg

@@ -34,6 +34,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -84,6 +85,9 @@ public class ExportBatchService extends Service<Void> {
                                             MemoryUtil.memFree(decodedPhoto.data());
                                         }))
                                 .exceptionally(ex -> {
+                                    if (ex instanceof CancellationException) {
+                                        return Optional.empty();
+                                    }
                                     ErrorHandler.getInstance().handle(ex);
                                     return Optional.empty();
                                 }).join();
