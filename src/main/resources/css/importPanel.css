@@ -67,7 +67,7 @@
 }
 
 .staged-count-text {
-    -fx-text-fill: #FFFFFF;
+    -fx-text-fill: -clr-text-primary;
     -fx-font-family: -font-family-primary;
     -fx-font-size: 13.5px;
     -fx-font-weight: bold;
@@ -92,14 +92,14 @@
     -fx-background-radius: 4px;
     -fx-border-color: -clr-border;
     -fx-border-radius: 4px;
-    -fx-text-fill: #FFFFFF;
+    -fx-text-fill: -clr-text-primary;
     -fx-font-size: 11.5px;
     -fx-font-weight: 500;
     -fx-padding: 5px 14px;
     -fx-cursor: hand;
 }
 .btn-batch-select:hover {
-    -fx-background-color: -clr-almostgrey;
+    -fx-background-color: -clr-darkgrey;
     -fx-border-color: -clr-blue;
 }
 
@@ -115,7 +115,7 @@
 .btn-auto-pair:hover {
     -fx-background-color: -clr-surface;
     -fx-border-color: -clr-blue;
-    -fx-text-fill: #FFFFFF;
+    -fx-text-fill: -clr-text-primary;
 }
 .btn-auto-pair-active {
     -fx-background-color: rgba(20, 107, 209, 0.18);
@@ -125,7 +125,7 @@
 .btn-auto-pair-active:hover {
     -fx-background-color: rgba(20, 107, 209, 0.28);
     -fx-border-color: -clr-blue-hover;
-    -fx-text-fill: #FFFFFF;
+    -fx-text-fill: -clr-text-primary;
 }
 
 /* --------------------------------------------------------------------------
@@ -161,7 +161,7 @@
 .staging-scroll-pane .scroll-bar:vertical .thumb,
 .grid-view .scroll-bar:vertical .thumb,
 .staging-flow-pane .scroll-bar:vertical .thumb {
-    -fx-background-color: #383842;
+    -fx-background-color: -clr-border;
     -fx-background-radius: 5px;
     -fx-background-insets: 1px;
 }
@@ -169,13 +169,13 @@
 .staging-scroll-pane .scroll-bar:vertical .thumb:hover,
 .grid-view .scroll-bar:vertical .thumb:hover,
 .staging-flow-pane .scroll-bar:vertical .thumb:hover {
-    -fx-background-color: #1C7DF0;
+    -fx-background-color: -clr-blue-hover;
 }
 
 .staging-scroll-pane .scroll-bar:vertical .thumb:pressed,
 .grid-view .scroll-bar:vertical .thumb:pressed,
 .staging-flow-pane .scroll-bar:vertical .thumb:pressed {
-    -fx-background-color: #0E60C8;
+    -fx-background-color: -clr-blue-active;
 }
 
 .grid-view .scroll-bar:vertical .increment-button,
@@ -337,7 +337,7 @@
 }
 
 .card-filename {
-    -fx-text-fill: #FFFFFF;
+    -fx-text-fill: -clr-text-primary;
     -fx-font-family: -font-family-primary;
     -fx-font-size: 13px;
     -fx-font-weight: bold;
@@ -429,8 +429,8 @@
 }
 
 .btn-plate-cancel {
-    -fx-background-color: -clr-surface;
-    -fx-text-fill: #FFFFFF;
+    -fx-background-color: -clr-darkgrey;
+    -fx-text-fill: -clr-text-primary;
     -fx-font-family: -font-family-primary;
     -fx-font-size: 14px;
     -fx-font-weight: bold;
@@ -439,7 +439,7 @@
     -fx-cursor: hand;
 }
 .btn-plate-cancel:hover {
-    -fx-background-color: -clr-almostgrey;
+    -fx-background-color: -clr-border;
 }
 
 .btn-import-commit {
@@ -486,7 +486,7 @@
 
 .import-method-selector-box .list-cell {
     -fx-background-color: transparent;
-    -fx-text-fill: #FFFFFF;
+    -fx-text-fill: -clr-text-primary;
     -fx-font-family: -font-family-primary;
     -fx-font-size: 13px;
     -fx-font-weight: bold;
@@ -522,7 +522,7 @@
 
 .import-method-selector-box .combo-box-popup .list-cell {
     -fx-background-color: transparent;
-    -fx-text-fill: #FFFFFF;
+    -fx-text-fill: -clr-text-primary;
     -fx-font-family: -font-family-primary;
     -fx-font-size: 12.5px;
     -fx-font-weight: 500;
@@ -543,9 +543,9 @@
    Red Remove Selected Button in Staging Toolbar
    -------------------------------------------------------------------------- */
 .btn-remove-selected {
-    -fx-background-color: #E04444;
+    -fx-background-color: -clr-danger;
     -fx-background-radius: 4px;
-    -fx-border-color: #E85555;
+    -fx-border-color: -clr-danger;
     -fx-border-radius: 4px;
     -fx-text-fill: #FFFFFF;
     -fx-font-size: 11.5px;
@@ -555,25 +555,25 @@
 }
 
 .btn-remove-selected:hover {
-    -fx-background-color: #F05555;
-    -fx-border-color: #FF7777;
+    -fx-background-color: -clr-danger-hover;
+    -fx-border-color: -clr-danger-hover;
 }
 
 .btn-remove-selected:disabled {
-    -fx-background-color: #4A3333;
-    -fx-border-color: #553A3A;
-    -fx-text-fill: #8A6666;
-    -fx-opacity: 0.6;
+    -fx-background-color: -clr-danger;
+    -fx-border-color: -clr-danger;
+    -fx-text-fill: #FFFFFF;
+    -fx-opacity: 0.4;
 }
 
 /* --------------------------------------------------------------------------
    Empty Staging Plate State (Figma pasted-image-1.png)
    -------------------------------------------------------------------------- */
 .empty-staging-container {
-    -fx-background-color: #16171B;
+    -fx-background-color: -clr-almostdarkgrey;
     -fx-background-radius: 12px;
     -fx-border-radius: 12px;
-    -fx-border-color: #2A2D35;
+    -fx-border-color: -clr-border;
     -fx-border-style: dashed;
     -fx-border-width: 1.5px;
     -fx-padding: 60px 40px;
@@ -581,14 +581,14 @@
 }
 
 .empty-staging-title {
-    -fx-text-fill: #FFFFFF;
+    -fx-text-fill: -clr-text-primary;
     -fx-font-family: -font-family-primary;
     -fx-font-size: 20px;
     -fx-font-weight: bold;
 }
 
 .empty-staging-subtitle {
-    -fx-text-fill: #8D8D94;
+    -fx-text-fill: -clr-text-muted;
     -fx-font-family: -font-family-primary;
     -fx-font-size: 12.5px;
 }
@@ -597,13 +597,13 @@
    Right Floating Sidebar Container
    -------------------------------------------------------------------------- */
 .floating-sidebar {
-    -fx-background-color: #24262C;
+    -fx-background-color: -clr-surface-card;
     -fx-background-radius: 16px;
     -fx-border-radius: 16px;
     -fx-border-color: -clr-border-subtle;
     -fx-border-width: 1px;
     -fx-padding: 20px 16px;
-    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.45), 20, 0, 0, 4);
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.25), 20, 0, 0, 4);
 }
 
 .sidebar-section {
@@ -611,7 +611,7 @@
 }
 
 .sidebar-section-title {
-    -fx-text-fill: #FFFFFF;
+    -fx-text-fill: -clr-text-primary;
     -fx-font-family: -font-family-primary;
     -fx-font-size: 13px;
     -fx-font-weight: bold;
@@ -658,7 +658,7 @@
 
 .sidebar-checkbox {
     -fx-cursor: hand;
-    -fx-text-fill: #FFFFFF;
+    -fx-text-fill: -clr-text-primary;
     -fx-font-size: 12.5px;
     -fx-font-weight: 500;
 }
@@ -705,7 +705,7 @@
 
 .search-field {
     -fx-background-color: transparent;
-    -fx-text-fill: #FFFFFF;
+    -fx-text-fill: -clr-text-primary;
     -fx-prompt-text-fill: -clr-text-muted;
     -fx-font-size: 13px;
     -fx-font-style: normal;
@@ -722,9 +722,9 @@
    Import Loading / Spinner Overlay
    -------------------------------------------------------------------------- */
 .import-loading-overlay {
-    -fx-background-color: rgba(18, 19, 23, 0.88);
+    -fx-background-color: -clr-surface-card;
     -fx-background-radius: 12px;
-    -fx-border-color: #2A2D35;
+    -fx-border-color: -clr-border;
     -fx-border-radius: 12px;
     -fx-border-width: 1.5px;
     -fx-padding: 32px;
@@ -732,30 +732,30 @@
 }
 
 .import-spinner {
-    -fx-progress-color: #1C7DF0;
+    -fx-progress-color: -clr-blue-hover;
 }
 
 .import-spinner .progress-indicator {
-    -fx-progress-color: #1C7DF0;
+    -fx-progress-color: -clr-blue-hover;
 }
 
 .import-spinner .determinate-indicator .progress {
-    -fx-background-color: #1C7DF0;
+    -fx-background-color: -clr-blue-hover;
 }
 
 .import-spinner .indeterminate-indicator .progress {
-    -fx-background-color: #1C7DF0;
+    -fx-background-color: -clr-blue-hover;
 }
 
 .import-progress-title {
-    -fx-text-fill: #FFFFFF;
+    -fx-text-fill: -clr-text-primary;
     -fx-font-family: -font-family-primary;
     -fx-font-size: 16px;
     -fx-font-weight: bold;
 }
 
 .import-progress-subtitle {
-    -fx-text-fill: #8D8D94;
+    -fx-text-fill: -clr-text-muted;
     -fx-font-family: -font-family-primary;
     -fx-font-size: 12.5px;
 }
