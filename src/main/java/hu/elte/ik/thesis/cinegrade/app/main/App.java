@@ -4,6 +4,9 @@ import hu.elte.ik.thesis.cinegrade.app.managers.concurrency.ThreadPoolManager;
 import hu.elte.ik.thesis.cinegrade.app.managers.catalog.CatalogManager;
 import hu.elte.ik.thesis.cinegrade.app.managers.concurrency.tasks.TaskManager;
 import hu.elte.ik.thesis.cinegrade.app.managers.user.UserManager;
+import hu.elte.ik.thesis.cinegrade.app.managers.presets.PresetManager;
+import hu.elte.ik.thesis.cinegrade.app.managers.presets.PresetStage;
+import hu.elte.ik.thesis.cinegrade.infra.services.storage.database.PresetService;
 import hu.elte.ik.thesis.cinegrade.app.scope.CatalogScopeFactory;
 import hu.elte.ik.thesis.cinegrade.app.scope.ResourceStack;
 import hu.elte.ik.thesis.cinegrade.domain.enums.ErrorCode;
@@ -67,6 +70,7 @@ public class App extends Application {
     private ErrorPresenter errorToastPresenter;
 
     private TransactionRunner appTx;
+    private PresetManager presetManager;
 
     @Override
     public void init() {
@@ -147,7 +151,7 @@ public class App extends Application {
         controllerFactory.register(DevelopmentPanelController.class, () -> new DevelopmentPanelController(catalogManager.getCurrentScope()));
         controllerFactory.register(ExportPanelController.class, () -> new ExportPanelController(catalogManager.getCurrentScope()));
         controllerFactory.register(DevelopPresetPanelController.class, () -> new DevelopPresetPanelController(
-                catalogManager.getCurrentScope().presetManager(),
+                presetManager,
                 catalogManager.getCurrentScope().editingManager(),
                 userManager));
         controllerFactory.register(DevelopViewportController.class, () -> new DevelopViewportController(
@@ -196,11 +200,11 @@ public class App extends Application {
                 threadPoolManager,
                 viewportRenderer,
                 thumbnailRenderer,
-                exportRenderer,
-                appTx), storageService);
+                exportRenderer), storageService);
 
         resources.push(catalogManager);
         userManager = new UserManager();
+        presetManager = new PresetManager(new PresetService(), new PresetStage(), appTx);
     }
 
     private void createPresenters() {

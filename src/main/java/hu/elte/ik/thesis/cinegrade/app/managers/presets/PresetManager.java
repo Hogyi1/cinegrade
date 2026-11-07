@@ -25,13 +25,11 @@ public class PresetManager {
     public static final String BUILT_IN_CATEGORY = "Built-in";
     private static final int VERSION_NUMBER = 1;
     private final PresetStage viewModel;
-    private final EditingManager editingManager;
     private final PresetService presetService;
     private final TransactionRunner appTx;
 
-    public PresetManager(EditingManager editingManager, PresetService presetService, PresetStage presetStage, TransactionRunner appTx) {
+    public PresetManager(PresetService presetService, PresetStage presetStage, TransactionRunner appTx) {
         this.viewModel = presetStage;
-        this.editingManager = editingManager;
         this.presetService = presetService;
         this.appTx = appTx;
 
@@ -74,8 +72,7 @@ public class PresetManager {
                 .exceptionally(this::fail);
     }
 
-    public void createFromCurrent(String name, String category, String author, String description, Set<GradeParam> included, boolean includeWb) {
-        EditState live = viewModel.getCurrentEditStateProperty().get();
+    public void createFromCurrent(EditState live, String name, String category, String author, String description, Set<GradeParam> included, boolean includeWb) {
         if (live == null || name == null || name.isBlank()) {
             return;
         }
@@ -138,10 +135,6 @@ public class PresetManager {
 
     public void exportFile(Preset preset, Path file) {
         appTx.execute(c -> presetService.write(preset, file)).exceptionally(this::fail);
-    }
-
-    public void apply(Preset preset) {
-        editingManager.applyPreset(preset);
     }
 
     private void save(Preset preset) {

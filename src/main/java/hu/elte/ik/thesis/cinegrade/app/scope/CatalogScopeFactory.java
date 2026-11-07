@@ -41,21 +41,19 @@ public class CatalogScopeFactory {
     private final ViewportRenderer viewportRenderer;
     private final ThumbnailRenderer thumbnailRenderer;
     private final ExportRenderer exportRenderer;
-    private final TransactionRunner appTx;
 
     public CatalogScopeFactory(TaskManager taskManager,
                                ThumbnailFactory thumbnailFactory,
                                ThreadPoolManager threadPoolManager,
                                ViewportRenderer viewportRenderer,
                                ThumbnailRenderer thumbnailRenderer,
-                               ExportRenderer exportRenderer, TransactionRunner appTx) {
+                               ExportRenderer exportRenderer) {
         this.taskManager = taskManager;
         this.thumbnailFactory = thumbnailFactory;
         this.threadPoolManager = threadPoolManager;
         this.viewportRenderer = viewportRenderer;
         this.thumbnailRenderer = thumbnailRenderer;
         this.exportRenderer = exportRenderer;
-        this.appTx = appTx;
     }
 
     public CatalogScope open(Catalog catalog) {
@@ -74,7 +72,6 @@ public class CatalogScopeFactory {
             ThumbnailService thumbnailService = resources.push(new ThumbnailService(blobDao, thumbnailFactory, threadPoolManager.getCpuPool()));
             ExifToolService exifToolService = new ExifToolService();
             StorageService storageService = new StorageService(catalog.getProjectDirectory());
-            PresetService presetService = new PresetService();
 
             HistoryManager historyManager = new HistoryManager();
             PhotoLibrary photoLibrary = new PhotoLibrary();
@@ -128,10 +125,7 @@ public class CatalogScopeFactory {
                     threadPoolManager.getCpuPool(),
                     exportStage));
 
-            PresetStage presetStage = new PresetStage(editingStage.currentPhotoProperty(), editingStage.currentEditStateProperty());
-            PresetManager presetManager = new PresetManager(editingManager, presetService, presetStage, appTx);
-
-            return new CatalogScope(resources, catalog, thumbnailService, catalogService, stagingArea, importManager, editingManager, exportManager, photoManager, photoLibrary, presetManager);
+            return new CatalogScope(resources, catalog, thumbnailService, catalogService, stagingArea, importManager, editingManager, exportManager, photoManager, photoLibrary);
         } catch (Exception e) {
             resources.close();
             throw new RuntimeException("Failed to open catalog scope", e);

@@ -23,14 +23,8 @@ public class PresetStage {
     private final FilteredList<Preset> filteredEntries = new FilteredList<>(masterEntries);
     private final ObservableList<String> categories = FXCollections.observableArrayList();
     private final StringProperty nameProperty = new SimpleStringProperty("");
-    private final ObjectProperty<PhotoEntry> currentPhotoEntryProperty = new SimpleObjectProperty<>();
-    private final ObjectProperty<EditState> currentEditStateProperty = new SimpleObjectProperty<>();
 
-    public PresetStage(ReadOnlyObjectProperty<PhotoEntry> currentPhotoEntryProperty,
-                       ReadOnlyObjectProperty<EditState> currentEditStateProperty) {
-        this.currentPhotoEntryProperty.bind(currentPhotoEntryProperty);
-        this.currentEditStateProperty.bind(currentEditStateProperty);
-
+    public PresetStage() {
         filteredEntries.predicateProperty().bind(Bindings.createObjectBinding(() -> {
             String nameFilter = nameProperty.get().trim().toLowerCase();
             return (Predicate<Preset>) entry -> nameFilter.isEmpty() || entry.getName().toLowerCase().contains(nameFilter);

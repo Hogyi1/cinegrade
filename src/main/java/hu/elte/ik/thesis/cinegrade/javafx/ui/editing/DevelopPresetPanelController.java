@@ -108,8 +108,8 @@ public class DevelopPresetPanelController {
 
         importPresetBtn.setOnAction(e -> SceneManager.chooseFile("Import preset", null, PRESET_FILES,
                 file -> presetManager.importFile(file.toPath())));
-        savePresetBtn.disableProperty().bind(presetStage.getCurrentEditStateProperty().isNull());
-        clearSettingsBtn.disableProperty().bind(presetStage.getCurrentEditStateProperty().isNull());
+        savePresetBtn.disableProperty().bind(editingManager.getViewModel().currentEditStateProperty().isNull());
+        clearSettingsBtn.disableProperty().bind(editingManager.getViewModel().currentEditStateProperty().isNull());
         savePresetBtn.setOnAction(e -> savePreset());
         clearSettingsBtn.setOnAction(e -> editingManager.resetSettings());
 
@@ -223,7 +223,7 @@ public class DevelopPresetPanelController {
      * Ctrl+Shift+S and the Save button: the current edit as a new preset.
      */
     public void savePreset() {
-        if (presetStage.getCurrentEditStateProperty().get() == null) {
+        if (editingManager.getViewModel().currentEditStateProperty().get() == null) {
             return;
         }
         PresetDialog dialog = new PresetDialog();
@@ -252,15 +252,15 @@ public class DevelopPresetPanelController {
             included.addAll(List.of(LUM_RED, LUM_ORANGE, LUM_YELLOW, LUM_GREEN, LUM_AQUA, LUM_BLUE, LUM_PURPLE, LUM_MAGENTA));
         }
 
-        presetManager.createFromCurrent(dialog.getName(), dialog.getCategory(), dialog.getAuthor(), dialog.getDescription(),
+        presetManager.createFromCurrent(editingManager.getViewModel().currentEditStateProperty().get(), dialog.getName(), dialog.getCategory(), dialog.getAuthor(), dialog.getDescription(),
                 included, dialog.getWhiteBalanceCheck().isSelected());
     }
 
     private void apply(Preset preset) {
-        if (presetStage.getCurrentEditStateProperty().get() == null) {
+        if (editingManager.getViewModel().currentEditStateProperty().get() == null) {
             return;
         }
-        presetManager.apply(preset);
+        editingManager.applyPreset(preset);
     }
 
     private <T> Optional<T> show(Dialog<T> dialog, String title) {

@@ -20,8 +20,7 @@ public record CatalogScope(ResourceStack resources,
                            EditingManager editingManager,
                            ExportManager exportManager,
                            PhotoManager photoManager,
-                           PhotoLibrary photoLibrary,
-                           PresetManager presetManager) implements AutoCloseable {
+                           PhotoLibrary photoLibrary) implements AutoCloseable {
 
     @Override
     public void close() {
