@@ -3,7 +3,7 @@ package hu.elte.ik.thesis.cinegrade.app.managers.imports;
 import hu.elte.ik.thesis.cinegrade.app.managers.concurrency.tasks.TaskManager;
 import hu.elte.ik.thesis.cinegrade.app.managers.photos.PhotoManager;
 import hu.elte.ik.thesis.cinegrade.domain.catalog.Catalog;
-import hu.elte.ik.thesis.cinegrade.domain.editing.imports.ImportRequest;
+import hu.elte.ik.thesis.cinegrade.domain.objects.imports.ImportRequest;
 import hu.elte.ik.thesis.cinegrade.domain.enums.ImportMethod;
 import hu.elte.ik.thesis.cinegrade.domain.tasks.ImportService;
 import hu.elte.ik.thesis.cinegrade.infra.database.TransactionRunner;
@@ -13,12 +13,10 @@ import hu.elte.ik.thesis.cinegrade.infra.database.dao.catalog.PhotoDao;
 import hu.elte.ik.thesis.cinegrade.infra.services.exiftool.ExifToolService;
 import hu.elte.ik.thesis.cinegrade.infra.services.storage.StorageService;
 import hu.elte.ik.thesis.cinegrade.infra.services.storage.ThumbnailService;
-import hu.elte.ik.thesis.cinegrade.infra.services.storage.database.LastPathService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.File;
-import java.nio.file.Path;
 import java.util.*;
 
 /**

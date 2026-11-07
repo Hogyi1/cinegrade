@@ -2,7 +2,7 @@ package hu.elte.ik.thesis.cinegrade.engine.renderer;
 
 import com.sun.prism.impl.BufferUtil;
 import hu.elte.ik.thesis.cinegrade.app.scope.ResourceStack;
-import hu.elte.ik.thesis.cinegrade.domain.editing.EditState;
+import hu.elte.ik.thesis.cinegrade.domain.objects.EditState;
 import hu.elte.ik.thesis.cinegrade.engine.GpuWorker;
 import hu.elte.ik.thesis.cinegrade.engine.gl.*;
 import hu.elte.ik.thesis.cinegrade.engine.grade.BaseBlockUniform;

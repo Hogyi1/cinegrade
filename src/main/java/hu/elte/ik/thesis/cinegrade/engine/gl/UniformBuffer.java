@@ -1,7 +1,5 @@
 package hu.elte.ik.thesis.cinegrade.engine.gl;
 
-import hu.elte.ik.thesis.cinegrade.domain.editing.EditState;
-
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 

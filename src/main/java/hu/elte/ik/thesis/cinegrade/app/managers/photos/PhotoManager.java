@@ -2,7 +2,7 @@ package hu.elte.ik.thesis.cinegrade.app.managers.photos;
 
 import hu.elte.ik.thesis.cinegrade.app.managers.catalog.HistoryManager;
 import hu.elte.ik.thesis.cinegrade.app.managers.concurrency.tasks.TaskManager;
-import hu.elte.ik.thesis.cinegrade.domain.editing.PhotoEntry;
+import hu.elte.ik.thesis.cinegrade.domain.objects.PhotoEntry;
 import hu.elte.ik.thesis.cinegrade.domain.enums.ErrorCode;
 import hu.elte.ik.thesis.cinegrade.domain.error.ErrorHandler;
 import hu.elte.ik.thesis.cinegrade.domain.exceptions.CineGradeException;
@@ -22,7 +22,6 @@ import java.nio.file.Files;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutorService;

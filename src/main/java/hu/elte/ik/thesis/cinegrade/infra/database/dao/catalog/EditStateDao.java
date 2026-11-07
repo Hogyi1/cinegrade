@@ -1,7 +1,7 @@
 // [AI-GENERATED]
 package hu.elte.ik.thesis.cinegrade.infra.database.dao.catalog;
 
-import hu.elte.ik.thesis.cinegrade.domain.editing.EditState;
+import hu.elte.ik.thesis.cinegrade.domain.objects.EditState;
 
 import java.sql.*;
 import java.time.Instant;

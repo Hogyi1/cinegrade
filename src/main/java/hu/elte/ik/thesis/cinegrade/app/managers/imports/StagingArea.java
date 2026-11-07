@@ -1,6 +1,6 @@
 package hu.elte.ik.thesis.cinegrade.app.managers.imports;
 
-import hu.elte.ik.thesis.cinegrade.domain.editing.imports.StageEntry;
+import hu.elte.ik.thesis.cinegrade.domain.objects.imports.StageEntry;
 import javafx.application.Platform;
 import javafx.beans.Observable;
 import javafx.beans.binding.Bindings;

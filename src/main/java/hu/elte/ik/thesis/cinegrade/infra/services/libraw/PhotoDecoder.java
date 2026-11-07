@@ -1,9 +1,8 @@
 package hu.elte.ik.thesis.cinegrade.infra.services.libraw;
 
-import hu.elte.ik.thesis.cinegrade.domain.editing.PhotoEntry;
+import hu.elte.ik.thesis.cinegrade.domain.objects.PhotoEntry;
 import hu.elte.ik.thesis.cinegrade.domain.enums.ErrorCode;
 import hu.elte.ik.thesis.cinegrade.domain.exceptions.CineGradeException;
-import javafx.application.Platform;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.lwjgl.system.MemoryUtil;
@@ -14,9 +13,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.util.Optional;
 import java.util.concurrent.CancellationException;
-import java.util.concurrent.CompletableFuture;
 import java.util.function.BooleanSupplier;
 
 public class PhotoDecoder implements AutoCloseable {

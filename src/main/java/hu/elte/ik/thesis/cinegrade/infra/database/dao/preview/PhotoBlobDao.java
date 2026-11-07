@@ -1,7 +1,7 @@
 // [AI-GENERATED]
 package hu.elte.ik.thesis.cinegrade.infra.database.dao.preview;
 
-import hu.elte.ik.thesis.cinegrade.domain.editing.PhotoBlob;
+import hu.elte.ik.thesis.cinegrade.domain.objects.PhotoBlob;
 import hu.elte.ik.thesis.cinegrade.domain.enums.BlobKind;
 
 import java.sql.*;

@@ -1,8 +1,8 @@
 package hu.elte.ik.thesis.cinegrade.domain.tasks;
 
-import hu.elte.ik.thesis.cinegrade.domain.editing.EditState;
-import hu.elte.ik.thesis.cinegrade.domain.editing.PhotoExportOptions;
-import hu.elte.ik.thesis.cinegrade.domain.editing.PhotoEntry;
+import hu.elte.ik.thesis.cinegrade.domain.objects.EditState;
+import hu.elte.ik.thesis.cinegrade.domain.objects.PhotoExportOptions;
+import hu.elte.ik.thesis.cinegrade.domain.objects.PhotoEntry;
 import hu.elte.ik.thesis.cinegrade.domain.enums.ErrorCode;
 import hu.elte.ik.thesis.cinegrade.domain.enums.PhotoExtension;
 import hu.elte.ik.thesis.cinegrade.domain.enums.WhiteBalanceType;

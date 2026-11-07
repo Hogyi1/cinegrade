@@ -1,9 +1,9 @@
 package hu.elte.ik.thesis.cinegrade.domain.tasks;
 
-import hu.elte.ik.thesis.cinegrade.domain.editing.PhotoEntry;
-import hu.elte.ik.thesis.cinegrade.domain.editing.imports.FileProbeResult;
-import hu.elte.ik.thesis.cinegrade.domain.editing.imports.StageEntry;
-import hu.elte.ik.thesis.cinegrade.domain.editing.imports.StageResult;
+import hu.elte.ik.thesis.cinegrade.domain.objects.PhotoEntry;
+import hu.elte.ik.thesis.cinegrade.domain.objects.imports.FileProbeResult;
+import hu.elte.ik.thesis.cinegrade.domain.objects.imports.StageEntry;
+import hu.elte.ik.thesis.cinegrade.domain.objects.imports.StageResult;
 import hu.elte.ik.thesis.cinegrade.domain.enums.PhotoExtension;
 import hu.elte.ik.thesis.cinegrade.infra.utils.file.FileUtils;
 import hu.elte.ik.thesis.cinegrade.infra.utils.thumbnail.ThumbnailFactory;

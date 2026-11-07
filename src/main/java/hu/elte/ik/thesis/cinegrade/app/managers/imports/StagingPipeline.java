@@ -1,8 +1,8 @@
 package hu.elte.ik.thesis.cinegrade.app.managers.imports;
 
-import hu.elte.ik.thesis.cinegrade.domain.editing.PhotoEntry;
-import hu.elte.ik.thesis.cinegrade.domain.editing.imports.FileProbeResult;
-import hu.elte.ik.thesis.cinegrade.domain.editing.imports.StageResult;
+import hu.elte.ik.thesis.cinegrade.domain.objects.PhotoEntry;
+import hu.elte.ik.thesis.cinegrade.domain.objects.imports.FileProbeResult;
+import hu.elte.ik.thesis.cinegrade.domain.objects.imports.StageResult;
 import hu.elte.ik.thesis.cinegrade.domain.error.ErrorHandler;
 import hu.elte.ik.thesis.cinegrade.domain.tasks.ImportProbeService;
 import hu.elte.ik.thesis.cinegrade.domain.tasks.ImportStageService;

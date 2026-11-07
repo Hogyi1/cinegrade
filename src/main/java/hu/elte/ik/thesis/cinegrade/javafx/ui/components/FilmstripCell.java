@@ -1,6 +1,6 @@
 package hu.elte.ik.thesis.cinegrade.javafx.ui.components;
 
-import hu.elte.ik.thesis.cinegrade.domain.editing.PhotoEntry;
+import hu.elte.ik.thesis.cinegrade.domain.objects.PhotoEntry;
 import hu.elte.ik.thesis.cinegrade.domain.enums.ColorLabel;
 import hu.elte.ik.thesis.cinegrade.domain.enums.ErrorCode;
 import hu.elte.ik.thesis.cinegrade.domain.exceptions.CineGradeException;

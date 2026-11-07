@@ -1,7 +1,7 @@
 package hu.elte.ik.thesis.cinegrade.infra.services.storage;
 
-import hu.elte.ik.thesis.cinegrade.domain.editing.PhotoBlob;
-import hu.elte.ik.thesis.cinegrade.domain.editing.PhotoEntry;
+import hu.elte.ik.thesis.cinegrade.domain.objects.PhotoBlob;
+import hu.elte.ik.thesis.cinegrade.domain.objects.PhotoEntry;
 import hu.elte.ik.thesis.cinegrade.domain.enums.BlobKind;
 import hu.elte.ik.thesis.cinegrade.domain.enums.ErrorCode;
 import hu.elte.ik.thesis.cinegrade.domain.exceptions.CineGradeException;

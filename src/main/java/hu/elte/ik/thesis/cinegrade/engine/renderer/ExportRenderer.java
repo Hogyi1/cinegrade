@@ -1,7 +1,7 @@
 package hu.elte.ik.thesis.cinegrade.engine.renderer;
 
 import hu.elte.ik.thesis.cinegrade.app.scope.ResourceStack;
-import hu.elte.ik.thesis.cinegrade.domain.editing.EditState;
+import hu.elte.ik.thesis.cinegrade.domain.objects.EditState;
 import hu.elte.ik.thesis.cinegrade.engine.GpuWorker;
 import hu.elte.ik.thesis.cinegrade.engine.RenderEngine;
 import hu.elte.ik.thesis.cinegrade.engine.gl.*;
@@ -11,14 +11,12 @@ import hu.elte.ik.thesis.cinegrade.javafx.ui.input.ViewportNavigator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
-import static hu.elte.ik.thesis.cinegrade.infra.utils.thumbnail.ThumbnailFactory.MAX_EDGE;
 import static org.lwjgl.opengl.GL30C.GL_RGBA32F;
 
 /**

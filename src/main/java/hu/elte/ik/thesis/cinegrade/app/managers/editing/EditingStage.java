@@ -1,7 +1,7 @@
 package hu.elte.ik.thesis.cinegrade.app.managers.editing;
 
-import hu.elte.ik.thesis.cinegrade.domain.editing.EditState;
-import hu.elte.ik.thesis.cinegrade.domain.editing.PhotoEntry;
+import hu.elte.ik.thesis.cinegrade.domain.objects.EditState;
+import hu.elte.ik.thesis.cinegrade.domain.objects.PhotoEntry;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.ReadOnlyBooleanProperty;

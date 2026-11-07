@@ -1,29 +1,23 @@
 package hu.elte.ik.thesis.cinegrade.app.managers.photos;
 
-import hu.elte.ik.thesis.cinegrade.app.managers.imports.StagingArea;
-import hu.elte.ik.thesis.cinegrade.domain.editing.PhotoEntry;
-import hu.elte.ik.thesis.cinegrade.domain.editing.imports.StageEntry;
+import hu.elte.ik.thesis.cinegrade.domain.objects.PhotoEntry;
 import hu.elte.ik.thesis.cinegrade.domain.enums.Operation;
 import javafx.application.Platform;
 import javafx.beans.Observable;
 import javafx.beans.binding.Bindings;
-import javafx.beans.binding.ObjectBinding;
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.ObservableSet;
 import javafx.collections.transformation.FilteredList;
 import javafx.collections.transformation.SortedList;
-import lombok.AccessLevel;
 import lombok.Getter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.function.Predicate;
 
 /**

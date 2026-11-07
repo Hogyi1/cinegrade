@@ -1,7 +1,7 @@
 // [AI-GENERATED]
 package hu.elte.ik.thesis.cinegrade.infra.database.dao.catalog;
 
-import hu.elte.ik.thesis.cinegrade.domain.editing.PhotoEntry;
+import hu.elte.ik.thesis.cinegrade.domain.objects.PhotoEntry;
 import hu.elte.ik.thesis.cinegrade.domain.enums.ImportMethod;
 
 import java.io.File;

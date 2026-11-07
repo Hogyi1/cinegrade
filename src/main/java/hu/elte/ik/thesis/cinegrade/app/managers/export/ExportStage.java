@@ -1,9 +1,9 @@
 package hu.elte.ik.thesis.cinegrade.app.managers.export;
 
 import hu.elte.ik.thesis.cinegrade.app.managers.photos.PhotoLibrary;
-import hu.elte.ik.thesis.cinegrade.domain.editing.LutExportOption;
-import hu.elte.ik.thesis.cinegrade.domain.editing.PhotoExportOptions;
-import hu.elte.ik.thesis.cinegrade.domain.editing.PhotoEntry;
+import hu.elte.ik.thesis.cinegrade.domain.objects.LutExportOption;
+import hu.elte.ik.thesis.cinegrade.domain.objects.PhotoExportOptions;
+import hu.elte.ik.thesis.cinegrade.domain.objects.PhotoEntry;
 import hu.elte.ik.thesis.cinegrade.domain.enums.PhotoExtension;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.IntegerProperty;

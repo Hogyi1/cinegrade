@@ -1,7 +1,7 @@
 package hu.elte.ik.thesis.cinegrade.engine.renderer;
 
 import hu.elte.ik.thesis.cinegrade.app.scope.ResourceStack;
-import hu.elte.ik.thesis.cinegrade.domain.editing.EditState;
+import hu.elte.ik.thesis.cinegrade.domain.objects.EditState;
 import hu.elte.ik.thesis.cinegrade.engine.GpuWorker;
 import hu.elte.ik.thesis.cinegrade.engine.gl.*;
 import hu.elte.ik.thesis.cinegrade.engine.grade.BaseBlockUniform;
@@ -16,7 +16,6 @@ import java.util.concurrent.TimeUnit;
 
 import static hu.elte.ik.thesis.cinegrade.infra.utils.thumbnail.ThumbnailFactory.MAX_EDGE;
 import static org.lwjgl.opengl.GL11C.GL_RGBA8;
-import static org.lwjgl.opengl.GL30C.GL_RGBA32F;
 
 /**
  * Renders graded thumbnails of any photo, independent of the viewport.

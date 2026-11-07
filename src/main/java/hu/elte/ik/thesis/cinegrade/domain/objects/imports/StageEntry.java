@@ -1,10 +1,9 @@
-package hu.elte.ik.thesis.cinegrade.domain.editing.imports;
+package hu.elte.ik.thesis.cinegrade.domain.objects.imports;
 
-import hu.elte.ik.thesis.cinegrade.domain.editing.Entry;
+import hu.elte.ik.thesis.cinegrade.domain.objects.Entry;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.scene.image.Image;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 

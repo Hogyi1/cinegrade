@@ -2,7 +2,7 @@
 package hu.elte.ik.thesis.cinegrade.javafx.ui.components;
 
 import hu.elte.ik.thesis.cinegrade.app.managers.editing.EditingManager;
-import hu.elte.ik.thesis.cinegrade.domain.editing.EditState;
+import hu.elte.ik.thesis.cinegrade.domain.objects.EditState;
 import hu.elte.ik.thesis.cinegrade.domain.enums.ErrorCode;
 import hu.elte.ik.thesis.cinegrade.domain.exceptions.CineGradeException;
 import hu.elte.ik.thesis.cinegrade.engine.GradeParam;
@@ -22,7 +22,6 @@ import lombok.Setter;
 
 import java.io.IOException;
 import java.util.Locale;
-import java.util.function.Consumer;
 import java.util.regex.Pattern;
 
 

@@ -1,4 +1,4 @@
-package hu.elte.ik.thesis.cinegrade.domain.editing;
+package hu.elte.ik.thesis.cinegrade.domain.objects;
 
 import hu.elte.ik.thesis.cinegrade.domain.enums.PhotoExtension;
 

@@ -2,7 +2,7 @@ package hu.elte.ik.thesis.cinegrade.javafx.ui.editing;
 
 import hu.elte.ik.thesis.cinegrade.app.managers.imports.ImportManager;
 import hu.elte.ik.thesis.cinegrade.app.managers.imports.StagingArea;
-import hu.elte.ik.thesis.cinegrade.domain.editing.imports.StageEntry;
+import hu.elte.ik.thesis.cinegrade.domain.objects.imports.StageEntry;
 import hu.elte.ik.thesis.cinegrade.domain.enums.ImportMethod;
 import hu.elte.ik.thesis.cinegrade.domain.enums.PhotoExtension;
 import hu.elte.ik.thesis.cinegrade.domain.enums.WorkspacePanel;
@@ -25,14 +25,11 @@ import javafx.scene.input.TransferMode;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
-import javafx.stage.Window;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.controlsfx.control.GridView;
 
 import java.io.File;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.List;
 import java.util.function.Consumer;
 

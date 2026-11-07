@@ -2,7 +2,7 @@ package hu.elte.ik.thesis.cinegrade.javafx.ui.editing;
 
 import hu.elte.ik.thesis.cinegrade.app.managers.photos.PhotoManager;
 import hu.elte.ik.thesis.cinegrade.app.managers.photos.PhotoLibrary;
-import hu.elte.ik.thesis.cinegrade.domain.editing.PhotoEntry;
+import hu.elte.ik.thesis.cinegrade.domain.objects.PhotoEntry;
 import hu.elte.ik.thesis.cinegrade.domain.enums.ColorLabel;
 import hu.elte.ik.thesis.cinegrade.domain.enums.Operation;
 import hu.elte.ik.thesis.cinegrade.infra.services.storage.ThumbnailService;

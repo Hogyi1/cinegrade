@@ -1,5 +1,5 @@
 // [AI-GENERATED]
-package hu.elte.ik.thesis.cinegrade.domain.editing;
+package hu.elte.ik.thesis.cinegrade.domain.objects;
 
 import lombok.Getter;
 import lombok.Setter;

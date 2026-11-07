@@ -1,4 +1,4 @@
-package hu.elte.ik.thesis.cinegrade.domain.editing.imports;
+package hu.elte.ik.thesis.cinegrade.domain.objects.imports;
 
 import com.google.gson.annotations.SerializedName;
 import hu.elte.ik.thesis.cinegrade.domain.enums.PhotoExtension;

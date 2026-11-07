@@ -1,10 +1,10 @@
 package hu.elte.ik.thesis.cinegrade.domain.tasks;
 
 import hu.elte.ik.thesis.cinegrade.domain.catalog.Catalog;
-import hu.elte.ik.thesis.cinegrade.domain.editing.EditState;
-import hu.elte.ik.thesis.cinegrade.domain.editing.PhotoEntry;
-import hu.elte.ik.thesis.cinegrade.domain.editing.PhotoMetadata;
-import hu.elte.ik.thesis.cinegrade.domain.editing.imports.ImportRequest;
+import hu.elte.ik.thesis.cinegrade.domain.objects.EditState;
+import hu.elte.ik.thesis.cinegrade.domain.objects.PhotoEntry;
+import hu.elte.ik.thesis.cinegrade.domain.objects.PhotoMetadata;
+import hu.elte.ik.thesis.cinegrade.domain.objects.imports.ImportRequest;
 import hu.elte.ik.thesis.cinegrade.domain.enums.ImportMethod;
 import hu.elte.ik.thesis.cinegrade.infra.database.TransactionRunner;
 import hu.elte.ik.thesis.cinegrade.infra.database.dao.catalog.EditStateDao;

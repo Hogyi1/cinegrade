@@ -1,16 +1,11 @@
 package hu.elte.ik.thesis.cinegrade.engine.grade;
 
-import hu.elte.ik.thesis.cinegrade.domain.editing.EditState;
+import hu.elte.ik.thesis.cinegrade.domain.objects.EditState;
 import hu.elte.ik.thesis.cinegrade.engine.GradeParam;
 import hu.elte.ik.thesis.cinegrade.engine.gl.ShaderProgram;
 import hu.elte.ik.thesis.cinegrade.engine.gl.UniformBuffer;
 
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-
-import static org.lwjgl.opengl.GL15.*;
-import static org.lwjgl.opengl.GL30.glBindBufferBase;
-import static org.lwjgl.opengl.GL31.GL_UNIFORM_BUFFER;
 
 /**
  * The {@code BasicBlock} uniform block (std140) of the grade shader, filled from an {@link EditState}.

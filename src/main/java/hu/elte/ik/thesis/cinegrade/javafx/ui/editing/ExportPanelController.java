@@ -3,7 +3,7 @@ package hu.elte.ik.thesis.cinegrade.javafx.ui.editing;
 import hu.elte.ik.thesis.cinegrade.app.managers.export.ExportManager;
 import hu.elte.ik.thesis.cinegrade.app.managers.export.ExportStage;
 import hu.elte.ik.thesis.cinegrade.app.scope.CatalogScope;
-import hu.elte.ik.thesis.cinegrade.domain.editing.PhotoEntry;
+import hu.elte.ik.thesis.cinegrade.domain.objects.PhotoEntry;
 import hu.elte.ik.thesis.cinegrade.domain.enums.PhotoExtension;
 import hu.elte.ik.thesis.cinegrade.domain.navigation.SceneManager;
 import hu.elte.ik.thesis.cinegrade.infra.services.storage.database.LastPathService;
@@ -21,12 +21,8 @@ import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
-import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
-import javafx.util.StringConverter;
 
-import java.io.File;
-import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 
 // [AI-GENERATED]

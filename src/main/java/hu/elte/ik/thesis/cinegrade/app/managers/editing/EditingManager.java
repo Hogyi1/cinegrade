@@ -2,9 +2,9 @@ package hu.elte.ik.thesis.cinegrade.app.managers.editing;
 
 import hu.elte.ik.thesis.cinegrade.app.managers.catalog.HistoryManager;
 import hu.elte.ik.thesis.cinegrade.app.managers.photos.PhotoManager;
-import hu.elte.ik.thesis.cinegrade.domain.editing.EditState;
-import hu.elte.ik.thesis.cinegrade.domain.editing.PhotoEntry;
-import hu.elte.ik.thesis.cinegrade.domain.editing.PhotoMetadata;
+import hu.elte.ik.thesis.cinegrade.domain.objects.EditState;
+import hu.elte.ik.thesis.cinegrade.domain.objects.PhotoEntry;
+import hu.elte.ik.thesis.cinegrade.domain.objects.PhotoMetadata;
 import hu.elte.ik.thesis.cinegrade.domain.enums.WhiteBalanceType;
 import hu.elte.ik.thesis.cinegrade.domain.error.ErrorHandler;
 import hu.elte.ik.thesis.cinegrade.engine.GradeParam;

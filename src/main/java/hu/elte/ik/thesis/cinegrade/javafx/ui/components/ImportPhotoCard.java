@@ -1,6 +1,6 @@
 package hu.elte.ik.thesis.cinegrade.javafx.ui.components;
 
-import hu.elte.ik.thesis.cinegrade.domain.editing.imports.StageEntry;
+import hu.elte.ik.thesis.cinegrade.domain.objects.imports.StageEntry;
 import hu.elte.ik.thesis.cinegrade.domain.enums.ErrorCode;
 import hu.elte.ik.thesis.cinegrade.domain.exceptions.CineGradeException;
 import hu.elte.ik.thesis.cinegrade.infra.utils.format.FormatUtils;
@@ -24,8 +24,6 @@ import org.controlsfx.control.GridView;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.function.Consumer;
 
 /**

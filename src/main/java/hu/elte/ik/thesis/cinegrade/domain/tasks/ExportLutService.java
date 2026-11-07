@@ -1,9 +1,7 @@
 package hu.elte.ik.thesis.cinegrade.domain.tasks;
 
-import hu.elte.ik.thesis.cinegrade.domain.editing.EditState;
-import hu.elte.ik.thesis.cinegrade.domain.editing.LutExportOption;
-import hu.elte.ik.thesis.cinegrade.domain.enums.ErrorCode;
-import hu.elte.ik.thesis.cinegrade.domain.exceptions.CineGradeException;
+import hu.elte.ik.thesis.cinegrade.domain.objects.EditState;
+import hu.elte.ik.thesis.cinegrade.domain.objects.LutExportOption;
 import hu.elte.ik.thesis.cinegrade.engine.renderer.ExportRenderer;
 import javafx.concurrent.Service;
 import javafx.concurrent.Task;

@@ -2,9 +2,9 @@ package hu.elte.ik.thesis.cinegrade.infra.services.exiftool;
 
 import com.google.gson.*;
 import com.google.gson.reflect.TypeToken;
-import hu.elte.ik.thesis.cinegrade.domain.editing.PhotoMetadata;
-import hu.elte.ik.thesis.cinegrade.domain.editing.imports.ExifProbeResult;
-import hu.elte.ik.thesis.cinegrade.domain.editing.imports.FileProbeResult;
+import hu.elte.ik.thesis.cinegrade.domain.objects.PhotoMetadata;
+import hu.elte.ik.thesis.cinegrade.domain.objects.imports.ExifProbeResult;
+import hu.elte.ik.thesis.cinegrade.domain.objects.imports.FileProbeResult;
 import hu.elte.ik.thesis.cinegrade.domain.enums.ExifTag;
 import hu.elte.ik.thesis.cinegrade.infra.utils.process.ProcessResult;
 import hu.elte.ik.thesis.cinegrade.infra.config.SystemInfo;

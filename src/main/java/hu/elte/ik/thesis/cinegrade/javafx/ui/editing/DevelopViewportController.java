@@ -1,18 +1,14 @@
 package hu.elte.ik.thesis.cinegrade.javafx.ui.editing;
 
 import hu.elte.ik.thesis.cinegrade.app.managers.editing.EditingManager;
-import hu.elte.ik.thesis.cinegrade.domain.editing.PhotoEntry;
-import hu.elte.ik.thesis.cinegrade.domain.error.ErrorHandler;
+import hu.elte.ik.thesis.cinegrade.domain.objects.PhotoEntry;
 import hu.elte.ik.thesis.cinegrade.domain.listener.HistoryListener;
-import hu.elte.ik.thesis.cinegrade.engine.renderer.ViewportRenderer;
-import hu.elte.ik.thesis.cinegrade.infra.services.libraw.LibrawService;
 import hu.elte.ik.thesis.cinegrade.infra.utils.format.FormatUtils;
 import hu.elte.ik.thesis.cinegrade.javafx.ui.animations.TransitionFactory;
 import hu.elte.ik.thesis.cinegrade.javafx.ui.input.InputListener;
 import hu.elte.ik.thesis.cinegrade.javafx.ui.input.ViewportNavigator;
 import javafx.animation.PauseTransition;
 import javafx.animation.SequentialTransition;
-import javafx.application.Platform;
 import javafx.beans.binding.BooleanBinding;
 import javafx.beans.binding.BooleanExpression;
 import javafx.event.EventHandler;
@@ -30,14 +26,6 @@ import javafx.stage.Screen;
 import javafx.util.Duration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.lwjgl.system.MemoryUtil;
-
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.util.concurrent.CompletableFuture;
 
 /**
  * Center viewport of the development page: shows the rendered photo.

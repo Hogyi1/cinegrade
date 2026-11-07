@@ -1,6 +1,6 @@
 package hu.elte.ik.thesis.cinegrade.engine.grade;
 
-import hu.elte.ik.thesis.cinegrade.domain.editing.EditState;
+import hu.elte.ik.thesis.cinegrade.domain.objects.EditState;
 import hu.elte.ik.thesis.cinegrade.engine.GradeParam;
 
 import java.util.Optional;

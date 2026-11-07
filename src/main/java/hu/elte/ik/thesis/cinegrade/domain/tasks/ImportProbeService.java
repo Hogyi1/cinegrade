@@ -1,6 +1,6 @@
 package hu.elte.ik.thesis.cinegrade.domain.tasks;
 
-import hu.elte.ik.thesis.cinegrade.domain.editing.imports.FileProbeResult;
+import hu.elte.ik.thesis.cinegrade.domain.objects.imports.FileProbeResult;
 import hu.elte.ik.thesis.cinegrade.infra.services.exiftool.ExifToolService;
 import javafx.concurrent.Service;
 import javafx.concurrent.Task;

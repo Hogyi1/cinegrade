@@ -1,8 +1,8 @@
 // [AI-GENERATED]
 package hu.elte.ik.thesis.cinegrade.app.managers.editing;
 
-import hu.elte.ik.thesis.cinegrade.domain.editing.EditState;
-import hu.elte.ik.thesis.cinegrade.domain.editing.PhotoEntry;
+import hu.elte.ik.thesis.cinegrade.domain.objects.EditState;
+import hu.elte.ik.thesis.cinegrade.domain.objects.PhotoEntry;
 import hu.elte.ik.thesis.cinegrade.engine.grade.WhiteBalancer;
 import hu.elte.ik.thesis.cinegrade.engine.renderer.ThumbnailRenderer;
 import hu.elte.ik.thesis.cinegrade.infra.services.libraw.PhotoDecoder;
