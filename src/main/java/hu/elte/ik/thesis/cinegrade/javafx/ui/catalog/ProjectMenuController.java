@@ -141,11 +141,7 @@ public class ProjectMenuController {
             // Handle home navigation click
         });
 
-        socialNav.setOnMouseClicked(e -> {
-            //TODO
-            // Handle social navigation click
-            sceneManager.switchView(ViewType.TEST_MENU);
-        });
+        socialNav.setOnMouseClicked(e -> sceneManager.switchView(ViewType.SOCIALS));
     }
 
     private void setupWelcomeLabel() {

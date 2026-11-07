@@ -33,7 +33,7 @@ import hu.elte.ik.thesis.cinegrade.javafx.ui.dialog.SplashScreenController;
 import hu.elte.ik.thesis.cinegrade.javafx.ui.editing.*;
 import hu.elte.ik.thesis.cinegrade.javafx.ui.presenters.ErrorPresenter;
 import hu.elte.ik.thesis.cinegrade.javafx.ui.presenters.TaskToastPresenter;
-import hu.elte.ik.thesis.cinegrade.javafx.ui.test.ErrorTestController;
+import hu.elte.ik.thesis.cinegrade.javafx.ui.catalog.SocialsController;
 import hu.elte.ik.thesis.cinegrade.domain.tasks.appinit.AppInitService;
 import javafx.animation.PauseTransition;
 import javafx.application.Application;
@@ -139,7 +139,7 @@ public class App extends Application {
     private void registerControllers() {
         logger.info("Registering view controllers");
         controllerFactory.register(ProjectMenuController.class, () -> new ProjectMenuController(catalogManager, userManager, sceneManager));
-        controllerFactory.register(ErrorTestController.class, () -> new ErrorTestController(sceneManager));
+        controllerFactory.register(SocialsController.class, () -> new SocialsController(sceneManager));
         controllerFactory.register(SplashScreenController.class, () -> new SplashScreenController(createAppInitService()));
 
         // Created after catalog is selected

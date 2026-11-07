@@ -4,7 +4,7 @@ public enum ViewType {
     SPLASH("/fxmls/splashScreen.fxml", "CineGrade", false, false),
     PROJECT_MENU("/fxmls/projectPage.fxml", "CineGrade — Projects", true, true),
     EDIT_PAGE("/fxmls/editPage.fxml", "CineGrade — Workspace", true, true),
-    TEST_MENU("/fxmls/Test.fxml", "CineGrade - Test panel", false, false);
+    SOCIALS("/fxmls/socialsPage.fxml", "CineGrade — Socials", true, true);
 
     private final String fxmlPath;
     private final String title;
