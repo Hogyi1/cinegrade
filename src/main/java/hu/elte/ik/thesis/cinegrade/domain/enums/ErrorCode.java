@@ -89,6 +89,15 @@ public enum ErrorCode {
     TEXTURE_UPLOAD_FAILED(5006, "Failed to upload image pixel data to OpenGL texture.", Severity.ERROR),
     RENDER_TARGET_READBACK_FAILED(5007, "Failed to read back rendered pixels from FBO to CPU buffer.", Severity.ERROR),
 
+    // [AI-GENERATED]
+    // ==========================================
+    // 6000–6099: Socials (web platform API)
+    // ==========================================
+    SOCIAL_NOT_LOGGED_IN(6001, "You are not signed in to CineGrade Socials.", Severity.WARNING),
+    SOCIAL_OFFLINE(6002, "Can't reach CineGrade Socials: %s", Severity.WARNING),
+    SOCIAL_REQUEST_FAILED(6003, "CineGrade Socials answered %d to %s", Severity.ERROR),
+    SOCIAL_BAD_RESPONSE(6004, "CineGrade Socials sent an unreadable answer to %s", Severity.ERROR),
+
     // ==========================================
     // 8000–8099: SQL Errors
     // ==========================================
