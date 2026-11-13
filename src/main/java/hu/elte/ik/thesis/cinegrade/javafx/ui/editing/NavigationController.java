@@ -7,6 +7,7 @@ import hu.elte.ik.thesis.cinegrade.domain.enums.WorkspacePanel;
 import hu.elte.ik.thesis.cinegrade.domain.navigation.SceneManager;
 import hu.elte.ik.thesis.cinegrade.domain.theme.ThemeManager;
 import hu.elte.ik.thesis.cinegrade.javafx.ui.animations.TransitionFactory;
+import hu.elte.ik.thesis.cinegrade.javafx.ui.catalog.SocialsController;
 import hu.elte.ik.thesis.cinegrade.javafx.ui.input.InputListener;
 import javafx.animation.ParallelTransition;
 import javafx.animation.Transition;
@@ -17,18 +18,23 @@ import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.fxml.FXML;
 import javafx.geometry.Bounds;
+import javafx.geometry.Rectangle2D;
+import javafx.geometry.Side;
 import javafx.scene.Node;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.ToggleButton;
+import javafx.scene.control.*;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCodeCombination;
 import javafx.scene.input.KeyCombination;
+import javafx.scene.input.MouseButton;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.util.Duration;
 
+import java.nio.file.Path;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -62,6 +68,12 @@ public class NavigationController {
     @FXML
     private Button userProfileBtn;
     @FXML
+    private ImageView avatarImage;
+    @FXML
+    private Button Signin;
+    @FXML
+    private Button Signup;
+    @FXML
     private ToggleButton themeToggleBtn;
 
     private Transition bubbleTransition;
@@ -69,6 +81,11 @@ public class NavigationController {
     private ThemeManager themeManager;
     private Label pendingTab;
     private InputListener inputListener;
+    private boolean contextMenuShowing = false;
+    // [AI-GENERATED]
+    private static final String DEFAULT_AVATAR = "/images/default_avatar.png";
+
+    private ContextMenu userMenu;
 
     public NavigationController(SceneManager sceneManager, UserManager userManager, ThemeManager themeManager) {
         this.sceneManager = sceneManager;
@@ -138,6 +155,67 @@ public class NavigationController {
                 updateTabStyles(activeTab);
             }
         });
+
+        userProfileBtn.setOnMouseClicked(e -> {
+            logger.debug("User profile button clicked");
+
+            if (contextMenuShowing) {
+                userMenu.hide();
+            }
+            userMenu = new ContextMenu();
+            MenuItem logout = new MenuItem("Logout");
+            logout.setOnAction(event -> {
+                userManager.logout();
+                userMenu.hide();
+            });
+            MenuItem socials = new MenuItem("Socials");
+            socials.setOnAction(event -> {
+                sceneManager.switchView(ViewType.SOCIALS);
+                userMenu.hide();
+            });
+            userMenu.getItems().add(logout);
+            userMenu.getItems().add(socials);
+            userMenu.show(userProfileBtn, Side.BOTTOM, -60, 10);
+        });
+        showAvatar();
+
+        userManager.currentUserProperty().addListener((obs, oldUser, newUser) -> {
+            showAvatar();
+            showSignedIn(userManager.isLoggedIn());
+        });
+        // [AI-GENERATED] The listener only fires on a change, so set the starting state once by hand
+        showSignedIn(userManager.isLoggedIn());
+
+        Signin.setOnAction(e -> openSocials("/login"));
+        Signup.setOnAction(e -> openSocials("/register"));
+    }
+
+    // [AI-GENERATED METHOD]
+    // The downloaded avatar, or the bundled default. The ImageView in the FXML fixes the size and the circle;
+    // a non-square picture is cropped to its centre square so it isn't squeezed.
+    private void showAvatar() {
+        Path avatar = userManager.getAvatarPath();
+        String url = avatar != null
+                ? avatar.toUri().toString()
+                : Objects.requireNonNull(getClass().getResource(DEFAULT_AVATAR)).toExternalForm();
+        Image image = new Image(url);   // a small local file, loaded right away so the crop knows its size
+        double side = Math.min(image.getWidth(), image.getHeight());
+        avatarImage.setImage(image);
+        avatarImage.setViewport(new Rectangle2D((image.getWidth() - side) / 2, (image.getHeight() - side) / 2, side, side));
+    }
+
+    private void showSignedIn(boolean on) {
+        Signin.setManaged(!on);
+        Signin.setVisible(!on);
+        Signup.setManaged(!on);
+        Signup.setVisible(!on);
+        userProfileBtn.setManaged(on);
+        userProfileBtn.setVisible(on);
+    }
+
+    private void openSocials(String path) {
+        SocialsController socials = sceneManager.switchView(ViewType.SOCIALS);
+        socials.open(path);
     }
 
     public void switchToPreviousPanel() {

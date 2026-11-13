@@ -86,9 +86,17 @@
                 </ToggleButton>
 
                 <Button fx:id="backToProjectsBtn" mnemonicParsing="false" styleClass="nav-action-btn" text="Projects"/>
+                <!-- [AI-GENERATED] Shown while signed out; they open /login and /register in the Socials view -->
+                <Button fx:id="Signin" mnemonicParsing="false" styleClass="nav-action-btn" text="Sign in"/>
+                <Button fx:id="Signup" mnemonicParsing="false" styleClass="nav-action-btn" text="Sign up"/>
+                <!-- [AI-GENERATED] The avatar: a 30px ImageView cut to a circle; the controller only swaps the picture -->
                 <Button fx:id="userProfileBtn" mnemonicParsing="false" styleClass="profile-avatar-btn">
                     <graphic>
-                        <Circle fill="#D9D9D9" radius="15.0"/>
+                        <ImageView fx:id="avatarImage" fitWidth="30.0" fitHeight="30.0" smooth="true">
+                            <clip>
+                                <Circle centerX="15.0" centerY="15.0" radius="15.0"/>
+                            </clip>
+                        </ImageView>
                     </graphic>
                 </Button>
             </children>

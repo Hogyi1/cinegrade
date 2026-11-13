@@ -3,9 +3,13 @@ package hu.elte.ik.thesis.cinegrade.app.main;
 import hu.elte.ik.thesis.cinegrade.app.managers.concurrency.ThreadPoolManager;
 import hu.elte.ik.thesis.cinegrade.app.managers.catalog.CatalogManager;
 import hu.elte.ik.thesis.cinegrade.app.managers.concurrency.tasks.TaskManager;
+import hu.elte.ik.thesis.cinegrade.app.managers.social.CineGradeApi;
+import hu.elte.ik.thesis.cinegrade.app.managers.social.PersistentCookieStore;
+import hu.elte.ik.thesis.cinegrade.app.managers.social.ShareManager;
 import hu.elte.ik.thesis.cinegrade.app.managers.user.UserManager;
 import hu.elte.ik.thesis.cinegrade.app.managers.presets.PresetManager;
 import hu.elte.ik.thesis.cinegrade.app.managers.presets.PresetStage;
+import hu.elte.ik.thesis.cinegrade.infra.database.dao.token.RefreshTokenDao;
 import hu.elte.ik.thesis.cinegrade.infra.services.storage.database.PresetService;
 import hu.elte.ik.thesis.cinegrade.app.scope.CatalogScopeFactory;
 import hu.elte.ik.thesis.cinegrade.app.scope.ResourceStack;
@@ -37,12 +41,17 @@ import hu.elte.ik.thesis.cinegrade.javafx.ui.catalog.SocialsController;
 import hu.elte.ik.thesis.cinegrade.domain.tasks.appinit.AppInitService;
 import javafx.animation.PauseTransition;
 import javafx.application.Application;
+import javafx.scene.image.Image;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.net.*;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Locale;
+import java.util.Objects;
 
 import static com.sun.jna.platform.win32.GL.GL_VERSION;
 import static org.lwjgl.opengl.GL11.glGetString;
@@ -65,6 +74,10 @@ public class App extends Application {
     private ViewportRenderer viewportRenderer;
     private ThumbnailRenderer thumbnailRenderer;
     private ExportRenderer exportRenderer;
+    private CookieManager cookieManager;
+    private PersistentCookieStore persistentCookieStore;
+    private ShareManager shareManager;
+    private CineGradeApi api;
 
     private TaskToastPresenter taskToastPresenter;
     private ErrorPresenter errorToastPresenter;
@@ -87,6 +100,7 @@ public class App extends Application {
     public void start(Stage primaryStage) {
         try {
             logger.debug("Application start method invoked");
+            primaryStage.getIcons().add(new Image(Objects.requireNonNull(App.class.getResourceAsStream("/images/icons/cine-icon.png"))));
 
             createBootstrapManagers(primaryStage);
             registerControllers();
@@ -99,6 +113,33 @@ public class App extends Application {
         } catch (Exception ex) {
             ErrorHandler.getInstance().handle(new CineGradeException(ErrorCode.STARTUP_ERROR, ex, "FATAL error inside application startup method"));
         }
+    }
+
+    // [AI-GENERATED METHOD]
+    /**
+     * Started by double-clicking a .cgproj (the installer's file association passes its path as the first
+     * argument): open that project straight away. Otherwise, or if it can't be opened, the project menu.
+     */
+    private void showFirstView() {
+        Path project = getParameters().getRaw().stream()
+                .filter(arg -> arg.toLowerCase(Locale.ROOT).endsWith(".cgproj"))
+                .map(Path::of)
+                .filter(Files::isRegularFile)
+                .findFirst()
+                .orElse(null);
+        if (project != null) {
+            try {
+                logger.info("Opening the project the app was started with: {}", project);
+                catalogManager.openCatalog(project.toFile());
+                sceneManager.switchView(ViewType.EDIT_PAGE);
+                return;
+            } catch (Exception ex) {
+                sceneManager.switchView(ViewType.PROJECT_MENU);
+                ErrorHandler.getInstance().handle(ex);
+                return;
+            }
+        }
+        sceneManager.switchView(ViewType.PROJECT_MENU);
     }
 
     /**
@@ -120,7 +161,7 @@ public class App extends Application {
                     SystemInfo.INSTANCE.setGlVersion(glGetString(GL_VERSION));
                     return null;
                 });
-                sceneManager.switchView(ViewType.PROJECT_MENU);
+                showFirstView();
             });
             pause.play();
         });
@@ -139,7 +180,7 @@ public class App extends Application {
     private void registerControllers() {
         logger.info("Registering view controllers");
         controllerFactory.register(ProjectMenuController.class, () -> new ProjectMenuController(catalogManager, userManager, sceneManager));
-        controllerFactory.register(SocialsController.class, () -> new SocialsController(sceneManager));
+        controllerFactory.register(SocialsController.class, () -> new SocialsController(sceneManager, api, getHostServices(), threadPoolManager.getIoPool(), presetManager, shareManager, persistentCookieStore));
         controllerFactory.register(SplashScreenController.class, () -> new SplashScreenController(createAppInitService()));
 
         // Created after catalog is selected
@@ -151,7 +192,9 @@ public class App extends Application {
         controllerFactory.register(DevelopmentPanelController.class, () -> new DevelopmentPanelController(catalogManager.getCurrentScope()));
         controllerFactory.register(ExportPanelController.class, () -> new ExportPanelController(catalogManager.getCurrentScope()));
         controllerFactory.register(DevelopPresetPanelController.class, () -> new DevelopPresetPanelController(
+                sceneManager,
                 presetManager,
+                shareManager,
                 catalogManager.getCurrentScope().editingManager(),
                 userManager));
         controllerFactory.register(DevelopViewportController.class, () -> new DevelopViewportController(
@@ -191,6 +234,14 @@ public class App extends Application {
         thumbnailRenderer = resources.push(new ThumbnailRenderer(renderEngine.getBackground()));
         exportRenderer = resources.push(new ExportRenderer(renderEngine.getBackground()));
         appTx = resources.push(new TransactionRunner(AppDatabase.getInstance().getConnection(), "appTx"));
+        try {
+            persistentCookieStore = new PersistentCookieStore(new URI(AppConfig.INSTANCE.getAppApi()), new RefreshTokenDao());
+            cookieManager = new CookieManager(persistentCookieStore, CookiePolicy.ACCEPT_ORIGINAL_SERVER);
+            api = resources.push(new CineGradeApi(persistentCookieStore));
+            CookieHandler.setDefault(cookieManager);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
 
         catalogManager = new CatalogManager(new CatalogScopeFactory(taskManager,
                 thumbnailFactory,
@@ -200,8 +251,11 @@ public class App extends Application {
                 exportRenderer), storageService);
 
         resources.push(catalogManager);
-        userManager = new UserManager();
+        userManager = new UserManager(persistentCookieStore, api, threadPoolManager.getIoPool());
+        persistentCookieStore.registerListener(userManager);
         presetManager = new PresetManager(new PresetService(), new PresetStage(), appTx);
+        shareManager = new ShareManager(new PresetService(), threadPoolManager.getIoPool(), threadPoolManager.getCpuPool(),
+                taskManager, exportRenderer);
     }
 
     private void createPresenters() {
