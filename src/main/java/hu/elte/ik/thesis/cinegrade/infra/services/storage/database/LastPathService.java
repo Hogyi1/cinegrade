@@ -17,6 +17,7 @@ public class LastPathService {
     private static final String EXPORT_LAST_FOLDER = "export.last_folder";
     private static final String EXPORT_LAST_LUT_FOLDER = "export.last_lut_folder";
     private static final String IMPORT_LAST_FOLDER = "import.last_folder";
+    private static final String DOWNLOAD_LAST_FOLDER = "download.last_folder";
     private static final String APP_PROJECT_PATH = "app.project_path";
 
     public LastPathService(Connection connection) {
@@ -60,6 +61,14 @@ public class LastPathService {
 
     public Optional<Path> getAppProjectPath() {
         return get(APP_PROJECT_PATH);
+    }
+
+    public Optional<Path> getDownloadLastFolder() {
+        return get(DOWNLOAD_LAST_FOLDER);
+    }
+
+    public void setDownloadLastFolder(Path folder) {
+        set(DOWNLOAD_LAST_FOLDER, folder);
     }
 
     public void setExportLastFolder(Path folder) {
