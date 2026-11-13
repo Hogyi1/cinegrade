@@ -2,6 +2,7 @@ package hu.elte.ik.thesis.cinegrade.infra.database;
 
 import hu.elte.ik.thesis.cinegrade.domain.enums.ErrorCode;
 import hu.elte.ik.thesis.cinegrade.domain.exceptions.CineGradeException;
+import lombok.Getter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -16,6 +17,7 @@ import java.util.concurrent.TimeUnit;
 public final class TransactionRunner implements AutoCloseable {
 
     private static final Logger logger = LogManager.getLogger(TransactionRunner.class);
+    @Getter
     private final Connection connection;
     private final String name;
     private final ExecutorService dbThread;

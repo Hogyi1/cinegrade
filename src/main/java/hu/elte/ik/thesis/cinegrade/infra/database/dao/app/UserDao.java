@@ -11,7 +11,7 @@ import java.util.List;
 /**
  * Data access object for the {@code user_session} table of the application database.
  *
- * Holds the locally persisted user session (profile data and auth token).
+ * Holds the locally persisted user profile; {@code refresh_token_id} points at its {@code refresh_tokens} row.
  * The DAO does not own the {@link Connection}; the caller is responsible for its lifecycle.
  */
 public class UserDao {
@@ -64,38 +64,40 @@ public class UserDao {
     }
 
     /**
-     * Sets the auth token of a user.
+     * Points a user at another {@code refresh_tokens} row.
      *
-     * @param id        id of the user
-     * @param authToken the new auth token
+     * @param id             id of the user
+     * @param refreshTokenId id of the refresh token row
      * @throws SQLException if the update fails
      */
-    public void updateAuthToken(int id, String authToken) throws SQLException {
-        String sql = "UPDATE user_session SET auth_token = ? WHERE id = ?";
+    public void updateRefreshTokenId(int id, int refreshTokenId) throws SQLException {
+        String sql = "UPDATE user_session SET refresh_token_id = ? WHERE id = ?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
-            pstmt.setString(1, authToken);
+            pstmt.setInt(1, refreshTokenId);
             pstmt.setInt(2, id);
             pstmt.executeUpdate();
         }
     }
 
     /**
-     * Inserts a user session row. The {@code last_login} and {@code created_at} columns are left to
-     * their database defaults.
+     * Stores the signed-in user as the only {@code user_session} row: any previous row is replaced, so calling
+     * it again after a refresh of {@code /users/me} doesn't create duplicates. The id is local (SQLite assigns
+     * it, {@code /users/me} has no server id); {@code user.getId()} is ignored. {@code last_login} and
+     * {@code created_at} are left to their database defaults.
      *
-     * @param user the user to store
-     * @throws SQLException if the insert fails, e.g. when a user with the same id already exists
+     * @param user the user to store; its {@code refreshTokenId} must point at an existing {@code refresh_tokens} row
+     * @throws SQLException if the insert fails, e.g. when {@code refreshTokenId} points at no row
      */
     public void insert(User user) throws SQLException {
-        String sql = "INSERT INTO user_session (id, username, email, avatar_url, auth_token) VALUES (?, ?, ?, ?, ?)";
+        deleteUser();
+        String sql = "INSERT INTO user_session (username, email, avatar_url, refresh_token_id) VALUES (?, ?, ?, ?)";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
-            pstmt.setInt(1, user.getId());
-            pstmt.setString(2, user.getUsername());
-            pstmt.setString(3, user.getEmail());
-            pstmt.setString(4, user.getAvatarUrl());
-            pstmt.setString(5, user.getAuthToken());
+            pstmt.setString(1, user.getUsername());
+            pstmt.setString(2, user.getEmail());
+            pstmt.setString(3, user.getAvatarUrl());
+            pstmt.setInt(4, user.getRefreshTokenId());
             pstmt.executeUpdate();
         }
     }
@@ -108,7 +110,7 @@ public class UserDao {
      */
     public List<User> findAll() throws SQLException {
         List<User> users = new ArrayList<>();
-        String sql = "SELECT id, username, email, avatar_url, auth_token, auth_token, last_login, created_at FROM user_session ORDER BY id";
+        String sql = "SELECT id, username, email, avatar_url, refresh_token_id, last_login, created_at FROM user_session ORDER BY id";
 
         try (Statement stmt = connection.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
@@ -140,7 +142,7 @@ public class UserDao {
                 rs.getString("username"),
                 rs.getString("email"),
                 rs.getString("avatar_url"),
-                rs.getString("auth_token"),
+                rs.getInt("refresh_token_id"),
                 lastLoginAt,
                 createdAt
         );
@@ -154,7 +156,7 @@ public class UserDao {
      * @throws SQLException if the query fails
      */
     public User findLatestUser(int id) throws SQLException {
-        String sql = "SELECT id, username, email, avatar_url, auth_token, auth_token, last_login, created_at FROM user_session WHERE id = ?";
+        String sql = "SELECT id, username, email, avatar_url, refresh_token_id, last_login, created_at FROM user_session WHERE id = ?";
         User user;
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
@@ -168,15 +170,13 @@ public class UserDao {
     }
 
     /**
-     * Returns a single user, selected by {@code ORDER BY last_login LIMIT 1}.
-     *
-     * Note: the ordering is ascending, so this selects the user with the <em>oldest</em> login time.
+     * Returns the user with the most recent login ({@code ORDER BY last_login DESC LIMIT 1}).
      *
      * @return the selected user, or {@code null} if no user is stored
      * @throws SQLException if the query fails
      */
     public User findLatestUser() throws SQLException {
-        String sql = "SELECT id, username, email, avatar_url, auth_token, auth_token, last_login, created_at FROM user_session ORDER BY last_login LIMIT 1";
+        String sql = "SELECT id, username, email, avatar_url, refresh_token_id, last_login, created_at FROM user_session ORDER BY last_login DESC LIMIT 1";
         User user;
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
@@ -198,7 +198,7 @@ public class UserDao {
         String sql = "DELETE FROM user_session";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
-            ResultSet rs = pstmt.executeQuery();
+            pstmt.executeUpdate();   // executeQuery throws on a DELETE in the SQLite driver
             return true;
         }
     }

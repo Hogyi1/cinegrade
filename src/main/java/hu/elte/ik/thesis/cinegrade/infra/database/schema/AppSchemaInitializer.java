@@ -39,6 +39,15 @@ public class AppSchemaInitializer {
             );
             """;
 
+    private static final String CREATE_TABLE_REFRESH_TOKENS = """
+            CREATE TABLE IF NOT EXISTS refresh_tokens (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                refresh_token TEXT NOT NULL,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                last_used_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            );
+            """;
+
     // One layer of preset categories; a category stays even when it has no presets
     private static final String CREATE_TABLE_PRESET_CATEGORIES = """
             CREATE TABLE IF NOT EXISTS preset_categories (
@@ -68,7 +77,7 @@ public class AppSchemaInitializer {
                 username TEXT NOT NULL,
                 email TEXT NOT NULL,
                 avatar_url TEXT,
-                auth_token TEXT NOT NULL,
+                refresh_token_id INTEGER NOT NULL REFERENCES refresh_tokens(id) ON DELETE CASCADE,
                 last_login DATETIME DEFAULT CURRENT_TIMESTAMP,
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP
             );
@@ -86,6 +95,7 @@ public class AppSchemaInitializer {
     private static final SchemaEntity[] TABLES = {
             new SchemaEntity("app_settings", CREATE_TABLE_APP_SETTINGS),
             new SchemaEntity("recent_catalogs", CREATE_TABLE_RECENT_CATALOGS),
+            new SchemaEntity("refresh_tokens", CREATE_TABLE_REFRESH_TOKENS),
             new SchemaEntity("preset_categories", CREATE_TABLE_PRESET_CATEGORIES),
             new SchemaEntity("preset_categories seed", SEED_USER_PRESETS),
             new SchemaEntity("presets", CREATE_TABLE_PRESETS),
@@ -111,9 +121,6 @@ public class AppSchemaInitializer {
             logger.info("App table has successfully been created: {}", table.name());
         }
 
-        migrateRecentCatalogs(connection);
-        dropGlobalPresets(connection);
-
         logger.info("Initializing app indexes..");
         for (SchemaEntity index : INDEXES) {
             logger.info("Creating app index: {}", index.name());
@@ -126,52 +133,6 @@ public class AppSchemaInitializer {
         }
 
         logger.info("App schema initialization has successfully finished");
-    }
-
-    // [AI-GENERATED METHOD]
-    // Old app databases stored only the project directory (catalog_path) and searched it for a .cgproj.
-    // Rename it to project_directory and backfill project_file_path as <directory>/<name>.cgproj.
-    private static void migrateRecentCatalogs(Connection connection) {
-        try {
-            if (columnExists(connection, "recent_catalogs", "catalog_path")) {
-                logger.info("Migrating recent_catalogs.catalog_path -> project_directory");
-                executeStatement(connection, "ALTER TABLE recent_catalogs RENAME COLUMN catalog_path TO project_directory;");
-            }
-            if (!columnExists(connection, "recent_catalogs", "project_file_path")) {
-                logger.info("Migrating recent_catalogs: adding project_file_path");
-                executeStatement(connection, "ALTER TABLE recent_catalogs ADD COLUMN project_file_path TEXT;");
-                try (PreparedStatement pstmt = connection.prepareStatement(
-                        "UPDATE recent_catalogs SET project_file_path = project_directory || ? || catalog_name || '.cgproj' WHERE project_file_path IS NULL;")) {
-                    pstmt.setString(1, java.io.File.separator);
-                    pstmt.executeUpdate();
-                }
-            }
-        } catch (SQLException ex) {
-            throw new CineGradeException(ErrorCode.DB_SCHEMA_INIT_FAILED, ex, "recent_catalogs migration");
-        }
-    }
-
-    // [AI-GENERATED METHOD]
-    // Old app databases have global_presets with an INTEGER id, replaced by presets (TEXT UUID id).
-    // Nothing ever wrote to it, so it is dropped instead of copied; its index goes with it.
-    private static void dropGlobalPresets(Connection connection) {
-        try {
-            executeStatement(connection, "DROP TABLE IF EXISTS global_presets;");
-        } catch (SQLException ex) {
-            throw new CineGradeException(ErrorCode.DB_SCHEMA_INIT_FAILED, ex, "global_presets migration");
-        }
-    }
-
-    private static boolean columnExists(Connection connection, String table, String column) throws SQLException {
-        try (java.sql.Statement stmt = connection.createStatement();
-             java.sql.ResultSet rs = stmt.executeQuery("PRAGMA table_info(" + table + ")")) {
-            while (rs.next()) {
-                if (column.equalsIgnoreCase(rs.getString("name"))) {
-                    return true;
-                }
-            }
-        }
-        return false;
     }
 
     private static void executeStatement(Connection connection, String sql) throws SQLException {

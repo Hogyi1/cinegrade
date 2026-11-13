@@ -14,16 +14,17 @@ public class User {
     private final String username;
     private final String email;
     private String avatarUrl;
-    private String authToken;
+    // refresh_tokens.id of the session this user came from; deleting that row deletes this one
+    private int refreshTokenId;
     private Instant lastLogin;
     private final Instant createdAt;
 
-    public User(int id, String username, String email, String avatarUrl, String authToken, Instant lastLogin, Instant createdAt) {
+    public User(int id, String username, String email, String avatarUrl, int refreshTokenId, Instant lastLogin, Instant createdAt) {
         this.id = id;
         this.username = username;
         this.email = email;
         this.avatarUrl = avatarUrl;
-        this.authToken = authToken;
+        this.refreshTokenId = refreshTokenId;
         this.lastLogin = lastLogin;
         this.createdAt = createdAt;
     }
