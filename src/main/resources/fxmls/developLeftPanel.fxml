@@ -25,7 +25,7 @@
                 <SeparatorMenuItem fx:id="editSeparator"/>
                 <MenuItem fx:id="exportPresetItem" mnemonicParsing="false" text="Export .cgedit"/>
                 <!-- Upload to the CineGrade site, comes with the API -->
-                <MenuItem fx:id="sharePresetItem" disable="true" mnemonicParsing="false" text="Share"/>
+                <MenuItem fx:id="sharePresetItem" mnemonicParsing="false" text="Share"/>
                 <SeparatorMenuItem fx:id="deleteSeparator"/>
                 <MenuItem fx:id="deletePresetItem" mnemonicParsing="false" styleClass="menu-item-danger" text="Delete"/>
             </items>

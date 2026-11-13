@@ -191,7 +191,6 @@ public class FFmpegCommandBuilder implements CommandBuilder {
         setExecutablePath(FFPROBE_EXECUTABLE);
         args.addAll(List.of(
                 "-hide_banner",
-                "-nostdin",
                 "-loglevel", "error",
                 "-probesize", "5M",
                 "-analyzeduration", "0",

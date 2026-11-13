@@ -3,14 +3,17 @@ package hu.elte.ik.thesis.cinegrade.javafx.ui.editing;
 import hu.elte.ik.thesis.cinegrade.app.managers.editing.EditingManager;
 import hu.elte.ik.thesis.cinegrade.app.managers.presets.PresetManager;
 import hu.elte.ik.thesis.cinegrade.app.managers.presets.PresetStage;
+import hu.elte.ik.thesis.cinegrade.app.managers.social.ShareManager;
 import hu.elte.ik.thesis.cinegrade.app.managers.user.UserManager;
+import hu.elte.ik.thesis.cinegrade.domain.enums.ViewType;
 import hu.elte.ik.thesis.cinegrade.domain.navigation.SceneManager;
 import hu.elte.ik.thesis.cinegrade.domain.objects.Preset;
 import hu.elte.ik.thesis.cinegrade.engine.GradeParam;
+import hu.elte.ik.thesis.cinegrade.javafx.ui.catalog.SocialsController;
 import hu.elte.ik.thesis.cinegrade.javafx.ui.components.ConfirmDialog;
 import hu.elte.ik.thesis.cinegrade.javafx.ui.components.PresetDialog;
 import hu.elte.ik.thesis.cinegrade.javafx.ui.components.SearchBar;
-import javafx.animation.PauseTransition;
+import javafx.beans.binding.Bindings;
 import javafx.collections.ListChangeListener;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
@@ -49,6 +52,8 @@ public class DevelopPresetPanelController {
     private final PresetManager presetManager;
     private final EditingManager editingManager;
     private final UserManager userManager;
+    private final ShareManager shareManager;
+    private final SceneManager sceneManager;
     // Collapsed category panes, kept across rebuilds
     private final Set<String> collapsed = new HashSet<>();
     // The preset the context menu was opened on
@@ -91,11 +96,13 @@ public class DevelopPresetPanelController {
     @FXML
     private Button clearSettingsBtn;
 
-    public DevelopPresetPanelController(PresetManager presetManager, EditingManager editingManager, UserManager userManager) {
+    public DevelopPresetPanelController(SceneManager sceneManager, PresetManager presetManager, ShareManager shareManager, EditingManager editingManager, UserManager userManager) {
+        this.sceneManager = sceneManager;
         this.presetManager = presetManager;
         this.presetStage = presetManager.getPresetStage();
         this.editingManager = editingManager;
         this.userManager = userManager;
+        this.shareManager = shareManager;
     }
 
     @FXML
@@ -139,6 +146,22 @@ public class DevelopPresetPanelController {
         });
         clearPopupRoot(presetContextMenu);
         clearPopupRoot(categoryContextMenu);
+
+        // [AI-GENERATED] Signed in, and a photo open: the post needs its before/after pair
+        var viewModel = editingManager.getViewModel();
+        sharePresetItem.disableProperty().bind(Bindings.createBooleanBinding(
+                () -> userManager.currentUserProperty().get() == null
+                        || viewModel.currentPhotoProperty().get() == null
+                        || viewModel.currentEditStateProperty().get() == null,
+                userManager.currentUserProperty(), viewModel.currentPhotoProperty(), viewModel.currentEditStateProperty()));
+        // [AI-GENERATED] Exports in the background (progress toast); the upload form opens only once it's all written
+        sharePresetItem.setOnAction(e -> shareManager.share(menuPreset,
+                viewModel.currentPhotoProperty().get(),
+                viewModel.currentEditStateProperty().get(),
+                draft -> {
+                    SocialsController socials = sceneManager.switchView(ViewType.SOCIALS);
+                    socials.open("/upload?from=desktop");
+                }));
     }
 
     // [AI-GENERATED METHOD]

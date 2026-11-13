@@ -59,6 +59,8 @@ public class ExportLutService extends Service<Void> {
 
         try {
             try (BufferedWriter writer = Files.newBufferedWriter(part, StandardCharsets.UTF_8)) {
+                writer.write("TITLE \"Cinegrade LUT\"");
+                writer.newLine();
                 writer.write("LUT_3D_SIZE " + option.lutSize());
                 writer.newLine();
 

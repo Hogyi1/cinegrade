@@ -109,9 +109,9 @@ public class PresetService {
         dao.upsert(preset, GSON.toJson(preset));
     }
 
-    public void write(Preset preset, Path file) {
+    public Path write(Preset preset, Path file) {
         try {
-            Files.writeString(file, GSON.toJson(preset));
+            return Files.writeString(file, GSON.toJson(preset));
         } catch (IOException ex) {
             throw new CineGradeException(ErrorCode.PRESET_SAVE_FAILED, ex, file);
         }
