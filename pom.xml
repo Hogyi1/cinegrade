@@ -249,6 +249,7 @@
                         <option>--enable-native-access=ALL-UNNAMED</option>
                         <option>--sun-misc-unsafe-memory-access=allow</option>
                         <option>--enable-native-access=javafx.graphics</option>
+                        <option>--enable-native-access=javafx.web</option>
                     </options>
                 </configuration>
             </plugin>

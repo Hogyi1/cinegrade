@@ -28,7 +28,7 @@ public enum AppConfig {
     private final String javaVersion;
     private final Theme fallBackTheme;
     private final long requiredSpace;
-    private final boolean developmentMode = false;
+    private final boolean developmentMode;
     private final String appApi;
     private final String appUrl;
 
@@ -40,12 +40,12 @@ public enum AppConfig {
             }
         } catch (IOException e) {
             Logger logger = LogManager.getLogger(AppConfig.class);
-            logger.debug("Could not load app.properties: " + e.getMessage());
+            logger.debug("Could not load app.properties: {}", e.getMessage());
         }
 
-        // boolean isPackaged = System.getProperty("jpackage.app-destination") != null;
-        // String env = System.getProperty("app.env", properties.getProperty("app.env", "development"));
-        // this.developmentMode = !isPackaged && "development".equalsIgnoreCase(env);
+        boolean isPackaged = System.getProperty("jpackage.app-destination") != null;
+        String env = System.getProperty("app.env", properties.getProperty("app.env", "development"));
+        this.developmentMode = !isPackaged && "development".equalsIgnoreCase(env);
 
         this.appName = properties.getProperty("app.name", "cinegrade");
         this.appVersion = properties.getProperty("app.version", "1.0-SNAPSHOT");
@@ -66,22 +66,6 @@ public enum AppConfig {
     }
 
     public InputStream getPackagedConfigFile() {
-        if (!developmentMode) {
-            String appPath = System.getProperty("jpackage.app-destination");
-            if (appPath != null) {
-
-                // In jpackage: <install_dir>/CineGrade.exe -> <install_dir>/app/CineGrade.cfg
-                Path exePath = Path.of(appPath);
-                Path cfgPath = exePath.getParent().resolve("app").resolve("CineGrade.cfg");
-                if (Files.exists(cfgPath)) {
-                    try {
-                        return Files.newInputStream(cfgPath);
-                    } catch (IOException e) {
-                        LogManager.getLogger(AppConfig.class).debug("Could not read packaged config file: " + e.getMessage());
-                    }
-                }
-            }
-        }
         return getClass().getClassLoader().getResourceAsStream("app.properties");
     }
 }
