@@ -59,6 +59,7 @@ public interface LibRaw extends Library {
 
     // File
     int libraw_open_file(Pointer lr, String filename);
+    int libraw_open_wfile(Pointer lr, WString filename);
 
     // Processing
     int libraw_unpack(Pointer lr);
@@ -92,6 +93,7 @@ public interface LibRaw extends Library {
 
     // Others
     String libraw_version();
+    String libraw_strerror(int errorcode);
 
     // metadata - deprecated
     int libraw_get_iwidth(Pointer lr);

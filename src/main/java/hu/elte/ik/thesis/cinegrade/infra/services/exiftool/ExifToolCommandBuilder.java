@@ -6,6 +6,9 @@ import hu.elte.ik.thesis.cinegrade.domain.exceptions.CineGradeException;
 import hu.elte.ik.thesis.cinegrade.infra.utils.process.NativeBinaryLocator;
 import hu.elte.ik.thesis.cinegrade.infra.services.CommandBuilder;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -128,9 +131,28 @@ public class ExifToolCommandBuilder implements CommandBuilder {
     public ArrayList<String> buildCommands() {
         ArrayList<String> finalCommands = new ArrayList<>();
         finalCommands.add(EXIFTOOL_EXECUTABLE);
-        finalCommands.addAll(args);
-        finalCommands.addAll(files);
+        if (files.isEmpty()) {
+            finalCommands.addAll(args);
+        }
+        finalCommands.add("-@");
+        finalCommands.add(writeArgFile().toString());
         return finalCommands;
+    }
+
+    private Path writeArgFile() {
+        List<String> lines = new ArrayList<>();
+        lines.add("-charset");
+        lines.add("filename=utf8");
+        lines.addAll(args);
+        lines.addAll(files);
+        try {
+            Path argFile = Files.createTempFile("cinegrade-exiftool-", ".args");
+            argFile.toFile().deleteOnExit();
+            Files.write(argFile, lines, StandardCharsets.UTF_8);
+            return argFile;
+        } catch (IOException e) {
+            throw new RuntimeException("Error creating argument file", e);
+        }
     }
 }
 

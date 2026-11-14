@@ -242,7 +242,7 @@ public class DevelopEditPanelController {
         showWhiteBalanceType(editState);
 
         PhotoEntry photo = editingManager.getViewModel().currentPhotoProperty().get();
-        if (photo != null && photo.isMissingPhoto()) {
+        if (photo != null && (photo.isMissingPhoto() || editingManager.getViewModel().decodeFailedProperty().get())) {
             histogramService.clear();
             panelsContainer.setDisable(true);
         }

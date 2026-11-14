@@ -1,6 +1,7 @@
 package hu.elte.ik.thesis.cinegrade.infra.services.libraw;
 
 import com.sun.jna.Pointer;
+import com.sun.jna.WString;
 import hu.elte.ik.thesis.cinegrade.domain.enums.ErrorCode;
 import hu.elte.ik.thesis.cinegrade.domain.exceptions.CineGradeException;
 import org.apache.logging.log4j.LogManager;
@@ -43,9 +44,9 @@ public class LibrawService implements AutoCloseable {
         }
 
         try {
-            int err = libRaw.libraw_open_file(handler, rawFile.getAbsolutePath());
+            int err = libRaw.libraw_open_wfile(handler, new WString(rawFile.getAbsolutePath()));
             if (err != 0) {
-                logger.error("Failed to open raw file: {}", rawFile.getAbsolutePath());
+                logger.error("Failed to open raw file: {} {}", rawFile.getAbsolutePath(), libRaw.libraw_strerror(err));
                 return Optional.empty();
             }
 
@@ -97,7 +98,7 @@ public class LibrawService implements AutoCloseable {
 
             libRaw.libraw_set_user_flip(handler, LibRawOptions.Flip.FROM_FILE.value);
 
-            int err = libRaw.libraw_open_file(handler, rawFile.getAbsolutePath());
+            int err = libRaw.libraw_open_wfile(handler, new WString(rawFile.getAbsolutePath()));
             if (err != 0) {
                 logger.error("Failed to open raw file (code {}): {}", err, rawFile.getAbsolutePath());
                 return Optional.empty();
@@ -113,7 +114,7 @@ public class LibrawService implements AutoCloseable {
 
             err = libRaw.libraw_unpack(handler);
             if (err != 0) {
-                logger.error("Failed to unpack raw file (code {}): {}", err, rawFile.getAbsolutePath());
+                logger.error("Failed to unpack raw file (code {} {}): {}", err, libRaw.libraw_strerror(err), rawFile.getAbsolutePath());
                 return Optional.empty();
             }
 
@@ -123,14 +124,14 @@ public class LibrawService implements AutoCloseable {
                 return Optional.empty();
             }
             if (err != 0) {
-                logger.error("Failed to process raw file (code {}): {}", err, rawFile.getAbsolutePath());
+                logger.error("Failed to process raw file (code {} {}): {}", err, libRaw.libraw_strerror(err), rawFile.getAbsolutePath());
                 return Optional.empty();
             }
 
             int[] errc = {0};
             LibRaw.ProcessedImage.ByReference image = libRaw.libraw_dcraw_make_mem_image(handler, errc);
             if (image == null) {
-                logger.error("Failed to create the memory image (code {}): {}", errc[0], rawFile.getAbsolutePath());
+                logger.error("Failed to create the memory image (code {} {}): {}", errc[0], libRaw.libraw_strerror(errc[0]), rawFile.getAbsolutePath());
                 return Optional.empty();
             }
 
@@ -149,16 +150,6 @@ public class LibrawService implements AutoCloseable {
         }
     }
 
-    /**
-     * A raw thumbnail image.
-     *
-     * @param data    the thumbnail data
-     * @param type    the thumbnail type
-     * @param width   the thumbnail width
-     * @param height  the thumbnail height
-     * @param colors  the number of color channels
-     * @param bits    the number of bits per channel
-     */
     @Override
     public void close() {
         if (!closed) {

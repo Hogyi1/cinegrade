@@ -48,6 +48,8 @@
                 <Label fx:id="photoNameLabel" maxWidth="260.0" styleClass="hud-filename" text="No photo selected"/>
                 <!-- The original file is gone; the thumbnail is shown instead -->
                 <Label fx:id="missingBadge" minWidth="-Infinity" managed="false" visible="false" styleClass="hud-missing-badge" text="Missing"/>
+                <!-- The original couldn't be decoded (unsupported RAW); the thumbnail is shown instead -->
+                <Label fx:id="errorBadge" minWidth="-Infinity" managed="false" visible="false" styleClass="hud-error-badge" text="Failed to decode"/>
                 <Label fx:id="photoMetaLabel" minWidth="-Infinity" styleClass="hud-meta"/>
 
                 <Region minWidth="8.0" HBox.hgrow="ALWAYS"/>

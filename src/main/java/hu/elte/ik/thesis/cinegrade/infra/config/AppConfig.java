@@ -39,13 +39,10 @@ public enum AppConfig {
                 properties.load(in);
             }
         } catch (IOException e) {
-            Logger logger = LogManager.getLogger(AppConfig.class);
-            logger.debug("Could not load app.properties: {}", e.getMessage());
+            System.out.println("Could not load app.config: " + e.getMessage());
         }
 
-        boolean isPackaged = System.getProperty("jpackage.app-destination") != null;
-        String env = System.getProperty("app.env", properties.getProperty("app.env", "development"));
-        this.developmentMode = !isPackaged && "development".equalsIgnoreCase(env);
+        this.developmentMode = properties.getProperty("app.env", "dev").equalsIgnoreCase("dev");
 
         this.appName = properties.getProperty("app.name", "cinegrade");
         this.appVersion = properties.getProperty("app.version", "1.0-SNAPSHOT");
@@ -66,6 +63,6 @@ public enum AppConfig {
     }
 
     public InputStream getPackagedConfigFile() {
-        return getClass().getClassLoader().getResourceAsStream("app.properties");
+        return getClass().getClassLoader().getResourceAsStream("app.config");
     }
 }

@@ -203,6 +203,7 @@ public class EditingManager implements AutoCloseable {
         }
         viewModel.setLoading(true);
         viewModel.setPlaceholder(null);
+        viewModel.setDecodeFailed(false);
         thumbnails.loadThumbnail(photo).thenAcceptAsync(imageOpt -> {
                     if (photo != viewModel.getPhoto()) return;
                     viewModel.setPlaceholder(imageOpt.orElse(null));
@@ -239,12 +240,16 @@ public class EditingManager implements AutoCloseable {
                         return CompletableFuture.completedFuture(null);
                     }
                     WhiteBalancer.WhiteBalance asShot = WhiteBalancer.asShotOf(decoded);
-                    Platform.runLater(() -> applyAsShot(photo, asShot));
+                    Platform.runLater(() -> {
+                        applyAsShot(photo, asShot);
+                        viewportRenderer.clear();
+                    });
                     return viewportRenderer.show(decoded)
                             .whenComplete((v, ex) -> MemoryUtil.memFree(decoded.data()))
                             .thenRun(() -> Platform.runLater(() -> {
                                 if (photo == viewModel.getPhoto()) {
                                     viewModel.setLoading(false);
+                                    viewModel.setDecodeFailed(false);
                                 }
                             }));
                 }).exceptionally(ex -> {
@@ -256,6 +261,8 @@ public class EditingManager implements AutoCloseable {
                     Platform.runLater(() -> {
                         if (photo == viewModel.getPhoto()) {
                             viewModel.setLoading(false);
+                            viewModel.setDecodeFailed(true);
+                            viewportRenderer.clear();
                         }
                         // a corrupt file is not a missing one
                         if (!photo.getFile().exists()) {

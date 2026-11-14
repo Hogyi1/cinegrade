@@ -91,6 +91,17 @@
     -fx-padding: 1px 7px;
 }
 
+/* [AI-GENERATED] orange badge in the HUD when the original can't be decoded (same shape as the missing badge) */
+.hud-error-badge {
+    -fx-background-color: -clr-warning;
+    -fx-background-radius: 8px;
+    -fx-text-fill: #FFFFFF;
+    -fx-font-family: -font-family-primary;
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+    -fx-padding: 1px 7px;
+}
+
 .hud-btn {
     -fx-background-color: -clr-surface-card;
     -fx-background-radius: 6px;

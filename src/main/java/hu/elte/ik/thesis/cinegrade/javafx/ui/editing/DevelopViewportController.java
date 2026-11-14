@@ -9,6 +9,7 @@ import hu.elte.ik.thesis.cinegrade.javafx.ui.input.InputListener;
 import hu.elte.ik.thesis.cinegrade.javafx.ui.input.ViewportNavigator;
 import javafx.animation.PauseTransition;
 import javafx.animation.SequentialTransition;
+import javafx.beans.binding.Bindings;
 import javafx.beans.binding.BooleanBinding;
 import javafx.beans.binding.BooleanExpression;
 import javafx.event.EventHandler;
@@ -50,6 +51,8 @@ public class DevelopViewportController implements HistoryListener {
     private Label photoNameLabel;
     @FXML
     private Label missingBadge;
+    @FXML
+    private Label errorBadge;
     @FXML
     private Label photoMetaLabel;
     @FXML
@@ -98,10 +101,12 @@ public class DevelopViewportController implements HistoryListener {
         // A missing original can't be decoded: keep its stored thumbnail up instead of the previous photo's frame
         BooleanExpression missing = BooleanExpression.booleanExpression(editingManager.getViewModel().currentPhotoProperty()
                 .flatMap(PhotoEntry::missingPhotoProperty).orElse(false));
-        BooleanBinding showThumbnail = editingManager.getViewModel().loadingProperty().or(missing);
+        BooleanBinding showThumbnail = editingManager.getViewModel().loadingProperty().or(missing).or(editingManager.getViewModel().decodeFailedProperty());
         thumbnailImageView.visibleProperty().bind(showThumbnail);
         missingBadge.visibleProperty().bind(missing);
         missingBadge.managedProperty().bind(missing);
+        errorBadge.visibleProperty().bind(editingManager.getViewModel().decodeFailedProperty());
+        errorBadge.managedProperty().bind(editingManager.getViewModel().decodeFailedProperty());
         if (loadProgressOverlay != null) {
             loadProgressOverlay.visibleProperty().bind(editingManager.getViewModel().loadingProperty());
             loadProgressOverlay.managedProperty().bind(editingManager.getViewModel().loadingProperty());
