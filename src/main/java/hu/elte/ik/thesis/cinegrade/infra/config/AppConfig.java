@@ -28,7 +28,7 @@ public enum AppConfig {
     private final String javaVersion;
     private final Theme fallBackTheme;
     private final long requiredSpace;
-    private final boolean developmentMode = true;
+    private final boolean developmentMode = false;
     private final String appApi;
     private final String appUrl;
 

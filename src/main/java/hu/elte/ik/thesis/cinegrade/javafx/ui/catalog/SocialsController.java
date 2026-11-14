@@ -17,6 +17,8 @@ import javafx.scene.control.Button;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
 import netscape.javascript.JSObject;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.net.HttpCookie;
 import java.util.Locale;
@@ -30,6 +32,7 @@ import java.util.concurrent.ExecutorService;
 public class SocialsController {
 
     public static final String SOCIALS_URL = AppConfig.INSTANCE.getAppUrl();
+    private static final Logger logger = LogManager.getLogger(SocialsController.class);
 
     private final SceneManager sceneManager;
     private final CineGradeApi api;
@@ -70,20 +73,25 @@ public class SocialsController {
 
         webEngine.getLoadWorker().stateProperty().addListener((obs, old, state) -> {
             String location = webEngine.getLocation();
+            logger.debug("Web page load state changed to: {} trying to reach {}", state, location);
             if (state == Worker.State.SUCCEEDED && isAllowed(location)) {
                 JSObject window = (JSObject) webEngine.executeScript("window");
                 window.setMember("cinegradeDesktop", desktopBridge);
+                logger.debug("Loaded socials page: {}", location);
             } else if (state == Worker.State.FAILED && !isOfflinePage(location)) {
                 // The bridge is attached when the offline page reaches SUCCEEDED
                 webEngine.load(offlinePageUrl);
+                logger.debug("Loaded offline page: {}", offlinePageUrl);
             }
         });
 
         // A link to another site: stop it here and open it in the system browser instead
         webEngine.locationProperty().addListener((obs, old, location) -> {
             if (isExternal(location)) {
+                logger.debug("Detected external link: {}", location);
                 Platform.runLater(() -> webEngine.getLoadWorker().cancel());   // CANCELLED, not FAILED: no offline page
                 hostServices.showDocument(location);
+                logger.debug("Opening external document: {}", location);
             }
         });
 
@@ -94,8 +102,10 @@ public class SocialsController {
                     popup.load(null);
                     if (isAllowed(location)) {
                         webEngine.load(location);
+                        logger.debug("Loaded popup page: {}", location);
                     } else {
                         hostServices.showDocument(location);
+                        logger.debug("Opening external document in popup: {}", location);
                     }
                 }
             });
@@ -109,6 +119,7 @@ public class SocialsController {
 
         backToProjectsBtn.setOnAction(e -> {
             // stop the page (scripts, requests) before the view is dropped
+            logger.debug("Switching back to projects view");
             cookieStore.removeListener(sessionListener);
             webEngine.load(null);
             sceneManager.switchView(ViewType.PROJECT_MENU);

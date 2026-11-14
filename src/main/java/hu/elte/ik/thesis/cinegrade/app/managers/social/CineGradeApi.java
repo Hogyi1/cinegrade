@@ -132,11 +132,13 @@ public class CineGradeApi implements AutoCloseable {
         return client.execute(httpRequest, response -> {
             int status = response.getCode();
             if (status == 401) {
+                logger.debug("Request failed with 401, refreshing token");
                 return null;
             }
             if (status < 200 || status >= 300) {
                 throw new SocialException(ErrorCode.SOCIAL_REQUEST_FAILED, status, httpRequest.getRequestUri());
             }
+            logger.debug("Request succeeded with status: {}", status);
             return handler.handleResponse(response);
         });
     }

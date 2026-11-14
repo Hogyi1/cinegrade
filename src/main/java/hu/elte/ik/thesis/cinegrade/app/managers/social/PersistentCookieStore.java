@@ -4,6 +4,8 @@ package hu.elte.ik.thesis.cinegrade.app.managers.social;
 import hu.elte.ik.thesis.cinegrade.domain.error.ErrorHandler;
 import hu.elte.ik.thesis.cinegrade.domain.token.RefreshToken;
 import hu.elte.ik.thesis.cinegrade.infra.database.dao.token.RefreshTokenDao;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.net.CookieManager;
 import java.net.CookieStore;
@@ -29,6 +31,7 @@ public class PersistentCookieStore implements CookieStore {
     public static final String REFRESH_TOKEN = "refresh-token";
     // Same lifetime as RefreshCookieFactory on the backend (sliding, renewed on every refresh)
     private static final Duration REFRESH_MAX_AGE = Duration.ofDays(14);
+    private static final Logger logger = LogManager.getLogger(PersistentCookieStore.class);
 
     private final CookieStore delegate = new CookieManager().getCookieStore();
     private final URI api;
@@ -43,6 +46,7 @@ public class PersistentCookieStore implements CookieStore {
         current = dao.load().orElse(null);
         if (current != null && current.getRefreshToken() != null) {
             delegate.add(api, cookie(current.getRefreshToken()));
+            logger.debug("Loaded refresh token from database");
         }
     }
 
@@ -75,6 +79,7 @@ public class PersistentCookieStore implements CookieStore {
         boolean changed;
         synchronized (this) {
             changed = !Objects.equals(raw, current == null ? null : current.getRefreshToken());
+            logger.debug("Refresh token changed: {} -> {}", current == null ? null : current.getRefreshToken(), raw);
             try {
                 if (changed && raw == null) {
                     dao.deleteToken();
@@ -93,6 +98,7 @@ public class PersistentCookieStore implements CookieStore {
         }
 
         if (changed) {
+            logger.debug("Notifying cookie change: {}", raw == null ? null : cookie);
             notifyCookieChanged(raw == null ? null : cookie);
         }
     }
