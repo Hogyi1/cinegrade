@@ -56,8 +56,6 @@ public class CineGradeApi implements AutoCloseable {
                 .build();
     }
 
-    // [AI-GENERATED METHOD]
-
     /**
      * Swaps the refresh token for a new JWT. A 401 means the session is dead (revoked, expired, password
      * changed): the stored session is cleared, which fires the logged-out event, and the call throws.
@@ -198,7 +196,6 @@ public class CineGradeApi implements AutoCloseable {
         client.close();
     }
 
-    // [AI-GENERATED METHOD]
     /**
      * Downloads a post's LUT or .cgedit to {@code target}, overwriting it (the save dialog already asked).
      * The bytes go to {@code <target>.part} first and are moved over the target only once complete, so a failed
@@ -219,7 +216,7 @@ public class CineGradeApi implements AutoCloseable {
             });
         } finally {
             try {
-                Files.deleteIfExists(part);   // only still there when something failed
+                Files.deleteIfExists(part);
             } catch (IOException ex) {
                 logger.warn("Couldn't delete the unfinished download {}", part, ex);
             }

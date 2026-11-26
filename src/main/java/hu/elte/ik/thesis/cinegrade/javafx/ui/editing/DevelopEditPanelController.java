@@ -11,6 +11,7 @@ import hu.elte.ik.thesis.cinegrade.javafx.ui.components.EditPane;
 import hu.elte.ik.thesis.cinegrade.javafx.ui.components.EditSlider;
 import hu.elte.ik.thesis.cinegrade.javafx.ui.presenters.HistogramService;
 import javafx.application.Platform;
+import javafx.beans.binding.Bindings;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -100,6 +101,12 @@ public class DevelopEditPanelController {
         editingManager.getViewModel().currentEditStateProperty().addListener((obs, oldState, newState) -> showEditState(newState));
         showPhoto(editingManager.getViewModel().currentPhotoProperty().get());
         showEditState(editingManager.getViewModel().currentEditStateProperty().get());
+
+        panelsContainer.disableProperty().bind(Bindings.createBooleanBinding(() ->
+                        editingManager.getViewModel().currentEditStateProperty().get() == null ||
+                        editingManager.getViewModel().currentPhotoProperty().get().isMissingPhoto() ||
+                        editingManager.getViewModel().currentPhotoProperty().get().isDecodeFailed()
+                , editingManager.getViewModel().currentEditStateProperty(), editingManager.getViewModel().currentPhotoProperty()));
     }
 
     private void buildPanes() {
@@ -238,13 +245,11 @@ public class DevelopEditPanelController {
      * The sliders follow the edit by themselves, only the panel's own state is left here. No photo: panel disabled.
      */
     private void showEditState(EditState editState) {
-        panelsContainer.setDisable(editState == null);
         showWhiteBalanceType(editState);
 
         PhotoEntry photo = editingManager.getViewModel().currentPhotoProperty().get();
-        if (photo != null && (photo.isMissingPhoto() || editingManager.getViewModel().decodeFailedProperty().get())) {
+        if (photo != null && (photo.isMissingPhoto() || photo.isDecodeFailed())) {
             histogramService.clear();
-            panelsContainer.setDisable(true);
         }
     }
 

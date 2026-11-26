@@ -203,7 +203,7 @@ public class EditingManager implements AutoCloseable {
         }
         viewModel.setLoading(true);
         viewModel.setPlaceholder(null);
-        viewModel.setDecodeFailed(false);
+        photo.setDecodeFailed(false);
         thumbnails.loadThumbnail(photo).thenAcceptAsync(imageOpt -> {
                     if (photo != viewModel.getPhoto()) return;
                     viewModel.setPlaceholder(imageOpt.orElse(null));
@@ -216,11 +216,11 @@ public class EditingManager implements AutoCloseable {
                 })
                 .thenAcceptAsync(found -> {
                     if (photo != viewModel.getPhoto()) return;
-                    viewModel.setEditState(found.orElseGet(() -> new EditState(photo.getId())));
-                    lastCommitted = new EditState(photo.getId(), viewModel.getEditState());
                     if (photo.isMissingPhoto() && Files.exists(photo.getFile().toPath())){
                         photo.missingPhotoProperty().set(false);
                     }
+                    viewModel.setEditState(found.orElseGet(() -> new EditState(photo.getId())));
+                    lastCommitted = new EditState(photo.getId(), viewModel.getEditState());
 
                     if (photo.isMissingPhoto()) {
                         viewportRenderer.clear();
@@ -249,7 +249,8 @@ public class EditingManager implements AutoCloseable {
                             .thenRun(() -> Platform.runLater(() -> {
                                 if (photo == viewModel.getPhoto()) {
                                     viewModel.setLoading(false);
-                                    viewModel.setDecodeFailed(false);
+                                    photo.setDecodeFailed(false);
+                                    photo.missingPhotoProperty().set(false);
                                 }
                             }));
                 }).exceptionally(ex -> {
@@ -261,7 +262,7 @@ public class EditingManager implements AutoCloseable {
                     Platform.runLater(() -> {
                         if (photo == viewModel.getPhoto()) {
                             viewModel.setLoading(false);
-                            viewModel.setDecodeFailed(true);
+                            photo.setDecodeFailed(true);
                             viewportRenderer.clear();
                         }
                         // a corrupt file is not a missing one
@@ -502,6 +503,7 @@ public class EditingManager implements AutoCloseable {
     public void close() throws Exception {
         // the running decode stops, queued ones are skipped, then the handle closes on the thread that owns it
         requestedPhotoId = null;
+        thumbnails.clear();
         decoderThread.submit(viewportDecoder::close);
         decoderThread.shutdown();
         try {

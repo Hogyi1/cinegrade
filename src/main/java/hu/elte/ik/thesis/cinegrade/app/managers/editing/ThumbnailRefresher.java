@@ -130,4 +130,10 @@ public class ThumbnailRefresher {
                     }
                 });
     }
+
+    public void clear() {
+        queue.clear();
+        edits.clear();
+        photos.clear();
+    }
 }

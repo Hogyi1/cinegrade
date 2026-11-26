@@ -49,7 +49,11 @@ public class UserManager implements CookieListener {
         this.cookieStore = cookieStore;
         refreshUser();
         if (cookieStore.getRefreshTokenId().isPresent()) {
-            loadProfile();
+            try {
+                loadProfile();
+            } catch (RuntimeException e) {
+                logger.error("Failed to load user profile", e);
+            }
         }
     }
 

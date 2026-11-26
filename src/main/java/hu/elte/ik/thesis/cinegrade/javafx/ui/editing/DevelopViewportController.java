@@ -101,12 +101,14 @@ public class DevelopViewportController implements HistoryListener {
         // A missing original can't be decoded: keep its stored thumbnail up instead of the previous photo's frame
         BooleanExpression missing = BooleanExpression.booleanExpression(editingManager.getViewModel().currentPhotoProperty()
                 .flatMap(PhotoEntry::missingPhotoProperty).orElse(false));
-        BooleanBinding showThumbnail = editingManager.getViewModel().loadingProperty().or(missing).or(editingManager.getViewModel().decodeFailedProperty());
+        BooleanExpression decodeFailed = BooleanExpression.booleanExpression(editingManager.getViewModel().currentPhotoProperty()
+                .flatMap(PhotoEntry::getDecodeFailed).orElse(false));
+        BooleanBinding showThumbnail = editingManager.getViewModel().loadingProperty().or(missing).or(decodeFailed);
         thumbnailImageView.visibleProperty().bind(showThumbnail);
         missingBadge.visibleProperty().bind(missing);
         missingBadge.managedProperty().bind(missing);
-        errorBadge.visibleProperty().bind(editingManager.getViewModel().decodeFailedProperty());
-        errorBadge.managedProperty().bind(editingManager.getViewModel().decodeFailedProperty());
+        errorBadge.visibleProperty().bind(decodeFailed);
+        errorBadge.managedProperty().bind(decodeFailed);
         if (loadProgressOverlay != null) {
             loadProgressOverlay.visibleProperty().bind(editingManager.getViewModel().loadingProperty());
             loadProgressOverlay.managedProperty().bind(editingManager.getViewModel().loadingProperty());

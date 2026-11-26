@@ -116,6 +116,7 @@ public class App extends Application {
     }
 
     // [AI-GENERATED METHOD]
+
     /**
      * Started by double-clicking a .cgproj (the installer's file association passes its path as the first
      * argument): open that project straight away. Otherwise, or if it can't be opened, the project menu.

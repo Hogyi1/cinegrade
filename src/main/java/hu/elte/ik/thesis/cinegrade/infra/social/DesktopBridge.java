@@ -63,9 +63,6 @@ public class DesktopBridge {
         this.lastPathService = new LastPathService();
     }
 
-    // [AI-GENERATED METHOD]
-
-    // [AI-GENERATED METHOD]
     private static String statusOf(SocialException ex) {
         if (ex.isNotLoggedIn()) {
             return "signin";
@@ -73,7 +70,6 @@ public class DesktopBridge {
         return ex.getErrorCode() == ErrorCode.SOCIAL_OFFLINE ? "offline" : "failed";
     }
 
-    // [AI-GENERATED METHOD]
     private static ShareFile shareFile(Path path, String name, String type) throws IOException {
         return new ShareFile(name, type, Base64.getEncoder().encodeToString(Files.readAllBytes(path)));
     }
@@ -108,7 +104,7 @@ public class DesktopBridge {
                     shareFile(draft.after(), "after.jpg", "image/jpeg"),
                     draft.lut() == null ? null : shareFile(draft.lut(), base + ".cube", OCTET_STREAM),
                     draft.cgedit() == null ? null : shareFile(draft.cgedit(), base + ".cgedit", OCTET_STREAM));
-            return GSON.toJson(json);   // null fields are left out, which the page expects
+            return GSON.toJson(json);
         } catch (IOException ex) {
             logger.warn("Couldn't read the share draft's files", ex);
             return null;

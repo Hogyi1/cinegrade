@@ -22,15 +22,10 @@ public class EditingStage {
     private final BooleanProperty loading = new SimpleBooleanProperty(false);
     private final BooleanProperty showOriginal = new SimpleBooleanProperty(false);
     private final ReadOnlyObjectProperty<Image> viewportImage;
-    private final BooleanProperty decodeFailed = new SimpleBooleanProperty(false);
 
     public EditingStage(ReadOnlyObjectProperty<Image> viewportImage, ObjectProperty<PhotoEntry> selectedPhoto) {
         this.viewportImage = viewportImage;
         currentPhoto.bind(selectedPhoto);
-    }
-
-    public ReadOnlyBooleanProperty decodeFailedProperty() {
-        return decodeFailed;
     }
 
     public ReadOnlyObjectProperty<EditState> currentEditStateProperty() {
@@ -85,7 +80,4 @@ public class EditingStage {
         showOriginal.set(value);
     }
 
-    public void setDecodeFailed(boolean b) {
-        decodeFailed.set(b);
-    }
 }

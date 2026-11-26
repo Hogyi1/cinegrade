@@ -17,6 +17,7 @@ public class PhotoEntry extends Entry {
 
     private final BooleanProperty missingPhoto = new SimpleBooleanProperty(false);
     private final BooleanProperty missingThumbnail = new SimpleBooleanProperty(false);
+    private final BooleanProperty decodeFailed = new SimpleBooleanProperty(false);
     private final BooleanProperty isEdited = new SimpleBooleanProperty(false);
     private final BooleanProperty isLiked = new SimpleBooleanProperty(false);
     private final IntegerProperty thumbnailVersion = new SimpleIntegerProperty(0);
@@ -169,5 +170,13 @@ public class PhotoEntry extends Entry {
 
     public String getFileName() {
         return file != null ? file.getName() : "";
+    }
+
+    public boolean isDecodeFailed() {
+        return decodeFailed.get();
+    }
+
+    public void setDecodeFailed(boolean b) {
+        decodeFailed.set(b);
     }
 }
